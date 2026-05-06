@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DuelLinks</title>
+    <title>Duel-Links</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎴</text></svg>">
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
@@ -228,7 +228,7 @@
             border-radius: 4px;
         }
 
-        /* 分享预览（卡片样式截图） */
+        /* 分享预览 */
         .share-preview {
             display: none;
             position: fixed;
@@ -245,9 +245,8 @@
             cursor: pointer;
         }
 
-        .share-preview canvas {
+        .share-preview img {
             max-width: 90%;
-            /* 高度自动，保持原比例 */
             max-height: 85vh;
             border-radius: 12px;
             box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
@@ -271,6 +270,41 @@
 
         .close-btn:hover {
             background: #c0392b;
+        }
+
+        /* 分享加载提示 */
+        .share-loading {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .share-loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        .share-loading-text {
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         @media (max-width: 768px) {
@@ -313,12 +347,12 @@
 
     <!-- 高清大图模态框 -->
     <div class="image-modal" id="imageModal" onclick="if(event.target === this) this.style.display='none'">
-        <img id="modalImage" alt="卡片大图">
+        <img id="modalImage" alt="卡片大图" onclick="event.stopPropagation()">
     </div>
 
     <!-- 分享预览窗口 -->
     <div class="share-preview" id="sharePreview" onclick="if(event.target === this) this.style.display='none'">
-        <canvas id="shareCanvas"></canvas>
+        <img id="shareImage" alt="卡片分享图" onclick="event.stopPropagation()">
         <button class="close-btn" onclick="document.getElementById('sharePreview').style.display='none'">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -326,6 +360,12 @@
             </svg>
             关闭
         </button>
+    </div>
+
+    <!-- 分享生成中的加载提示 -->
+    <div class="share-loading" id="shareLoading">
+        <div class="share-loading-spinner"></div>
+        <div class="share-loading-text">正在生成分享图，首次生成需加载组件较慢，请稍候…</div>
     </div>
 
     <script>
@@ -343,22 +383,47 @@
             modal.style.display = 'flex';
         }
 
-        // 生成与卡片界面完全一致的分享截图
+        // 代理图片地址，解决 CORS 问题
+        function getProxiedImageUrl(originalUrl) {
+            return `https://images.weserv.nl/?url=${encodeURIComponent(originalUrl)}`;
+        }
+
+        // 打开/关闭加载提示
+        function showLoading(show) {
+            const el = document.getElementById('shareLoading');
+            el.style.display = show ? 'flex' : 'none';
+        }
+
+        // 生成分享图
         async function showSharePreview(cardId, cardName, cardDesc, cardType) {
             const preview = document.getElementById('sharePreview');
-            const canvas = document.getElementById('shareCanvas');
+            const shareImg = document.getElementById('shareImage');
+            const proxyUrl = getProxiedImageUrl(`https://cdn.233.momobako.com/ygopro/pics/${cardId}.jpg`);
 
-            // 预加载卡图
+            // 显示加载提示
+            showLoading(true);
+
+            // 预加载卡图（使用代理支持 CORS，并设置跨域属性）
             const img = new Image();
-            img.src = `https://cdn.233.momobako.com/ygopro/pics/${cardId}.jpg`;
-            await new Promise(resolve => {
-                img.onload = img.onerror = resolve;
-                setTimeout(resolve, 3000);
+            img.crossOrigin = 'anonymous';
+            img.src = proxyUrl;
+            await new Promise((resolve) => {
+                img.onload = resolve;
+                img.onerror = () => {
+                    console.warn('代理图片加载失败，回退直接链接（可能无法保存）');
+                    img.crossOrigin = null;
+                    img.src = `https://cdn.233.momobako.com/ygopro/pics/${cardId}.jpg`;
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                };
+                setTimeout(resolve, 5000);
             });
 
-            // 模拟卡片结构的临时容器（与 .card 完全一致的布局）
+            // 创建屏幕外临时容器（与卡片样式完全一致）
             const container = document.createElement('div');
-            // 宽260px，与卡片一致
+            container.style.position = 'fixed';
+            container.style.left = '-9999px';
+            container.style.top = '0';
             container.style.width = '260px';
             container.style.background = '#ffffff';
             container.style.borderRadius = '12px';
@@ -366,7 +431,7 @@
             container.style.boxShadow = '0 8px 20px rgba(0,0,0,0.12)';
             container.style.fontFamily = "'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
 
-            // ------- 图片区域（模拟 .image-container） -------
+            // 图片区域
             const imgContainer = document.createElement('div');
             imgContainer.style.position = 'relative';
             imgContainer.style.display = 'flex';
@@ -375,7 +440,6 @@
             imgContainer.style.background = 'linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%)';
             imgContainer.style.padding = '15px';
 
-            // 卡牌类型标签（如果有）
             if (cardType) {
                 const typeLabel = document.createElement('div');
                 typeLabel.textContent = cardType;
@@ -394,6 +458,7 @@
 
             const imgEl = document.createElement('img');
             imgEl.src = img.src;
+            imgEl.crossOrigin = 'anonymous';
             imgEl.style.maxWidth = '100%';
             imgEl.style.maxHeight = '330px';
             imgEl.style.objectFit = 'contain';
@@ -401,7 +466,7 @@
             imgContainer.appendChild(imgEl);
             container.appendChild(imgContainer);
 
-            // ------- 文字内容区域（模拟 .card-content） -------
+            // 内容区域
             const contentDiv = document.createElement('div');
             contentDiv.style.padding = '15px';
 
@@ -430,27 +495,32 @@
             document.body.appendChild(container);
 
             try {
+                await new Promise(resolve => setTimeout(resolve, 100));
+
                 const screenshot = await html2canvas(container, {
-                    scale: 2,       // 2倍清晰度，保持比例
+                    scale: 2,
                     backgroundColor: '#ffffff',
-                    useCORS: false,
-                    allowTaint: true,
+                    useCORS: true,
+                    allowTaint: false,
                     logging: false
                 });
 
-                canvas.width = screenshot.width;
-                canvas.height = screenshot.height;
-                canvas.getContext('2d').drawImage(screenshot, 0, 0);
+                const blob = await new Promise(resolve => {
+                    screenshot.toBlob(blob => resolve(blob), 'image/png');
+                });
+                const blobUrl = URL.createObjectURL(blob);
+                shareImg.src = blobUrl;
                 preview.style.display = 'flex';
             } catch (e) {
                 alert('生成分享图失败，请重试');
                 console.error(e);
             } finally {
                 document.body.removeChild(container);
+                showLoading(false);  // 隐藏加载提示
             }
         }
 
-        // 搜索卡片
+        // 搜索功能
         async function searchCards() {
             const keyword = document.getElementById('searchInput').value.trim();
             const resultsDiv = document.getElementById('results');
@@ -496,7 +566,6 @@
                         resultsDiv.innerHTML += cardEl;
                     });
 
-                    // 绑定分享按钮事件
                     document.querySelectorAll('.share-btn').forEach(btn => {
                         btn.addEventListener('click', (e) => {
                             e.stopPropagation();
