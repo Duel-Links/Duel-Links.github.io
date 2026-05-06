@@ -5,14 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DuelLinks</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎴</text></svg>">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         :root {
             --primary-color: #3498db;
             --background-color: #f8f9fa;
             --card-bg: #ffffff;
-            --success-color: #2ecc71;
-            --error-color: #e74c3c;
-            --warning-color: #f39c12; 
         }
 
         * {
@@ -127,7 +125,7 @@
             gap: 8px;
         }
 
-        .preview-btn {
+        .share-btn {
             width: 42px;
             height: 42px;
             background: rgba(0, 0, 0, 0.8);
@@ -142,14 +140,14 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
-        .preview-btn:hover {
+        .share-btn:hover {
             background: var(--primary-color);
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
         }
 
-        .preview-btn:hover::after {
-            content: "查看大图";
+        .share-btn:hover::after {
+            content: "查看详情";
             position: absolute;
             top: -40px;
             left: 50%;
@@ -162,11 +160,11 @@
             white-space: nowrap;
         }
 
-        .preview-btn:active {
+        .share-btn:active {
             transform: translateY(0);
         }
 
-        .preview-btn svg {
+        .share-btn svg {
             width: 22px;
             height: 22px;
         }
@@ -239,8 +237,30 @@
             grid-column: 1 / -1;
         }
 
-        /* 大图预览窗口（统一用于查看高清卡图） */
-        .image-preview {
+        /* 高清大图预览（点击卡图） */
+        .image-modal {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .image-modal img {
+            max-width: 95%;
+            max-height: 95%;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        /* 分享详情预览（合成截图） */
+        .share-preview {
             display: none;
             position: fixed;
             top: 0;
@@ -249,45 +269,45 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.95);
             z-index: 1001;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            cursor: pointer;
-        }
-
-        .image-preview-container {
-            display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .share-preview canvas {
             max-width: 90%;
-            max-height: 90vh;
-        }
-
-        .image-preview img {
-            max-width: 100%;
             max-height: 80vh;
-            object-fit: contain;
-            border-radius: 8px;
+            border-radius: 12px;
             box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
+            background: white;
         }
 
-        .preview-close-btn {
+        .share-preview .close-btn {
             margin-top: 20px;
-            padding: 10px 25px;
+            padding: 12px 30px;
             border-radius: 30px;
             border: none;
-            background: #7f8c8d;
+            background: #e74c3c;
             color: white;
             font-weight: 600;
+            font-size: 16px;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: all 0.3s;
+            transition: background 0.3s;
         }
 
-        .preview-close-btn:hover {
-            background: #6c7a7d;
+        .share-preview .close-btn:hover {
+            background: #c0392b;
+        }
+
+        .share-preview .tip {
+            color: #aaa;
+            margin-top: 15px;
+            font-size: 14px;
+            text-align: center;
         }
 
         @media (max-width: 768px) {
@@ -310,12 +330,12 @@
                 max-width: 260px;
             }
             
-            .preview-btn {
+            .share-btn {
                 width: 38px;
                 height: 38px;
             }
             
-            .preview-btn svg {
+            .share-btn svg {
                 width: 18px;
                 height: 18px;
             }
@@ -338,36 +358,108 @@
         <div id="results" class="cards-grid"></div>
     </div>
 
-    <!-- 大图预览窗口 -->
-    <div class="image-preview" id="imagePreview" onclick="if(event.target === this) this.style.display='none'">
-        <div class="image-preview-container">
-            <img id="previewImage" alt="卡片大图">
-            <button class="preview-close-btn" onclick="document.getElementById('imagePreview').style.display='none'">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-                关闭
-            </button>
-        </div>
+    <!-- 高清大图模态框（点击卡图） -->
+    <div class="image-modal" id="imageModal" onclick="this.style.display='none'">
+        <img id="modalImage" alt="卡片大图">
+    </div>
+
+    <!-- 分享详情预览（合成截图） -->
+    <div class="share-preview" id="sharePreview">
+        <canvas id="shareCanvas"></canvas>
+        <div class="tip">长按上方图片即可保存或分享（若无法保存请使用系统截图）</div>
+        <button class="close-btn" onclick="document.getElementById('sharePreview').style.display='none'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            关闭
+        </button>
     </div>
 
     <script>
         // 初始加载示例卡片
         window.addEventListener('DOMContentLoaded', () => {
-            const examples = ['白银姬', '灰流丽', '闪刀姬', '玛德莲', '小美人鱼'];
+            const examples = ['白银姬', '灰流丽', '闪刀启动', '玛德莲', '小美人鱼'];
             const randomExample = examples[Math.floor(Math.random() * examples.length)];
             document.getElementById('searchInput').value = randomExample;
             searchCards();
         });
 
-        // 显示大图预览
-        function previewCardImage(cardId) {
-            const preview = document.getElementById('imagePreview');
-            const previewImg = document.getElementById('previewImage');
-            const imgUrl = `https://cdn.233.momobako.com/ygopro/pics/${cardId}.jpg`;
-            previewImg.src = imgUrl;
-            preview.style.display = 'flex';
+        // 仅显示高清大图（点击卡图时）
+        function showLargeImage(cardId) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modalImg.src = `https://cdn.233.momobako.com/ygopro/pics/${cardId}.jpg`;
+            modal.style.display = 'flex';
+        }
+
+        // 分享按钮：生成卡图+文字合成截图
+        async function showSharePreview(cardId, cardName, cardDesc, cardType) {
+            const preview = document.getElementById('sharePreview');
+            const canvas = document.getElementById('shareCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // 创建临时容器用于截图（不显示在页面上）
+            const container = document.createElement('div');
+            container.style.position = 'fixed';
+            container.style.left = '-9999px';
+            container.style.top = '0';
+            container.style.width = '600px'; // 固定宽度便于生成
+            container.style.backgroundColor = '#ffffff';
+            container.style.padding = '20px';
+            container.style.borderRadius = '12px';
+            container.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+            container.style.fontFamily = "'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif";
+
+            // 加载卡图
+            const img = new Image();
+            img.crossOrigin = ''; // 不设置crossorigin，允许污染
+            img.src = `https://cdn.233.momobako.com/ygopro/pics/${cardId}.jpg`;
+
+            // 等待图片加载完成
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = () => {
+                    // 图片加载失败，使用占位背景
+                    img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjNjY2Ij7lm77niYfliqDovb3lpLHotKU8L3RleHQ+PC9zdmc+';
+                    resolve();
+                };
+                setTimeout(reject, 5000);
+            });
+
+            container.innerHTML = `
+                <div style="text-align:center; margin-bottom:15px;">
+                    <img src="${img.src}" style="max-width:100%; max-height:400px; border-radius:8px;" />
+                </div>
+                ${cardType ? `<div style="color:#555; font-size:14px; margin-bottom:10px; text-align:center;">${cardType}</div>` : ''}
+                <h2 style="text-align:center; color:#2c3e50; margin-bottom:10px; font-size:1.4em;">${cardName}</h2>
+                <div style="white-space:pre-wrap; line-height:1.6; color:#333; background:#f9f9f9; padding:12px; border-radius:8px; border-left:4px solid #3498db;">${cardDesc}</div>
+            `;
+
+            document.body.appendChild(container);
+
+            try {
+                const screenshot = await html2canvas(container, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    useCORS: false,
+                    allowTaint: true,
+                    logging: false
+                });
+
+                // 将截图绘制到预览canvas上
+                canvas.width = screenshot.width;
+                canvas.height = screenshot.height;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(screenshot, 0, 0);
+
+                preview.style.display = 'flex';
+            } catch (error) {
+                alert('生成分享图失败，请重试');
+                console.error(error);
+            } finally {
+                document.body.removeChild(container);
+            }
         }
         
         // 搜索功能
@@ -389,16 +481,20 @@
                 if (data.result?.length) {
                     resultsDiv.innerHTML = '';
                     data.result.forEach(card => {
-                        const safeName = card.cn_name 
-                            ? card.cn_name.replace(/'/g, "\\'") 
-                            : '未知卡名';
-                        
+                        const cardName = card.cn_name || '未知卡名';
                         const cardDesc = `${card.text.types}\n${card.text.desc || '暂无效果描述'}`;
+                        const safeName = cardName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        const safeDesc = cardDesc.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        const safeType = (card.type || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                             
                         const cardHtml = `
                             <div class="card-container">
                                 <div class="card-controls">
-                                    <button class="preview-btn" data-card-id="${card.id}">
+                                    <button class="share-btn" 
+                                            data-card-id="${card.id}"
+                                            data-card-name="${safeName}"
+                                            data-card-desc="${safeDesc}"
+                                            data-card-type="${safeType}">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                             <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -411,12 +507,12 @@
                                         ${card.type ? `<div class="card-type">${card.type}</div>` : ''}
                                         <img class="card-image" 
                                              src="https://cdn.233.momobako.com/ygopro/pics/${card.id}.jpg"
-                                             alt="${card.cn_name}"
+                                             alt="${cardName}"
                                              loading="lazy"
-                                             onclick="previewCardImage(${card.id})">
+                                             onclick="showLargeImage(${card.id})">
                                     </div>
                                     <div class="card-content">
-                                        <h3 class="card-title">${card.cn_name || '未知卡名'}</h3>
+                                        <h3 class="card-title">${cardName}</h3>
                                         <div class="card-desc">${cardDesc}</div>
                                     </div>
                                 </div>
@@ -425,12 +521,15 @@
                         resultsDiv.innerHTML += cardHtml;
                     });
                     
-                    // 为所有预览按钮绑定事件
-                    document.querySelectorAll('.preview-btn').forEach(btn => {
+                    // 绑定分享按钮事件
+                    document.querySelectorAll('.share-btn').forEach(btn => {
                         btn.addEventListener('click', function(e) {
                             e.stopPropagation();
                             const cardId = this.dataset.cardId;
-                            previewCardImage(cardId);
+                            const cardName = this.dataset.cardName;
+                            const cardDesc = this.dataset.cardDesc;
+                            const cardType = this.dataset.cardType;
+                            showSharePreview(cardId, cardName, cardDesc, cardType);
                         });
                     });
                 } else {
@@ -447,10 +546,11 @@
             if (e.key === 'Enter') searchCards();
         });
         
-        // ESC 关闭预览窗口
+        // ESC 关闭预览
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                document.getElementById('imagePreview').style.display = 'none';
+                document.getElementById('imageModal').style.display = 'none';
+                document.getElementById('sharePreview').style.display = 'none';
             }
         });
     </script>
