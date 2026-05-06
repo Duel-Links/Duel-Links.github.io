@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Duel-Links</title>
+    <title>DuelLinks</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎴</text></svg>">
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
@@ -365,8 +365,7 @@
     <!-- 分享生成中的加载提示 -->
     <div class="share-loading" id="shareLoading">
         <div class="share-loading-spinner"></div>
-        <div class="share-loading-text">正在生成分享图，首次生成
-            需加载组件较慢，请稍候…</div>
+        <div class="share-loading-text">正在生成分享图，首次需加载组件较慢，请稍候…</div>
     </div>
 
     <script>
@@ -389,13 +388,13 @@
             return `https://images.weserv.nl/?url=${encodeURIComponent(originalUrl)}`;
         }
 
-        // 打开/关闭加载提示
+        // 显示/隐藏加载提示
         function showLoading(show) {
             const el = document.getElementById('shareLoading');
             el.style.display = show ? 'flex' : 'none';
         }
 
-        // 生成分享图
+        // 生成分享图（使用 Data URL 解决长按保存问题）
         async function showSharePreview(cardId, cardName, cardDesc, cardType) {
             const preview = document.getElementById('sharePreview');
             const shareImg = document.getElementById('shareImage');
@@ -404,14 +403,14 @@
             // 显示加载提示
             showLoading(true);
 
-            // 预加载卡图（使用代理支持 CORS，并设置跨域属性）
+            // 预加载卡图（带 CORS 支持）
             const img = new Image();
             img.crossOrigin = 'anonymous';
             img.src = proxyUrl;
             await new Promise((resolve) => {
                 img.onload = resolve;
                 img.onerror = () => {
-                    console.warn('代理图片加载失败，回退直接链接（可能无法保存）');
+                    console.warn('代理图片加载失败，回退直接链接');
                     img.crossOrigin = null;
                     img.src = `https://cdn.233.momobako.com/ygopro/pics/${cardId}.jpg`;
                     img.onload = resolve;
@@ -496,6 +495,7 @@
             document.body.appendChild(container);
 
             try {
+                // 等待布局稳定
                 await new Promise(resolve => setTimeout(resolve, 100));
 
                 const screenshot = await html2canvas(container, {
@@ -506,18 +506,16 @@
                     logging: false
                 });
 
-                const blob = await new Promise(resolve => {
-                    screenshot.toBlob(blob => resolve(blob), 'image/png');
-                });
-                const blobUrl = URL.createObjectURL(blob);
-                shareImg.src = blobUrl;
+                // 使用 Data URL 代替 Blob URL，完美兼容所有环境的长按保存
+                const dataUrl = screenshot.toDataURL('image/png');
+                shareImg.src = dataUrl;
                 preview.style.display = 'flex';
             } catch (e) {
                 alert('生成分享图失败，请重试');
                 console.error(e);
             } finally {
                 document.body.removeChild(container);
-                showLoading(false);  // 隐藏加载提示
+                showLoading(false);
             }
         }
 
