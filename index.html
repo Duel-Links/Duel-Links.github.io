@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DuelLinks</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎴</text></svg>">
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js">
-    </script>
     <style>
         :root {
             --primary-color: #3498db;
@@ -14,7 +12,7 @@
             --card-bg: #ffffff;
             --success-color: #2ecc71;
             --error-color: #e74c3c;
-            --warning-color: #f39c12;
+            --warning-color: #f39c12; 
         }
 
         * {
@@ -129,7 +127,7 @@
             gap: 8px;
         }
 
-        .screenshot-btn {
+        .preview-btn {
             width: 42px;
             height: 42px;
             background: rgba(0, 0, 0, 0.8);
@@ -144,14 +142,14 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
-        .screenshot-btn:hover {
+        .preview-btn:hover {
             background: var(--primary-color);
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
         }
 
-        .screenshot-btn:hover::after {
-            content: "分享卡片";
+        .preview-btn:hover::after {
+            content: "查看大图";
             position: absolute;
             top: -40px;
             left: 50%;
@@ -164,27 +162,13 @@
             white-space: nowrap;
         }
 
-        .screenshot-btn:active {
+        .preview-btn:active {
             transform: translateY(0);
         }
 
-        .screenshot-btn svg {
-            transition: transform 0.3s;
+        .preview-btn svg {
             width: 22px;
             height: 22px;
-        }
-
-        .screenshot-btn.copied {
-            background: var(--success-color);
-            animation: pulse 0.5s;
-        }
-
-        .screenshot-btn.error {
-            background: var(--error-color);
-        }
-
-        .screenshot-btn.copied svg {
-            transform: scale(1.3);
         }
 
         .image-container {
@@ -255,127 +239,45 @@
             grid-column: 1 / -1;
         }
 
-        .modal {
+        /* 大图预览窗口（统一用于查看高清卡图） */
+        .image-preview {
             display: none;
             position: fixed;
-            z-index: 999;
-            left: 0;
             top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.95);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-img {
-            max-width: 90%;
-            max-height: 90%;
-            object-fit: contain;
-        }
-
-        .screenshot-notification {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-100px);
-            background: var(--success-color);
-            color: white;
-            padding: 12px 25px;
-            border-radius: 30px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
-            opacity: 0;
-            transition: all 0.4s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 600;
-            font-size: 15px;
-        }
-
-        .screenshot-notification.error {
-            background: var(--error-color);
-        }
-
-        .screenshot-notification.warning {
-            background: var(--warning-color);
-        }
-
-        .screenshot-notification.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .protocol-info {
-            text-align: center;
-            padding: 10px;
-            margin: 15px 0;
-            background: rgba(243, 156, 18, 0.15);
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        .screenshot-preview {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
             z-index: 1001;
             justify-content: center;
             align-items: center;
-            flex-direction: column;
             padding: 20px;
             cursor: pointer;
         }
 
-        .screenshot-preview-container {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            max-width: 90%;
-            max-height: 90vh;
+        .image-preview-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            cursor: default;
+            max-width: 90%;
+            max-height: 90vh;
         }
 
-        /* 预览区域现在直接展示 canvas */
-        .screenshot-canvas-wrapper {
+        .image-preview img {
             max-width: 100%;
-            max-height: 70vh;
+            max-height: 80vh;
+            object-fit: contain;
             border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .screenshot-canvas-wrapper canvas {
-            max-width: 100%;
-            max-height: 70vh;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
         }
 
-        .screenshot-controls {
+        .preview-close-btn {
             margin-top: 20px;
-            display: flex;
-            gap: 15px;
-        }
-
-        .screenshot-btn-action {
             padding: 10px 25px;
             border-radius: 30px;
             border: none;
+            background: #7f8c8d;
+            color: white;
             font-weight: 600;
             cursor: pointer;
             display: flex;
@@ -384,19 +286,8 @@
             transition: all 0.3s;
         }
 
-        .screenshot-btn-copy {
-            background: var(--success-color);
-            color: white;
-        }
-
-        .screenshot-btn-download {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .screenshot-btn-close {
-            background: #7f8c8d;
-            color: white;
+        .preview-close-btn:hover {
+            background: #6c7a7d;
         }
 
         @media (max-width: 768px) {
@@ -419,24 +310,14 @@
                 max-width: 260px;
             }
             
-            .screenshot-btn {
+            .preview-btn {
                 width: 38px;
                 height: 38px;
             }
             
-            .screenshot-btn svg {
+            .preview-btn svg {
                 width: 18px;
                 height: 18px;
-            }
-            
-            .screenshot-controls {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            
-            .screenshot-btn-action {
-                padding: 8px 15px;
-                font-size: 14px;
             }
         }
     </style>
@@ -444,94 +325,49 @@
 <body>
     <div class="container">
         <div class="search-box">
-            <input type="text" id="searchInput" placeholder="请输入卡名或效果关键词（例如：青眼白龙）" autocomplete="off">
+            <input type="text" id="searchInput" placeholder="请输入卡名或效果关键词（例如：青眼白龙、黑魔导）" autocomplete="off">
             <button class="search-btn" onclick="searchCards()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
-                搜索卡片
+                修改
             </button>
-        </div>
-        
-        <div class="protocol-info">
-            当前协议: <span id="protocol-info">检测中...</span> | 
-            图片复制需安全环境HTTPS或localhost
         </div>
         
         <div id="results" class="cards-grid"></div>
     </div>
 
-    <div class="modal" onclick="this.style.display='none'">
-        <img class="modal-img" id="modalImage">
-    </div>
-    
-    <!-- 截图预览（现在直接展示 canvas） -->
-    <div class="screenshot-preview" id="screenshotPreview" onclick="if(event.target === this) this.style.display='none'">
-        <div class="screenshot-preview-container">
-            <div class="screenshot-canvas-wrapper" id="screenshotCanvasContainer"></div>
-            <div class="screenshot-controls">
-                <button class="screenshot-btn-action screenshot-btn-copy" id="copyScreenshotBtn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                    </svg>
-                    复制图片
-                </button>
-                <button class="screenshot-btn-action screenshot-btn-download" id="downloadScreenshotBtn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    下载图片
-                </button>
-                <button class="screenshot-btn-action screenshot-btn-close" onclick="document.getElementById('screenshotPreview').style.display='none'">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                    关闭
-                </button>
-            </div>
+    <!-- 大图预览窗口 -->
+    <div class="image-preview" id="imagePreview" onclick="if(event.target === this) this.style.display='none'">
+        <div class="image-preview-container">
+            <img id="previewImage" alt="卡片大图">
+            <button class="preview-close-btn" onclick="document.getElementById('imagePreview').style.display='none'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                关闭
+            </button>
         </div>
-    </div>
-    
-    <!-- 截图成功提示 -->
-    <div class="screenshot-notification" id="screenshotNotification">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-        </svg>
-        <span>卡片截图成功</span>
     </div>
 
     <script>
-        // 当前截图画布引用（用于后续复制/下载）
-        let currentScreenshotCanvas = null;
-
         // 初始加载示例卡片
         window.addEventListener('DOMContentLoaded', () => {
             const examples = ['白银姬', '灰流丽', '闪刀姬', '玛德莲', '小美人鱼'];
             const randomExample = examples[Math.floor(Math.random() * examples.length)];
             document.getElementById('searchInput').value = randomExample;
             searchCards();
-            
-            // 显示当前协议
-            const protocolInfo = document.getElementById('protocol-info');
-            const currentProtocol = window.location.protocol;
-            protocolInfo.textContent = currentProtocol;
-            protocolInfo.style.color = currentProtocol === 'https:' ? '#2ecc71' : '#e74c3c';
         });
 
-        // 显示大图功能
-        function showLargeImage(cardId) {
-            const modal = document.querySelector('.modal');
-            const modalImg = document.getElementById('modalImage');
-            
+        // 显示大图预览
+        function previewCardImage(cardId) {
+            const preview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImage');
             const imgUrl = `https://cdn.233.momobako.com/ygopro/pics/${cardId}.jpg`;
-            modalImg.src = imgUrl;
-            modal.style.display = 'flex';
+            previewImg.src = imgUrl;
+            preview.style.display = 'flex';
         }
         
         // 搜索功能
@@ -562,9 +398,7 @@
                         const cardHtml = `
                             <div class="card-container">
                                 <div class="card-controls">
-                                    <button class="screenshot-btn" 
-                                            data-card-id="${card.id}"
-                                            data-card-name="${safeName}">
+                                    <button class="preview-btn" data-card-id="${card.id}">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                             <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -575,12 +409,11 @@
                                 <div class="card" id="card-${card.id}">
                                     <div class="image-container">
                                         ${card.type ? `<div class="card-type">${card.type}</div>` : ''}
-                                        <!-- 不再使用 crossorigin="anonymous"，保证图片显示 -->
                                         <img class="card-image" 
                                              src="https://cdn.233.momobako.com/ygopro/pics/${card.id}.jpg"
                                              alt="${card.cn_name}"
                                              loading="lazy"
-                                             onclick="showLargeImage(${card.id})">
+                                             onclick="previewCardImage(${card.id})">
                                     </div>
                                     <div class="card-content">
                                         <h3 class="card-title">${card.cn_name || '未知卡名'}</h3>
@@ -592,9 +425,13 @@
                         resultsDiv.innerHTML += cardHtml;
                     });
                     
-                    // 为所有截图按钮绑定事件
-                    document.querySelectorAll('.screenshot-btn').forEach(btn => {
-                        btn.addEventListener('click', takeScreenshot);
+                    // 为所有预览按钮绑定事件
+                    document.querySelectorAll('.preview-btn').forEach(btn => {
+                        btn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            const cardId = this.dataset.cardId;
+                            previewCardImage(cardId);
+                        });
                     });
                 } else {
                     resultsDiv.innerHTML = '<div class="loading">❌ 未找到相关卡片，请尝试其他关键词</div>';
@@ -605,170 +442,15 @@
             }
         }
 
-        // 截图功能（点击分享按钮）
-        async function takeScreenshot(event) {
-            event.stopPropagation();
-            
-            const button = event.currentTarget;
-            const cardId = button.dataset.cardId;
-            const cardName = button.dataset.cardName;
-            const cardElement = document.getElementById(`card-${cardId}`);
-            
-            if (!cardElement) {
-                showNotification('未找到卡片元素', 'error');
-                return;
-            }
-
-            // 按钮反馈
-            button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>';
-            button.classList.add('copied');
-            
-            try {
-                // 使用 html2canvas 生成截图（允许污染以获得可显示的 canvas）
-                const canvas = await html2canvas(cardElement, {
-                    scale: 2,
-                    backgroundColor: null,
-                    logging: false,
-                    useCORS: false,
-                    allowTaint: true
-                });
-                
-                // 保存当前画布，供复制/下载使用
-                currentScreenshotCanvas = canvas;
-                
-                // 在预览窗口直接展示 canvas（不受污染影响）
-                const container = document.getElementById('screenshotCanvasContainer');
-                container.innerHTML = ''; // 清空旧内容
-                canvas.style.maxWidth = '100%';
-                canvas.style.maxHeight = '70vh';
-                container.appendChild(canvas);
-                
-                // 显示预览窗口
-                document.getElementById('screenshotPreview').style.display = 'flex';
-                
-                // 恢复按钮状态
-                setTimeout(() => {
-                    button.innerHTML = `
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                            <path d="M21 15l-5-5L5 21"></path>
-                        </svg>
-                    `;
-                    button.classList.remove('copied');
-                }, 2000);
-                
-                // 绑定复制/下载按钮事件（放在这里确保每次截图后重新绑定最新canvas）
-                document.getElementById('copyScreenshotBtn').onclick = copyScreenshotToClipboard;
-                document.getElementById('downloadScreenshotBtn').onclick = downloadScreenshot;
-                
-            } catch (error) {
-                console.error('截图失败:', error);
-                showNotification('截图失败，请重试', 'error');
-                button.classList.add('error');
-                
-                setTimeout(() => {
-                    button.innerHTML = `
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                            <path d="M21 15l-5-5L5 21"></path>
-                        </svg>
-                    `;
-                    button.classList.remove('error');
-                }, 2000);
-            }
-        }
-        
-        // 复制截图到剪贴板
-        async function copyScreenshotToClipboard() {
-            if (!currentScreenshotCanvas) {
-                showNotification('没有可复制的截图', 'error');
-                return;
-            }
-            
-            // 检查画布是否被污染（跨域图片导致）
-            try {
-                // 尝试获取数据，如果污染会抛出错误
-                currentScreenshotCanvas.toDataURL();
-            } catch (e) {
-                showNotification('图片跨域限制，无法复制（但可截图后通过截图工具获取）', 'warning');
-                return;
-            }
-            
-            try {
-                currentScreenshotCanvas.toBlob(async (blob) => {
-                    try {
-                        await navigator.clipboard.write([
-                            new ClipboardItem({ 'image/png': blob })
-                        ]);
-                        showNotification('卡片截图已复制到剪贴板', false);
-                    } catch (err) {
-                        console.error(err);
-                        showNotification('复制失败，请检查浏览器权限', 'error');
-                    }
-                }, 'image/png');
-            } catch (error) {
-                showNotification('复制功能异常', 'error');
-            }
-        }
-        
-        // 下载截图
-        function downloadScreenshot() {
-            if (!currentScreenshotCanvas) {
-                showNotification('没有可下载的截图', 'error');
-                return;
-            }
-            
-            // 检查画布污染
-            try {
-                currentScreenshotCanvas.toDataURL();
-            } catch (e) {
-                showNotification('图片跨域限制，无法直接下载（可右键预览图另存）', 'warning');
-                return;
-            }
-            
-            try {
-                const link = document.createElement('a');
-                link.download = `卡片分享.png`;
-                link.href = currentScreenshotCanvas.toDataURL('image/png');
-                link.click();
-                showNotification('截图已开始下载', false);
-            } catch (error) {
-                showNotification('下载失败', 'error');
-            }
-        }
-
-        // 显示通知
-        function showNotification(message, type = false) {
-            const notification = document.getElementById('screenshotNotification');
-            notification.querySelector('span').textContent = message;
-            
-            notification.classList.remove('error', 'warning', 'show');
-            
-            if (type === 'error') {
-                notification.classList.add('error');
-            } else if (type === 'warning') {
-                notification.classList.add('warning');
-            }
-            
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
         // 回车搜索支持
         document.getElementById('searchInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') searchCards();
         });
         
-        // ESC 关闭弹窗
+        // ESC 关闭预览窗口
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                document.querySelector('.modal').style.display = 'none';
-                document.getElementById('screenshotPreview').style.display = 'none';
+                document.getElementById('imagePreview').style.display = 'none';
             }
         });
     </script>
