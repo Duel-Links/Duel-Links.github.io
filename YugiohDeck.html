@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Duel-Links</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎴</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -43,7 +43,6 @@
             height: 100%;
         }
 
-        /* 移动端布局优化 */
         @media (max-width: 1000px) {
             .app-container {
                 grid-template-columns: 1fr;
@@ -68,16 +67,22 @@
             .container {
                 height: calc(100vh - 20px);
             }
+
+            /* 卡片尺寸缩小，适应一行四张 */
             .card-item {
-                height: 120px !important;
-                width: 80px !important;
+                height: 100px !important;
+                width: auto !important;
             }
+
+            /* 主卡组和额外卡组均固定4列 */
             .main-deck-grid {
-                grid-template-columns: repeat(5, 1fr) !important;
+                grid-template-columns: repeat(4, 1fr) !important;
             }
             .extra-deck-grid {
                 grid-template-columns: repeat(4, 1fr) !important;
             }
+
+            /* 搜索区域输入框和按钮字体缩小 */
             .search-box input {
                 padding: 8px !important;
                 font-size: 0.9rem !important;
@@ -86,6 +91,8 @@
                 padding: 0 15px !important;
                 font-size: 0.9rem !important;
             }
+
+            /* 搜索结果卡片预览调整 */
             .result-item img {
                 width: 50px !important;
                 height: 70px !important;
@@ -100,6 +107,8 @@
                 font-size: 0.7rem !important;
                 max-height: 40px !important;
             }
+
+            /* 卡片详情模态框等保持原布局 */
             .modal-content,
             .add-card-content,
             .deck-list-content,
@@ -137,6 +146,8 @@
                 max-height: 45vh;
                 overflow-y: auto;
             }
+
+            /* 模态框底部适配 */
             .deck-list-modal,
             .share-modal,
             .save-deck-modal {
@@ -150,18 +161,29 @@
                 border-radius: 12px 12px 0 0;
                 padding-bottom: 30px;
             }
+
+            /* 搜索结果区域最大高度限制，防止挤压卡组区 */
             .results-container {
                 max-height: 300px !important;
                 overflow-y: auto;
             }
 
-            /* 移动端卡组区域允许横向滚动 */
-            .deck-container {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
+            /* 技能栏允许换行 */
+            .deck-skill-section {
+                flex-wrap: wrap;
             }
-            .deck-grid {
-                min-width: max-content;
+            .skill-selector {
+                flex-wrap: wrap;
+                width: 100%;
+            }
+            .skill-selector input {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 8px;
+            }
+            .deck-counts {
+                width: 100%;
+                justify-content: flex-start;
             }
         }
 
@@ -170,8 +192,7 @@
                 padding: 5px;
             }
             .card-item {
-                height: 90px !important;
-                width: 60px !important;
+                height: 85px !important;
             }
             .card-image,
             .add-card-preview {
@@ -187,6 +208,7 @@
             }
         }
 
+        /* 原有样式保持不变（略作精简） */
         .card-detail {
             display: flex;
             padding: 20px;
@@ -308,8 +330,6 @@
         .result-type {
             font-size: 0.85rem;
             color: #718096;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         .result-desc {
@@ -322,28 +342,6 @@
             padding-right: 5px;
         }
 
-        .result-desc::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .result-desc::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 3px;
-        }
-
-        .result-desc::-webkit-scrollbar-thumb {
-            background: #cbd5e0;
-            border-radius: 3px;
-        }
-
-        .result-desc::-webkit-scrollbar-thumb:hover {
-            background: #a0aec0;
-        }
-
-        .pagination {
-            display: none;
-        }
-
         .deck-section {
             background: white;
             border-radius: 12px;
@@ -354,7 +352,6 @@
             flex-direction: column;
             height: 100%;
             flex: 1;
-            overflow-x: auto;
         }
 
         .deck-skill-section {
@@ -553,12 +550,6 @@
             grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             margin-top: auto;
-        }
-
-        @media (max-width: 768px) {
-            .deck-actions {
-                grid-template-columns: repeat(4, 1fr);
-            }
         }
 
         .action-btn {
@@ -1037,7 +1028,7 @@
             color: white;
         }
 
-        /* ---------- 截图预览模态框（全屏） ---------- */
+        /* 截图预览模态框（全屏） */
         .screenshot-preview-modal {
             display: none;
             position: fixed;
@@ -1082,7 +1073,7 @@
             background: #c0392b;
         }
 
-        /* ---------- 加载提示 ---------- */
+        /* 加载提示 */
         .share-loading {
             display: none;
             position: fixed;
@@ -1289,7 +1280,7 @@
         </div>
     </div>
 
-    <!-- 分享卡组模态框（仅含代码） -->
+    <!-- 分享卡组模态框 -->
     <div class="share-modal" id="share-modal">
         <div class="share-content">
             <div class="share-options">
@@ -1323,7 +1314,7 @@
         </div>
     </div>
 
-    <!-- 截图预览模态框（全屏深色背景，支持长按保存） -->
+    <!-- 截图预览模态框 -->
     <div class="screenshot-preview-modal" id="screenshot-preview-modal">
         <img id="screenshot-preview-image" alt="卡组截图" />
         <button class="close-screenshot-btn" id="close-screenshot-btn">
@@ -1356,13 +1347,11 @@
 
     <script>
         (function() {
-            // 状态变量
             let deck = { main: [], extra: [], skill: "" };
             let searchState = { currentPage: 1, pageSize: 30, totalResults: 0, currentSearchTerm: '' };
             let currentSelectedCard = null;
             let selectedQuantity = 1;
 
-            // DOM 元素
             const mainDeckEl = document.getElementById('main-deck');
             const extraDeckEl = document.getElementById('extra-deck');
             const mainCountEl = document.getElementById('main-count');
@@ -1383,12 +1372,10 @@
             const shareLoading = document.getElementById('share-loading');
             const generateScreenshotBtn = document.getElementById('generate-screenshot-btn');
 
-            // 初始化事件绑定
             deckSkillInput.addEventListener('change', () => { deck.skill = deckSkillInput.value; });
             document.getElementById('search-btn').addEventListener('click', searchCards);
             document.getElementById('card-search').addEventListener('keypress', (e) => { if (e.key === 'Enter') searchCards(); });
 
-            // 搜索卡片
             function searchCards() {
                 const searchTerm = document.getElementById('card-search').value.trim();
                 if (!searchTerm) { showNotification('请输入卡片名称', true); return; }
@@ -1437,7 +1424,6 @@
                 });
             }
 
-            // 添加卡片弹窗
             function showAddCardModal(card) {
                 currentSelectedCard = card;
                 selectedQuantity = 1;
@@ -1550,7 +1536,6 @@
                 setTimeout(() => notification.classList.remove('show'), 3000);
             }
 
-            // 保存/加载/分享逻辑
             document.getElementById('save-btn').onclick = () => { document.getElementById('deck-name-input').value = ''; saveDeckModal.style.display = 'flex'; };
             document.getElementById('save-deck-confirm').onclick = () => {
                 const name = document.getElementById('deck-name-input').value.trim();
@@ -1583,12 +1568,11 @@
             };
             document.getElementById('close-share-btn').onclick = () => shareModal.style.display = 'none';
 
-            // 生成截图：关闭分享框，生成后在新预览窗口显示
             generateScreenshotBtn.onclick = async function() {
                 if (this.disabled) return;
                 this.disabled = true;
-                shareModal.style.display = 'none';   // 关闭分享模态框
-                shareLoading.style.display = 'flex';  // 显示加载提示
+                shareModal.style.display = 'none';
+                shareLoading.style.display = 'flex';
 
                 const clone = deckSection.cloneNode(true);
                 clone.style.position = 'absolute';
@@ -1626,11 +1610,9 @@
                 }
             };
 
-            // 关闭截图预览
             document.getElementById('close-screenshot-btn').onclick = () => screenshotPreviewModal.style.display = 'none';
             screenshotPreviewModal.onclick = function(e) { if (e.target === this) this.style.display = 'none'; };
 
-            // 重置
             document.getElementById('reset-btn').onclick = () => {
                 if (confirm('确定重置卡组？')) {
                     deck.main = []; deck.extra = []; deck.skill = '';
@@ -1640,7 +1622,6 @@
                 }
             };
 
-            // 关闭模态框
             closeModal.onclick = () => cardModal.style.display = 'none';
             window.onclick = (e) => {
                 if (e.target === cardModal) cardModal.style.display = 'none';
@@ -1652,7 +1633,6 @@
 
             document.getElementById('close-deck-list').onclick = () => deckListModal.style.display = 'none';
 
-            // 代码加载
             document.getElementById('load-by-code-btn').onclick = loadDeckByCode;
             function loadDeckByCode() {
                 const text = document.getElementById('deck-code-input').value.trim();
@@ -1747,9 +1727,7 @@
                 setTimeout(updateDeckDisplay, 500);
             }
 
-            // 页面加载完成
             window.addEventListener('DOMContentLoaded', () => {
-                // 默认空卡组
                 updateDeckDisplay();
             });
         })();
