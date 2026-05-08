@@ -371,7 +371,7 @@
     <script>
         // 初始加载示例
         window.addEventListener('DOMContentLoaded', () => {
-            const examples = ['白银姬', '灰流丽', '闪刀启动', '玛德莲', '小美人鱼'];
+            const examples = ['白银姬', '灰流丽', '闪刀启动', '普莉莫娅', '小美人鱼'];
             document.getElementById('searchInput').value = examples[Math.floor(Math.random() * examples.length)];
             searchCards();
         });
@@ -538,7 +538,13 @@
                     resultsDiv.innerHTML = '';
                     data.result.forEach(card => {
                         const name = card.cn_name || '未知卡名';
-                        const desc = `${card.text.types}\n${card.text.desc || '暂无效果'}`;
+                        // 构建效果文本，若有灵摆效果则优先显示
+                        let desc;
+                        if (card.text.pdesc) {
+                            desc = `${card.text.types}\n【灵摆效果】\n${card.text.pdesc}\n【怪兽效果】\n${card.text.desc || '暂无效果'}`;
+                        } else {
+                            desc = `${card.text.types}\n${card.text.desc || '暂无效果'}`;
+                        }
                         const type = card.type || '';
                         
                         const cardEl = `
