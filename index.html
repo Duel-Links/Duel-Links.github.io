@@ -4,591 +4,144 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Duel-Links</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎴</text></svg>">
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+	<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎴</text></svg>">
+    <!-- 引入Font Awesome图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary-color: #3498db;
-            --background-color: #f8f9fa;
-            --card-bg: #ffffff;
-        }
-
+        /* 基础样式重置 */
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            box-sizing: border-box;
         }
 
         body {
-            background: var(--background-color);
-            min-height: 100vh;
-            padding: 20px;
-            background-image: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .search-box {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+        /* 标签容器样式 - 固定在顶部并随滚动保持可见 */
+        .tabs {
             position: sticky;
-            top: 10px;
-            z-index: 100;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        #searchInput {
-            flex: 1;
-            padding: 15px;
-            border: 2px solid var(--primary-color);
-            border-radius: 8px;
-            font-size: 16px;
-            transition: box-shadow 0.3s;
-            background: #fff;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        #searchInput:focus {
-            outline: none;
-            box-shadow: 0 0 12px rgba(52, 152, 219, 0.4), inset 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .search-btn {
-            padding: 15px 30px;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: transform 0.2s, background 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .search-btn:hover {
-            background: #2980b9;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(52, 152, 219, 0.4);
-        }
-
-        .search-btn:active {
-            transform: translateY(0);
-        }
-
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 25px;
-            justify-content: center;
-        }
-
-        .card {
-            position: relative;
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-            overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s;
-            width: 260px;
-            margin: 0 auto;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .share-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 36px;
-            height: 36px;
-            background: rgba(0, 0, 0, 0.75);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-            transition: background 0.3s, transform 0.2s;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        }
-
-        .share-btn:hover {
-            background: var(--primary-color);
-            transform: scale(1.1);
-        }
-
-        .share-btn svg {
-            width: 18px;
-            height: 18px;
-        }
-
-        .image-container {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            background: linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%);
-            padding: 15px;
-        }
-
-        .card-image {
-            max-width: 100%;
-            max-height: 330px;
-            object-fit: contain;
-            transition: transform 0.3s;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-
-        .card-image:hover {
-            transform: scale(1.03);
-        }
-
-        .card-content {
-            padding: 15px;
-        }
-
-        .card-title {
-            color: #2c3e50;
-            margin-bottom: 12px;
-            font-size: 1.1em;
-            font-weight: 700;
-            text-align: center;
-        }
-
-        .card-desc {
-            color: #555;
-            line-height: 1.5;
-            font-size: 13px;
-            white-space: pre-wrap;
-            background: #f9f9f9;
-            padding: 12px;
-            border-radius: 6px;
-            border-left: 3px solid #ccc;
-        }
-
-        .card-type {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0, 0, 0, 0.75);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            z-index: 2;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-            font-size: 16px;
-            grid-column: 1 / -1;
-        }
-
-        /* 高清大图模态框 */
-        .image-modal {
-            display: none;
-            position: fixed;
-            z-index: 999;
-            left: 0;
             top: 0;
             width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .image-modal img {
-            max-width: 95%;
-            max-height: 95%;
-            object-fit: contain;
-            border-radius: 4px;
-        }
-
-        /* 分享预览 */
-        .share-preview {
-            display: none;
-            position: fixed;
-            z-index: 1001;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            cursor: pointer;
-        }
-
-        .share-preview img {
-            max-width: 90%;
-            max-height: 85vh;
-            border-radius: 12px;
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
-            background: white;
-        }
-
-        .close-btn {
-            margin-top: 20px;
-            padding: 10px 25px;
-            border-radius: 30px;
-            border: none;
-            background: #e74c3c;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
             display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: background 0.3s;
+            background-color: #f8fafc;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            z-index: 1000;
         }
 
-        .close-btn:hover {
-            background: #c0392b;
-        }
-
-        /* 分享加载提示 */
-        .share-loading {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
-
-        .share-loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid #ffffff;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-bottom: 15px;
-        }
-
-        .share-loading-text {
-            color: white;
+        /* 标签按钮样式 - 各占一半宽度 */
+        .tab-button {
+            flex: 1; /* 两个按钮各占一半宽度 */
+            background-color: #f1f5f9;
+            color: #3b82f6;
+            border: none;
+            padding: 14px 0;
+            cursor: pointer;
             font-size: 16px;
             font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border-bottom: 3px solid transparent;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        /* 悬停效果 */
+        .tab-button:hover {
+            background-color: #e0f2fe;
+            color: #1e40af;
         }
 
+        /* 激活状态样式 */
+        .tab-button.active {
+            background-color: #ffffff;
+            color: #1e40af;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+        }
+
+        /* 内容容器样式 */
+        .iframe-container {
+            width: 100%;
+            overflow: hidden;
+        }
+
+        /* iframe样式 */
+        iframe {
+            width: 100%;
+            height: calc(100vh - 56px); /* 减去标签栏高度 */
+            border: none;
+            transition: opacity 0.3s ease;
+        }
+
+        /* 隐藏未激活的iframe */
+        iframe:not(.active) {
+            display: none;
+        }
+
+        /* 响应式调整 */
         @media (max-width: 768px) {
-            .search-box {
-                flex-direction: column;
-                padding: 12px;
-            }
-
-            .search-btn {
-                width: 100%;
-                justify-content: center;
+            .tab-button {
+                font-size: 14px;
+                padding: 12px 0;
             }
             
-            .cards-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .card {
-                width: 100%;
-                max-width: 260px;
+            iframe {
+                height: calc(100vh - 50px);
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="请输入卡名或效果关键词" autocomplete="off">
-            <button class="search-btn" onclick="searchCards()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                搜索
-            </button>
-        </div>
-        
-        <div id="results" class="cards-grid"></div>
-    </div>
-
-    <!-- 高清大图模态框 -->
-    <div class="image-modal" id="imageModal" onclick="if(event.target === this) this.style.display='none'">
-        <img id="modalImage" alt="卡片大图" onclick="event.stopPropagation()">
-    </div>
-
-    <!-- 分享预览窗口 -->
-    <div class="share-preview" id="sharePreview" onclick="if(event.target === this) this.style.display='none'">
-        <img id="shareImage" alt="卡片分享图" onclick="event.stopPropagation()">
-        <button class="close-btn" onclick="document.getElementById('sharePreview').style.display='none'">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-            关闭
+    <!-- 标签页导航 -->
+    <div class="tabs">
+        <button class="tab-button active" data-target="tab1">
+            <i class="fas fa-image"></i> 卡牌查询
+        </button>
+        <button class="tab-button" data-target="tab2">
+            <i class="fas fa-box"></i> 卡组构建
         </button>
     </div>
-
-    <!-- 分享生成中的加载提示 -->
-    <div class="share-loading" id="shareLoading">
-        <div class="share-loading-spinner"></div>
-        <div class="share-loading-text">正在生成分享图，首次需加载组件较慢，请稍候…</div>
+    
+    <!-- 内容区域 -->
+    <div class="iframe-container">
+        <iframe id="tab1" class="active" src="YugiohCard.html" title="卡牌查询"></iframe>
+        <iframe id="tab2" src="YugiohDeck.html" title="卡组构建"></iframe>
     </div>
 
+    <!-- 标签切换逻辑 -->
     <script>
-        // 初始加载示例
-        window.addEventListener('DOMContentLoaded', () => {
-            const examples = ['白银姬', '灰流丽', '闪刀启动', '玛德莲', '小美人鱼'];
-            document.getElementById('searchInput').value = examples[Math.floor(Math.random() * examples.length)];
-            searchCards();
-        });
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const iframes = document.querySelectorAll('iframe');
 
-        // 仅显示高清大图
-        function showLargeImage(cardId) {
-            const modal = document.getElementById('imageModal');
-            modal.querySelector('img').src = `https://cdn.233.momobako.com/ygopro/pics/${cardId}.jpg`;
-            modal.style.display = 'flex';
-        }
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // 移除所有按钮的激活状态
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    // 为当前点击的按钮添加激活状态
+                    this.classList.add('active');
 
-        // 代理图片地址，解决 CORS 问题
-        function getProxiedImageUrl(originalUrl) {
-            return `https://images.weserv.nl/?url=${encodeURIComponent(originalUrl)}`;
-        }
+                    // 获取目标iframe的ID
+                    const targetId = this.getAttribute('data-target');
+                    
+                    // 隐藏所有iframe并移除激活状态
+                    iframes.forEach(iframe => {
+                        iframe.classList.remove('active');
+                        iframe.style.display = 'none';
+                    });
 
-        // 显示/隐藏加载提示
-        function showLoading(show) {
-            const el = document.getElementById('shareLoading');
-            el.style.display = show ? 'flex' : 'none';
-        }
-
-        // 生成分享图（使用 Data URL 解决长按保存问题）
-        async function showSharePreview(cardId, cardName, cardDesc, cardType) {
-            const preview = document.getElementById('sharePreview');
-            const shareImg = document.getElementById('shareImage');
-            const proxyUrl = getProxiedImageUrl(`https://cdn.233.momobako.com/ygopro/pics/${cardId}.jpg`);
-
-            // 显示加载提示
-            showLoading(true);
-
-            // 预加载卡图（带 CORS 支持）
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.src = proxyUrl;
-            await new Promise((resolve) => {
-                img.onload = resolve;
-                img.onerror = () => {
-                    console.warn('代理图片加载失败，回退直接链接');
-                    img.crossOrigin = null;
-                    img.src = `https://cdn.233.momobako.com/ygopro/pics/${cardId}.jpg`;
-                    img.onload = resolve;
-                    img.onerror = resolve;
-                };
-                setTimeout(resolve, 5000);
-            });
-
-            // 创建屏幕外临时容器（与卡片样式完全一致）
-            const container = document.createElement('div');
-            container.style.position = 'fixed';
-            container.style.left = '-9999px';
-            container.style.top = '0';
-            container.style.width = '260px';
-            container.style.background = '#ffffff';
-            container.style.borderRadius = '12px';
-            container.style.overflow = 'hidden';
-            container.style.boxShadow = '0 8px 20px rgba(0,0,0,0.12)';
-            container.style.fontFamily = "'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
-
-            // 图片区域
-            const imgContainer = document.createElement('div');
-            imgContainer.style.position = 'relative';
-            imgContainer.style.display = 'flex';
-            imgContainer.style.alignItems = 'center';
-            imgContainer.style.justifyContent = 'center';
-            imgContainer.style.background = 'linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%)';
-            imgContainer.style.padding = '15px';
-
-            if (cardType) {
-                const typeLabel = document.createElement('div');
-                typeLabel.textContent = cardType;
-                typeLabel.style.position = 'absolute';
-                typeLabel.style.top = '10px';
-                typeLabel.style.left = '10px';
-                typeLabel.style.background = 'rgba(0,0,0,0.75)';
-                typeLabel.style.color = 'white';
-                typeLabel.style.padding = '5px 10px';
-                typeLabel.style.borderRadius = '20px';
-                typeLabel.style.fontSize = '11px';
-                typeLabel.style.fontWeight = '600';
-                typeLabel.style.zIndex = '2';
-                imgContainer.appendChild(typeLabel);
-            }
-
-            const imgEl = document.createElement('img');
-            imgEl.src = img.src;
-            imgEl.crossOrigin = 'anonymous';
-            imgEl.style.maxWidth = '100%';
-            imgEl.style.maxHeight = '330px';
-            imgEl.style.objectFit = 'contain';
-            imgEl.style.borderRadius = '4px';
-            imgContainer.appendChild(imgEl);
-            container.appendChild(imgContainer);
-
-            // 内容区域
-            const contentDiv = document.createElement('div');
-            contentDiv.style.padding = '15px';
-
-            const titleEl = document.createElement('h3');
-            titleEl.textContent = cardName;
-            titleEl.style.color = '#2c3e50';
-            titleEl.style.marginBottom = '12px';
-            titleEl.style.fontSize = '1.1em';
-            titleEl.style.fontWeight = '700';
-            titleEl.style.textAlign = 'center';
-            contentDiv.appendChild(titleEl);
-
-            const descEl = document.createElement('div');
-            descEl.textContent = cardDesc;
-            descEl.style.color = '#555';
-            descEl.style.lineHeight = '1.5';
-            descEl.style.fontSize = '13px';
-            descEl.style.whiteSpace = 'pre-wrap';
-            descEl.style.background = '#f9f9f9';
-            descEl.style.padding = '12px';
-            descEl.style.borderRadius = '6px';
-            descEl.style.borderLeft = '3px solid #ccc';
-            contentDiv.appendChild(descEl);
-
-            container.appendChild(contentDiv);
-            document.body.appendChild(container);
-
-            try {
-                // 等待布局稳定
-                await new Promise(resolve => setTimeout(resolve, 100));
-
-                const screenshot = await html2canvas(container, {
-                    scale: 2,
-                    backgroundColor: '#ffffff',
-                    useCORS: true,
-                    allowTaint: false,
-                    logging: false
+                    // 显示目标iframe并添加激活状态
+                    const targetIframe = document.getElementById(targetId);
+                    targetIframe.classList.add('active');
+                    targetIframe.style.display = 'block';
+                    
+                    // 触发iframe刷新（可选）
+                    targetIframe.src = targetIframe.src;
                 });
-
-                // 使用 Data URL 代替 Blob URL，完美兼容所有环境的长按保存
-                const dataUrl = screenshot.toDataURL('image/png');
-                shareImg.src = dataUrl;
-                preview.style.display = 'flex';
-            } catch (e) {
-                alert('生成分享图失败，请重试');
-                console.error(e);
-            } finally {
-                document.body.removeChild(container);
-                showLoading(false);
-            }
-        }
-
-        // 搜索功能
-        async function searchCards() {
-            const keyword = document.getElementById('searchInput').value.trim();
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '<div class="loading">🔍 搜索中…</div>';
-
-            if (!keyword) {
-                resultsDiv.innerHTML = '<div class="loading">请输入关键词</div>';
-                return;
-            }
-
-            try {
-                const res = await fetch(`https://ygocdb.com/api/v0/?search=${encodeURIComponent(keyword)}`);
-                const data = await res.json();
-                
-                if (data.result?.length) {
-                    resultsDiv.innerHTML = '';
-                    data.result.forEach(card => {
-                        const name = card.cn_name || '未知卡名';
-                        const desc = `${card.text.types}\n${card.text.desc || '暂无效果'}`;
-                        const type = card.type || '';
-                        
-                        const cardEl = `
-                            <div class="card">
-                                <button class="share-btn" data-id="${card.id}" data-name="${name.replace(/"/g, '&quot;')}" data-desc="${desc.replace(/"/g, '&quot;')}" data-type="${type.replace(/"/g, '&quot;')}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="18" cy="5" r="3"></circle>
-                                        <circle cx="6" cy="12" r="3"></circle>
-                                        <circle cx="18" cy="19" r="3"></circle>
-                                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                                    </svg>
-                                </button>
-                                <div class="image-container">
-                                    ${type ? `<div class="card-type">${type}</div>` : ''}
-                                    <img class="card-image" src="https://cdn.233.momobako.com/ygopro/pics/${card.id}.jpg" alt="${name}" loading="lazy" onclick="showLargeImage(${card.id})">
-                                </div>
-                                <div class="card-content">
-                                    <h3 class="card-title">${name}</h3>
-                                    <div class="card-desc">${desc}</div>
-                                </div>
-                            </div>
-                        `;
-                        resultsDiv.innerHTML += cardEl;
-                    });
-
-                    document.querySelectorAll('.share-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const { id, name, desc, type } = btn.dataset;
-                            showSharePreview(id, name, desc, type);
-                        });
-                    });
-                } else {
-                    resultsDiv.innerHTML = '<div class="loading">未找到相关卡片</div>';
-                }
-            } catch (error) {
-                resultsDiv.innerHTML = '<div class="loading">搜索失败，请检查网络</div>';
-            }
-        }
-
-        document.getElementById('searchInput').addEventListener('keypress', e => {
-            if (e.key === 'Enter') searchCards();
-        });
-
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') {
-                document.getElementById('imageModal').style.display = 'none';
-                document.getElementById('sharePreview').style.display = 'none';
-            }
+            });
         });
     </script>
 </body>
