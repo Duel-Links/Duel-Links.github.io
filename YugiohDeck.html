@@ -1,0 +1,1935 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5">
+    <title>Duel-Links</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎴</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js">
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 40px);
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+            flex: 1;
+            height: 100%;
+        }
+
+        @media (max-width: 1000px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            .search-section {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .container {
+                width: 100%;
+                max-width: 100%;
+                padding: 10px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                overflow-x: hidden;
+            }
+            .container {
+                height: calc(100vh - 20px);
+            }
+            .card-item {
+                height: 120px !important;
+                width: 80px !important;
+            }
+            .main-deck-grid {
+                grid-template-columns: repeat(5, 1fr) !important;
+            }
+            .extra-deck-grid {
+                grid-template-columns: repeat(4, 1fr) !important;
+            }
+            .search-box input {
+                padding: 8px !important;
+                font-size: 0.9rem !important;
+            }
+            .search-box button {
+                padding: 0 15px !important;
+                font-size: 0.9rem !important;
+            }
+            .result-item img {
+                width: 50px !important;
+                height: 70px !important;
+            }
+            .result-name {
+                font-size: 0.9rem !important;
+            }
+            .result-type {
+                font-size: 0.75rem !important;
+            }
+            .result-desc {
+                font-size: 0.7rem !important;
+                max-height: 40px !important;
+            }
+            .modal-content,
+            .add-card-content,
+            .deck-list-content,
+            .share-content,
+            .screenshot-content,
+            .save-deck-content {
+                width: 95% !important;
+                max-width: 95% !important;
+            }
+            .screenshot-content {
+                max-width: 95% !important;
+            }
+            .card-detail {
+                flex-direction: row !important;
+                max-height: 90vh;
+                flex-wrap: wrap;
+            }
+            .card-image {
+                min-width: 40% !important;
+                max-width: 40% !important;
+                max-height: 350px !important;
+            }
+            .card-info {
+                width: 55%;
+                max-height: 60vh;
+                overflow-y: auto;
+            }
+            .add-card-container {
+                flex-direction: row !important;
+                flex-wrap: wrap;
+            }
+            .add-card-preview {
+                min-width: 40% !important;
+                max-width: 40% !important;
+                max-height: 350px !important;
+            }
+            .add-card-info {
+                min-width: 55%;
+                max-height: 45vh;
+                overflow-y: auto;
+            }
+            .deck-list-modal,
+            .share-modal,
+            .save-deck-modal {
+                align-items: flex-end;
+            }
+            .deck-list-content,
+            .share-content,
+            .save-deck-content {
+                width: 100%;
+                max-width: 100%;
+                border-radius: 12px 12px 0 0;
+                padding-bottom: 30px;
+            }
+            .results-container {
+                max-height: 300px !important;
+                overflow-y: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+            .card-item {
+                height: 90px !important;
+                width: 60px !important;
+            }
+            .card-image,
+            .add-card-preview {
+                min-width: 100% !important;
+                max-width: 100% !important;
+            }
+            .card-info,
+            .add-card-info {
+                width: 100% !important;
+                min-width: 100% !important;
+                max-height: 45vh;
+                overflow-y: auto;
+            }
+        }
+
+        .card-detail {
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            max-height: 90vh;
+            overflow: auto;
+        }
+
+        .search-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 400px;
+        }
+
+        .search-box {
+            display: flex;
+            margin-bottom: 15px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px 0 0 8px;
+            background: #f8fafc;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #4da6ff;
+            box-shadow: 0 0 10px rgba(77, 166, 255, 0.2);
+        }
+
+        .search-box button {
+            padding: 0 20px;
+            background: #4da6ff;
+            color: white;
+            border: none;
+            border-radius: 0 8px 8px 0;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .search-box button:hover {
+            background: #3182ce;
+        }
+
+        .search-results {
+            flex: 1;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 60px);
+        }
+
+        .results-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #edf2f7;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-radius: 6px;
+            margin-bottom: 5px;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-item:hover {
+            background: rgba(77, 166, 255, 0.05);
+        }
+
+        .result-item img {
+            width: 70px;
+            height: 100px;
+            object-fit: contain;
+            border-radius: 5px;
+            margin-right: 12px;
+            border: 1px solid #e2e8f0;
+            background: #f7fafc;
+        }
+
+        .result-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .result-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-size: 1rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #2d3748;
+        }
+
+        .result-type {
+            font-size: 0.85rem;
+            color: #718096;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .result-desc {
+            font-size: 0.8rem;
+            color: #4a5568;
+            margin-top: 6px;
+            max-height: 50px;
+            overflow-y: auto;
+            line-height: 1.4;
+            padding-right: 5px;
+        }
+
+        .result-desc::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .result-desc::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .result-desc::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 3px;
+        }
+
+        .result-desc::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+
+        .pagination {
+            display: none;
+        }
+
+        .deck-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            flex: 1;
+        }
+
+        .deck-skill-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(77, 166, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+
+        .skill-selector {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+
+        .skill-selector input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e0;
+            background: #f7fafc;
+            color: #333;
+            font-size: 0.9rem;
+            margin-right: 15px;
+        }
+
+        .deck-counts {
+            display: flex;
+            gap: 15px;
+            font-size: 0.95rem;
+            align-items: center;
+        }
+
+        .deck-count {
+            background: rgba(77, 166, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #2d3748;
+        }
+
+        .count-value {
+            color: #3182ce;
+            font-weight: bold;
+        }
+
+        .deck-container {
+            margin-bottom: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .deck-title {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #3182ce;
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .deck-title i {
+            margin-right: 8px;
+        }
+
+        .deck-grid {
+            display: grid;
+            gap: 10px;
+            min-height: 120px;
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px dashed #cbd5e0;
+            flex: 1;
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        .main-deck-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        @media (max-width: 1200px) {
+            .main-deck-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+
+        .main-deck-grid.medium {
+            grid-template-columns: repeat(5, 1fr);
+        }
+
+        .main-deck-grid.large {
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        .extra-deck-grid {
+            grid-template-columns: repeat(4, 1fr);
+            min-height: 180px;
+            height: auto;
+        }
+
+        @media (max-width: 1200px) {
+            .extra-deck-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+
+        .card-item {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+            height: 150px;
+            width: 100px;
+            background: white;
+        }
+
+        .card-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 12px rgba(77, 166, 255, 0.15);
+        }
+
+        .card-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .card-count {
+            position: absolute;
+            top: 1px;
+            right: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #3182ce;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            z-index: 2;
+            border: 1px solid #e2e8f0;
+        }
+
+        .card-controls {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            display: flex;
+            gap: 4px;
+            z-index: 2;
+        }
+
+        .card-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #e2e8f0;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .card-increase {
+            background: #48bb78;
+        }
+
+        .card-decrease {
+            background: #e53e3e;
+        }
+
+        .card-btn:hover {
+            transform: scale(1.15);
+        }
+
+        .deck-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: auto;
+        }
+
+        @media (max-width: 768px) {
+            .deck-actions {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .action-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .save-btn {
+            background: #38a169;
+            color: white;
+        }
+
+        .load-btn {
+            background: #3182ce;
+            color: white;
+        }
+
+        .share-btn {
+            background: #805ad5;
+            color: white;
+        }
+
+        .reset-btn {
+            background: #e53e3e;
+            color: white;
+        }
+
+        .card-placeholder {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 130px;
+            background: #f7fafc;
+            border-radius: 6px;
+            border: 1px dashed #cbd5e0;
+            color: #a0aec0;
+            font-size: 0.85rem;
+            text-align: center;
+            padding: 10px;
+            grid-column: 1 / -1;
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 15px;
+        }
+
+        .loader .spinner {
+            border: 3px solid rgba(77, 166, 255, 0.2);
+            border-radius: 50%;
+            border-top: 3px solid #3182ce;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 700px;
+            max-height: 85vh;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+            position: relative;
+            width: 90%;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 12px;
+            right: 15px;
+            font-size: 1.8rem;
+            color: #718096;
+            cursor: pointer;
+            z-index: 10;
+            transition: color 0.3s;
+        }
+
+        .close-modal:hover {
+            color: #3182ce;
+        }
+
+        .card-image {
+            flex: 1;
+            min-width: 250px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f7fafc;
+        }
+
+        .card-image img {
+            width: 100%;
+            max-height: 350px;
+            object-fit: contain;
+        }
+
+        .card-info {
+            flex: 1;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .card-name {
+            font-size: 1.6rem;
+            margin-bottom: 12px;
+            color: #3182ce;
+        }
+
+        .card-type {
+            font-size: 1.1rem;
+            color: #718096;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .card-desc {
+            line-height: 1.6;
+            font-size: 1rem;
+            color: #4a5568;
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 6px;
+            max-height: 250px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 6px;
+            background: #38a169;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transform: translateX(200%);
+            transition: transform 0.4s ease-out;
+            z-index: 2000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: #e53e3e;
+        }
+
+        .notification.warning {
+            background: #dd6b20;
+        }
+
+        .add-card-modal,
+        .deck-list-modal,
+        .share-modal,
+        .save-deck-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .add-card-content,
+        .deck-list-content,
+        .share-content,
+        .save-deck-content {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 90vh;
+            width: 90%;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .add-card-container {
+            display: flex;
+            gap: 20px;
+            padding: 15px;
+            max-height: 90vh;
+        }
+
+        .add-card-preview {
+            flex: 1;
+            min-width: 150px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f7fafc;
+        }
+
+        .add-card-preview img {
+            width: 100%;
+            max-height: 350px;
+            object-fit: contain;
+        }
+
+        .add-card-info {
+            flex: 1;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .add-card-name {
+            font-size: 1.6rem;
+            margin-bottom: 10px;
+            color: #3182ce;
+        }
+
+        .add-card-type {
+            font-size: 1.1rem;
+            color: #718096;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .add-card-desc {
+            line-height: 1.6;
+            font-size: 1rem;
+            color: #4a5568;
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 6px;
+            max-height: 200px;
+            margin-bottom: 5px;
+        }
+
+        .quantity-selector {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 5px 0 10px;
+        }
+
+        .quantity-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: #f7fafc;
+            color: #4a5568;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #cbd5e0;
+        }
+
+        .quantity-btn.active {
+            background: #3182ce;
+            color: white;
+        }
+
+        .add-card-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .add-card-btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .confirm-add {
+            background: #38a169;
+            color: white;
+        }
+
+        .cancel-add {
+            background: #e53e3e;
+            color: white;
+        }
+
+        .deck-list-items {
+            max-height: 350px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .deck-item {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid #3182ce;
+        }
+
+        .deck-item-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #3182ce;
+        }
+
+        .deck-item-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .deck-action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.3s;
+            font-size: 1rem;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: #3182ce;
+            color: white;
+        }
+
+        .btn-success {
+            background: #38a169;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #e53e3e;
+            color: white;
+        }
+
+        .share-content {
+            max-width: 500px;
+        }
+
+        .share-options {
+            margin-top: 10px;
+        }
+
+        .share-option {
+            margin-bottom: 20px;
+        }
+
+        .option-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #3182ce;
+            margin-bottom: 8px;
+        }
+
+        .share-code {
+            background: #f7fafc;
+            padding: 12px;
+            border-radius: 6px;
+            word-break: break-all;
+            font-family: monospace;
+            max-height: 120px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            color: #4a5568;
+            text-align: left;
+            white-space: pre-wrap;
+            margin-top: 10px;
+        }
+
+        .share-buttons {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            justify-content: center;
+        }
+
+        .share-btn-action {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .copy-btn {
+            background: #3182ce;
+            color: white;
+        }
+
+        .download-btn {
+            background: #38a169;
+            color: white;
+        }
+
+        .close-share-btn {
+            background: #e53e3e;
+            color: white;
+        }
+
+        .screenshot-preview-area {
+            text-align: center;
+        }
+
+        .screenshot-preview-area img {
+            max-width: 100%;
+            max-height: 60vh;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .load-by-code-section {
+            margin-bottom: 20px;
+        }
+
+        .load-by-code-section textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e0;
+            background: #f7fafc;
+            margin-bottom: 10px;
+            resize: vertical;
+        }
+
+        .save-deck-content {
+            max-width: 400px;
+        }
+
+        .save-input {
+            margin: 15px 0;
+        }
+
+        .save-input input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            background: #f8fafc;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .save-input input:focus {
+            outline: none;
+            border-color: #4da6ff;
+            box-shadow: 0 0 10px rgba(77, 166, 255, 0.2);
+        }
+
+        .save-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .save-actions button {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="app-container">
+            <div class="search-section">
+                <div class="search-box">
+                    <input type="text" id="card-search" placeholder="输入卡片名称搜索...">
+                    <button id="search-btn"><i class="fas fa-search"></i> 搜索</button>
+                </div>
+                <div class="loader" id="loader">
+                    <div class="spinner"></div>
+                    <p>正在搜索卡片...</p>
+                </div>
+                <div class="search-results" id="search-results">
+                    <div class="results-container" id="results-container">
+                        <div class="result-item placeholder">
+                            <div class="result-info">
+                                <div class="result-name">输入卡片名称开始搜索</div>
+                                <div class="result-type">例如：青眼白龙、黑魔术师、死者苏生</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="deck-section" id="deck-section">
+                <div class="deck-skill-section">
+                    <div class="skill-selector">
+                        <input type="text" class="skill-input" id="deck-skill" placeholder="输入卡组技能...">
+                        <div class="deck-counts">
+                            <div class="deck-count">
+                                <i class="fas fa-layer-group"></i> MN: <span id="main-count">0</span>/30
+                            </div>
+                            <div class="deck-count">
+                                <i class="fas fa-star"></i> EX: <span id="extra-count">0</span>/8
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="deck-container">
+                    <h3 class="deck-title"><i class="fas fa-layer-group"></i> 主卡组</h3>
+                    <div class="deck-grid main-deck-grid" id="main-deck">
+                        <div class="card-placeholder">添加主卡组卡片 (20-30张)</div>
+                    </div>
+                </div>
+                <div class="deck-container">
+                    <h3 class="deck-title"><i class="fas fa-star"></i> 额外卡组</h3>
+                    <div class="deck-grid extra-deck-grid" id="extra-deck">
+                        <div class="card-placeholder">添加额外卡组卡片 (最多8张)</div>
+                    </div>
+                </div>
+                <div class="deck-actions">
+                    <button class="action-btn save-btn" id="save-btn">
+                        <i class="fas fa-save"></i> 保存
+                    </button>
+                    <button class="action-btn load-btn" id="load-btn">
+                        <i class="fas fa-folder-open"></i> 加载
+                    </button>
+                    <button class="action-btn share-btn" id="share-btn">
+                        <i class="fas fa-share-alt"></i> 分享
+                    </button>
+                    <button class="action-btn reset-btn" id="reset-btn">
+                        <i class="fas fa-trash-alt"></i> 重置
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="card-modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-modal">&times;</span>
+            <div class="card-detail">
+                <div class="card-image">
+                    <img src="" alt="卡片大图" id="detail-image">
+                </div>
+                <div class="card-info">
+                    <h2 class="card-name" id="detail-name">卡片名称</h2>
+                    <div class="card-type" id="detail-type">卡片类型</div>
+                    <div class="card-desc" id="detail-desc">
+                        卡片效果描述将显示在这里...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="add-card-modal" id="add-card-modal">
+        <div class="add-card-content">
+            <div class="add-card-container">
+                <div class="add-card-preview">
+                    <img src="" alt="卡片预览" id="add-card-image">
+                </div>
+                <div class="add-card-info">
+                    <div class="add-card-name" id="add-card-name">卡片名称</div>
+                    <div class="add-card-type" id="add-card-type">卡片类型</div>
+                    <div class="add-card-desc" id="add-card-desc">卡片描述</div>
+                    <div class="quantity-selector-container">
+                        <div class="quantity-selector">
+                            <button class="quantity-btn" data-quantity="1">1</button>
+                            <button class="quantity-btn" data-quantity="2">2</button>
+                            <button class="quantity-btn" data-quantity="3">3</button>
+                        </div>
+                    </div>
+                    <div class="add-card-actions">
+                        <button class="add-card-btn confirm-add" id="confirm-add">添加</button>
+                        <button class="add-card-btn cancel-add" id="cancel-add">取消</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="deck-list-modal" id="deck-list-modal">
+        <div class="deck-list-content">
+            <div class="load-by-code-section">
+                <textarea id="deck-code-input" placeholder="在此粘贴卡组代码..."></textarea>
+                <button id="load-by-code-btn" class="btn btn-primary">
+                    <i class="fas fa-code"></i> 通过代码加载卡组
+                </button>
+            </div>
+            <div class="deck-list-items" id="deck-list-items">
+            </div>
+            <button class="btn btn-primary" id="close-deck-list">
+                <i class="fas fa-times"></i> 关闭
+            </button>
+        </div>
+    </div>
+    <div class="share-modal" id="share-modal">
+        <div class="share-content">
+            <div class="share-options">
+                <div class="share-option">
+                    <div class="option-title">
+                        <i class="fas fa-code"></i> 卡组代码
+                    </div>
+                    <div class="share-code" id="deck-code">生成中...</div>
+                    <div class="share-buttons">
+                        <button class="share-btn-action copy-btn" id="copy-code-btn">
+                            <i class="fas fa-copy"></i> 复制代码
+                        </button>
+                    </div>
+                </div>
+                <div class="share-option">
+                    <div class="option-title">
+                        <i class="fas fa-camera"></i> 卡组截图
+                    </div>
+                    <div class="screenshot-preview-area" id="screenshot-area" style="display:none;">
+                        <img id="deck-screenshot-img" alt="卡组截图" style="width:100%; max-height:60vh; object-fit:contain; border-radius:8px;" />
+                        <p style="font-size:0.8em; color:#718096; margin-top:8px;">长按图片即可保存</p>
+                    </div>
+                    <div class="share-buttons">
+                        <button class="share-btn-action download-btn" id="generate-screenshot-btn">
+                            <i class="fas fa-camera"></i> 生成截图
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="share-buttons">
+                <button class="share-btn-action close-share-btn" id="close-share-btn">
+                    <i class="fas fa-times"></i> 关闭
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="save-deck-modal" id="save-deck-modal">
+        <div class="save-deck-content">
+            <h2><i class="fas fa-save"></i> 保存卡组</h2>
+            <div class="save-input">
+                <input type="text" id="deck-name-input" placeholder="输入卡组名称">
+            </div>
+            <div class="save-actions">
+                <button class="btn btn-success" id="save-deck-confirm">保存</button>
+                <button class="btn btn-danger" id="save-deck-cancel">取消</button>
+            </div>
+        </div>
+    </div>
+    <div class="notification" id="notification">操作成功！</div>
+    <script>
+        (function() {
+            let deck = {
+                main: [],
+                extra: [],
+                skill: ""
+            };
+            let searchState = {
+                currentPage: 1,
+                pageSize: 30,
+                totalResults: 0,
+                currentSearchTerm: ''
+            };
+            let currentSelectedCard = null;
+            let selectedQuantity = 1;
+
+            const mainDeckEl = document.getElementById('main-deck');
+            const extraDeckEl = document.getElementById('extra-deck');
+            const mainCountEl = document.getElementById('main-count');
+            const extraCountEl = document.getElementById('extra-count');
+            const cardModal = document.getElementById('card-modal');
+            const closeModal = document.getElementById('close-modal');
+            const notification = document.getElementById('notification');
+            const resultsContainer = document.getElementById('results-container');
+            const loaderEl = document.getElementById('loader');
+            const addCardModal = document.getElementById('add-card-modal');
+            const deckListModal = document.getElementById('deck-list-modal');
+            const shareModal = document.getElementById('share-modal');
+            const saveDeckModal = document.getElementById('save-deck-modal');
+            const deckSkillInput = document.getElementById('deck-skill');
+            const deckSection = document.getElementById('deck-section');
+            const screenshotArea = document.getElementById('screenshot-area');
+            const deckScreenshotImg = document.getElementById('deck-screenshot-img');
+            const generateScreenshotBtn = document.getElementById('generate-screenshot-btn');
+
+            deckSkillInput.addEventListener('change', () => {
+                deck.skill = deckSkillInput.value;
+            });
+
+            document.getElementById('search-btn').addEventListener('click', searchCards);
+            document.getElementById('card-search').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') searchCards();
+            });
+
+            function searchCards() {
+                const searchTerm = document.getElementById('card-search').value.trim();
+                if (!searchTerm) {
+                    showNotification('请输入卡片名称', true);
+                    return;
+                }
+                searchState.currentSearchTerm = searchTerm;
+                loaderEl.style.display = 'block';
+                resultsContainer.innerHTML = '';
+                fetch(`https://ygocdb.com/api/v0/?search=${encodeURIComponent(searchTerm)}&limit=${searchState
+                .pageSize}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        loaderEl.style.display = 'none';
+                        if (data.result && data.result.length > 0) {
+                            searchState.totalResults = data.total;
+                            displaySearchResults(data.result);
+                        } else {
+                            resultsContainer.innerHTML =
+                                '<div class="result-item"><div class="result-info"><div class="result-name">未找到相关卡片</div><div class="result-type">请尝试其他关键词</div></div></div>';
+                        }
+                    })
+                    .catch(error => {
+                        loaderEl.style.display = 'none';
+                        console.error('API调用失败:', error);
+                        resultsContainer.innerHTML =
+                            '<div class="result-item"><div class="result-info"><div class="result-name">API调用失败</div><div class="result-type">请稍后重试</div></div></div>';
+                        showNotification('API调用失败，请稍后重试', true);
+                    });
+            }
+
+            function displaySearchResults(cards) {
+                resultsContainer.innerHTML = '';
+                cards.forEach(card => {
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'result-item';
+                    resultItem.dataset.id = card.id;
+                    resultItem.dataset.name = card.cn_name || card.name;
+                    const cardType = card.text?.types || card.type || '';
+                    const cardDesc = card.text?.desc || card.desc || '';
+                    resultItem.innerHTML = `
+                        <img src="https://cdn.233.momobako.com/ygopro/pics/${card.id}.jpg" alt="${card.cn_name || card.name}">
+                        <div class="result-info">
+                            <div class="result-name">${card.cn_name || card.name}</div>
+                            <div class="result-type">${cardType}</div>
+                            <div class="result-desc">${cardDesc}</div>
+                        </div>
+                    `;
+                    resultItem.addEventListener('click', () => {
+                        showAddCardModal({
+                            id: card.id,
+                            name: card.cn_name || card.name,
+                            type: cardType,
+                            desc: cardDesc
+                        });
+                    });
+                    resultsContainer.appendChild(resultItem);
+                });
+                adjustResultsContainerHeight();
+            }
+
+            function showAddCardModal(card) {
+                currentSelectedCard = card;
+                selectedQuantity = 1;
+                document.getElementById('add-card-image').src =
+                    `https://cdn.233.momobako.com/ygopro/pics/${card.id}.jpg`;
+                document.getElementById('add-card-name').textContent = card.name;
+                document.getElementById('add-card-type').textContent = card.type;
+                document.getElementById('add-card-desc').textContent = card.desc;
+                document.querySelectorAll('.quantity-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.quantity === '1') btn.classList.add('active');
+                });
+                addCardModal.style.display = 'flex';
+            }
+
+            document.querySelectorAll('.quantity-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.quantity-btn').forEach(b => b.classList.remove(
+                        'active'));
+                    btn.classList.add('active');
+                    selectedQuantity = parseInt(btn.dataset.quantity);
+                });
+            });
+
+            document.getElementById('confirm-add').addEventListener('click', () => {
+                if (currentSelectedCard) {
+                    addCardToDeck(currentSelectedCard, selectedQuantity);
+                    addCardModal.style.display = 'none';
+                }
+            });
+
+            document.getElementById('cancel-add').addEventListener('click', () => {
+                addCardModal.style.display = 'none';
+            });
+
+            function addCardToDeck(card, quantity) {
+                const isExtraDeckCard = card.type.includes('融合') || card.type.includes('同调') || card.type
+                    .includes('超量') || card.type.includes('连接');
+                const targetDeck = isExtraDeckCard ? deck.extra : deck.main;
+                const deckName = isExtraDeckCard ? '额外卡组' : '主卡组';
+                const currentCount = targetDeck.reduce((sum, c) => sum + c.count, 0);
+                const maxCount = isExtraDeckCard ? 8 : 30;
+                if (currentCount + quantity > maxCount) {
+                    const available = maxCount - currentCount;
+                    showNotification(`${deckName}空间不足，只能添加${available}张`, true);
+                    return;
+                }
+                const existingCard = targetDeck.find(c => c.id === card.id);
+                if (existingCard) {
+                    if (existingCard.count + quantity > 3) {
+                        const available = 3 - existingCard.count;
+                        showNotification(`"${card.name}"在${deckName}中最多还能添加${available}张`, true);
+                        return;
+                    }
+                    existingCard.count += quantity;
+                } else {
+                    targetDeck.push({ ...card, count: quantity });
+                }
+                updateDeckDisplay();
+                showNotification(`已添加${quantity}张"${card.name}"到${deckName}`);
+            }
+
+            function updateDeckDisplay() {
+                mainDeckEl.innerHTML = '';
+                extraDeckEl.innerHTML = '';
+                const mainCount = deck.main.reduce((sum, card) => sum + card.count, 0);
+                const extraCount = deck.extra.reduce((sum, card) => sum + card.count, 0);
+                mainCountEl.textContent = mainCount;
+                extraCountEl.textContent = extraCount;
+                const uniqueMainCount = deck.main.length;
+                if (uniqueMainCount <= 20) {
+                    mainDeckEl.className = "deck-grid main-deck-grid";
+                } else if (uniqueMainCount <= 25) {
+                    mainDeckEl.className = "deck-grid main-deck-grid medium";
+                } else {
+                    mainDeckEl.className = "deck-grid main-deck-grid large";
+                }
+                if (deck.main.length === 0) {
+                    mainDeckEl.innerHTML = '<div class="card-placeholder">添加主卡组卡片 (20-30张)</div>';
+                } else {
+                    deck.main.forEach(card => mainDeckEl.appendChild(createCardElement(card, 'main')));
+                }
+                if (deck.extra.length === 0) {
+                    extraDeckEl.innerHTML = '<div class="card-placeholder">添加额外卡组卡片 (最多8张)</div>';
+                } else {
+                    deck.extra.forEach(card => extraDeckEl.appendChild(createCardElement(card, 'extra')));
+                }
+                adjustResultsContainerHeight();
+            }
+
+            function createCardElement(card, deckType) {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card-item';
+                cardEl.dataset.id = card.id;
+                cardEl.dataset.deck = deckType;
+                cardEl.innerHTML = `
+                    <img src="https://cdn.233.momobako.com/ygopro/pics/${card.id}.jpg" alt="${card.name}">
+                    <div class="card-count">${card.count}</div>
+                    <div class="card-controls">
+                        <button class="card-btn card-increase" title="增加数量">+</button>
+                        <button class="card-btn card-decrease" title="减少数量">-</button>
+                    </div>
+                `;
+                cardEl.querySelector('img').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showCardDetail(card);
+                });
+                cardEl.querySelector('.card-increase').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    increaseCardQuantity(card.id, deckType);
+                });
+                cardEl.querySelector('.card-decrease').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    decreaseCardQuantity(card.id, deckType);
+                });
+                return cardEl;
+            }
+
+            function increaseCardQuantity(cardId, deckType) {
+                const targetDeck = deckType === 'main' ? deck.main : deck.extra;
+                const card = targetDeck.find(c => c.id === cardId);
+                if (!card) return;
+                if (card.count >= 3) {
+                    showNotification(`"${card.name}"已达到最大数量(3张)`, true);
+                    return;
+                }
+                const currentCount = targetDeck.reduce((sum, c) => sum + c.count, 0);
+                const maxCount = deckType === 'main' ? 30 : 8;
+                if (currentCount >= maxCount) {
+                    showNotification(`${deckType === 'main' ? '主卡组' : '额外卡组'}已满`, true);
+                    return;
+                }
+                card.count++;
+                updateDeckDisplay();
+                showNotification(`已增加1张"${card.name}"`);
+            }
+
+            function decreaseCardQuantity(cardId, deckType) {
+                const targetDeck = deckType === 'main' ? deck.main : deck.extra;
+                const cardIndex = targetDeck.findIndex(c => c.id === cardId);
+                if (cardIndex === -1) return;
+                const card = targetDeck[cardIndex];
+                if (card.count > 1) {
+                    card.count--;
+                } else {
+                    targetDeck.splice(cardIndex, 1);
+                }
+                updateDeckDisplay();
+                showNotification(`已减少1张"${card.name}"`);
+            }
+
+            function showCardDetail(card) {
+                document.getElementById('detail-image').src =
+                    `https://cdn.233.momobako.com/ygopro/pics/${card.id}.jpg`;
+                document.getElementById('detail-name').textContent = card.name;
+                document.getElementById('detail-type').textContent = card.type;
+                document.getElementById('detail-desc').textContent = card.desc || '无描述信息';
+                cardModal.style.display = 'flex';
+            }
+
+            function showNotification(message, isError = false, isWarning = false) {
+                notification.textContent = message;
+                notification.className = 'notification';
+                if (isError) notification.classList.add('error');
+                else if (isWarning) notification.classList.add('warning');
+                notification.classList.add('show');
+                setTimeout(() => notification.classList.remove('show'), 3000);
+            }
+
+            document.getElementById('save-btn').addEventListener('click', () => {
+                document.getElementById('deck-name-input').value = "";
+                saveDeckModal.style.display = 'flex';
+            });
+
+            document.getElementById('save-deck-confirm').addEventListener('click', () => {
+                const deckName = document.getElementById('deck-name-input').value.trim();
+                if (!deckName) {
+                    showNotification('请输入卡组名称', true);
+                    return;
+                }
+                const deckData = {
+                    name: deckName,
+                    date: new Date().toISOString(),
+                    main: [...deck.main],
+                    extra: [...deck.extra],
+                    skill: deck.skill
+                };
+                let savedDecks = JSON.parse(localStorage.getItem('ygoDecks')) || [];
+                if (savedDecks.length >= 20) {
+                    showNotification('最多只能保存20个卡组，请删除一些旧卡组', true);
+                    return;
+                }
+                savedDecks.push(deckData);
+                localStorage.setItem('ygoDecks', JSON.stringify(savedDecks));
+                showNotification(`卡组"${deckName}"保存成功！`);
+                saveDeckModal.style.display = 'none';
+            });
+
+            document.getElementById('save-deck-cancel').addEventListener('click', () => {
+                saveDeckModal.style.display = 'none';
+            });
+
+            document.getElementById('load-btn').addEventListener('click', () => {
+                showDeckListModal();
+            });
+
+            document.getElementById('share-btn').addEventListener('click', () => {
+                shareDeck();
+            });
+
+            function shareDeck() {
+                const mainCount = deck.main.reduce((sum, card) => sum + card.count, 0);
+                const extraCount = deck.extra.reduce((sum, card) => sum + card.count, 0);
+                if (mainCount === 0 && extraCount === 0) {
+                    showNotification('卡组为空，无法分享', true);
+                    return;
+                }
+                let shareCode = "";
+                shareCode += `!${deck.skill || '无技能'}\n#main\n`;
+                deck.main.forEach(card => {
+                    shareCode += `${card.name} ${card.count}\n`;
+                });
+                if (deck.extra.length > 0) {
+                    shareCode += "#extra\n";
+                    deck.extra.forEach(card => {
+                        shareCode += `${card.name} ${card.count}\n`;
+                    });
+                }
+                document.getElementById('deck-code').textContent = shareCode;
+                screenshotArea.style.display = 'none';
+                deckScreenshotImg.src = '';
+                shareModal.style.display = 'flex';
+            }
+
+            document.getElementById('copy-code-btn').addEventListener('click', () => {
+                const codeText = document.getElementById('deck-code').textContent;
+                navigator.clipboard.writeText(codeText)
+                    .then(() => showNotification('卡组代码已复制到剪贴板！'))
+                    .catch(() => showNotification('复制失败，请手动复制', true));
+            });
+
+            function getProxiedImageUrl(originalUrl) {
+                return `https://images.weserv.nl/?url=${encodeURIComponent(originalUrl)}`;
+            }
+
+            async function generateScreenshot() {
+                if (generateScreenshotBtn.disabled) return;
+                generateScreenshotBtn.disabled = true;
+                screenshotArea.style.display = 'block';
+                deckScreenshotImg.src = '';
+                showNotification('正在生成截图，请稍候...', false, true);
+
+                const tempContainer = document.createElement('div');
+                tempContainer.style.position = 'absolute';
+                tempContainer.style.left = '-9999px';
+                tempContainer.style.background = 'white';
+                tempContainer.style.borderRadius = '12px';
+                tempContainer.style.padding = '20px';
+                tempContainer.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.05)';
+                tempContainer.style.width = deckSection.offsetWidth + 'px';
+
+                const skillClone = document.querySelector('.deck-skill-section').cloneNode(true);
+                const mainDeckClone = document.querySelector('#main-deck').parentElement.cloneNode(true);
+                const extraDeckClone = document.querySelector('#extra-deck').parentElement.cloneNode(true);
+                tempContainer.appendChild(skillClone);
+                tempContainer.appendChild(mainDeckClone);
+                tempContainer.appendChild(extraDeckClone);
+                document.body.appendChild(tempContainer);
+
+                const images = tempContainer.querySelectorAll('img');
+                const loadPromises = [];
+                images.forEach(img => {
+                    if (img.src) {
+                        const proxyUrl = getProxiedImageUrl(img.src);
+                        img.crossOrigin = 'anonymous';
+                        img.src = proxyUrl;
+                        loadPromises.push(new Promise(resolve => {
+                            img.onload = resolve;
+                            img.onerror = resolve;
+                            setTimeout(resolve, 3000);
+                        }));
+                    }
+                });
+
+                try {
+                    await Promise.all(loadPromises);
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    const canvas = await html2canvas(tempContainer, {
+                        scale: 2,
+                        backgroundColor: '#ffffff',
+                        useCORS: true,
+                        allowTaint: false,
+                        logging: false
+                    });
+                    const dataUrl = canvas.toDataURL('image/png');
+                    deckScreenshotImg.src = dataUrl;
+                    showNotification('截图生成成功！长按图片即可保存');
+                } catch (error) {
+                    console.error('截图生成失败:', error);
+                    screenshotArea.style.display = 'none';
+                    showNotification('截图生成失败，请重试', true);
+                } finally {
+                    document.body.removeChild(tempContainer);
+                    generateScreenshotBtn.disabled = false;
+                }
+            }
+
+            generateScreenshotBtn.addEventListener('click', generateScreenshot);
+
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                if (confirm('确定要重置整个卡组吗？')) {
+                    deck.main = [];
+                    deck.extra = [];
+                    deck.skill = "";
+                    deckSkillInput.value = "";
+                    updateDeckDisplay();
+                    showNotification('卡组已重置');
+                }
+            });
+
+            closeModal.addEventListener('click', () => cardModal.style.display = 'none');
+
+            window.addEventListener('click', (e) => {
+                if (e.target === cardModal) cardModal.style.display = 'none';
+                if (e.target === addCardModal) addCardModal.style.display = 'none';
+                if (e.target === deckListModal) deckListModal.style.display = 'none';
+                if (e.target === shareModal) shareModal.style.display = 'none';
+                if (e.target === saveDeckModal) saveDeckModal.style.display = 'none';
+            });
+
+            document.getElementById('close-deck-list')?.addEventListener('click', () => deckListModal.style.display =
+                'none');
+            document.getElementById('close-share-btn')?.addEventListener('click', () => shareModal.style.display =
+            'none');
+
+            document.getElementById('load-by-code-btn').addEventListener('click', loadDeckByCode);
+
+            function loadDeckByCode() {
+                const codeText = document.getElementById('deck-code-input').value.trim();
+                if (!codeText) {
+                    showNotification('请输入卡组代码', true);
+                    return;
+                }
+                try {
+                    const lines = codeText.split('\n');
+                    const mainDeck = [];
+                    const extraDeck = [];
+                    let deckSkill = "";
+                    let currentSection = 'main';
+                    for (const line of lines) {
+                        const trimmedLine = line.trim();
+                        if (!trimmedLine) continue;
+                        if (trimmedLine.startsWith('!')) {
+                            deckSkill = trimmedLine.substring(1).trim();
+                            continue;
+                        }
+                        if (trimmedLine.toLowerCase() === '#main') {
+                            currentSection = 'main';
+                            continue;
+                        }
+                        if (trimmedLine.toLowerCase() === '#extra') {
+                            currentSection = 'extra';
+                            continue;
+                        }
+                        const parts = trimmedLine.split(' ');
+                        if (parts.length < 2) continue;
+                        const countPart = parts.pop();
+                        const count = parseInt(countPart);
+                        if (isNaN(count)) {
+                            parts.push(countPart);
+                        } else {
+                            const cardName = parts.join(' ').trim();
+                            if (cardName && count > 0) {
+                                if (currentSection === 'main') mainDeck.push({ name: cardName, count });
+                                else extraDeck.push({ name: cardName, count });
+                            }
+                        }
+                    }
+                    deck.main = [];
+                    deck.extra = [];
+                    deck.skill = deckSkill;
+                    deckSkillInput.value = deckSkill;
+                    let mainLoadCount = 0;
+                    let extraLoadCount = 0;
+                    const loadCard = (cardName, count, isExtra) => {
+                        return new Promise(resolve => {
+                            fetch(
+                                    `https://ygocdb.com/api/v0/?search=${encodeURIComponent(cardName)}&limit=1`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.result && data.result.length > 0) {
+                                        const card = data.result[0];
+                                        const cardType = card.text?.types || card.type || '';
+                                        addCardToDeck({
+                                            id: card.id,
+                                            name: card.cn_name || card.name,
+                                            type: cardType,
+                                            desc: card.text?.desc || card.desc || ''
+                                        }, count);
+                                        if (isExtra) extraLoadCount++;
+                                        else mainLoadCount++;
+                                    }
+                                    resolve();
+                                })
+                                .catch(() => resolve());
+                        });
+                    };
+                    showNotification('正在加载卡组，请稍候...', false, true);
+                    const loadPromises = [];
+                    mainDeck.forEach(card => {
+                        for (let i = 0; i < card.count; i++) loadPromises.push(loadCard(card.name, 1,
+                            false));
+                    });
+                    extraDeck.forEach(card => {
+                        for (let i = 0; i < card.count; i++) loadPromises.push(loadCard(card.name, 1, true));
+                    });
+                    Promise.all(loadPromises).then(() => {
+                        updateDeckDisplay();
+                        showNotification(
+                            `卡组加载完成！主卡组:${mainLoadCount}张, 额外卡组:${extraLoadCount}张`);
+                        deckListModal.style.display = 'none';
+                    });
+                } catch (error) {
+                    console.error('解析卡组代码失败:', error);
+                    showNotification('解析卡组代码失败，请检查格式', true);
+                }
+            }
+
+            function createDefaultDeck() {
+                return {
+                    name: "默认卡组",
+                    date: new Date().toISOString(),
+                    skill: "战斗编年史",
+                    main: [
+                        { name: "青眼亚白龙", count: 2 }, { name: "白色灵龙", count: 3 },
+                        { name: "最强混沌战士", count: 1 }, { name: "青眼白龙", count: 3 },
+                        { name: "继承之魂", count: 2 }, { name: "究极融合", count: 1 },
+                        { name: "龙觉醒旋律", count: 3 }, { name: "摇号机GO！GO！", count: 1 },
+                        { name: "复活之福音", count: 2 }, { name: "王者的看破", count: 2 }
+                    ],
+                    extra: [
+                        { name: "究极龙骑士", count: 1 }, { name: "真青眼究极龙", count: 1 },
+                        { name: "青眼究极龙", count: 1 }, { name: "青眼双爆裂龙", count: 1 },
+                        { name: "宵星之机神 丁吉尔苏", count: 1 }, { name: "银河眼光波龙", count: 1 },
+                        { name: "银河眼重铠光子龙", count: 1 }, { name: "银河眼光波刃龙", count: 1 }
+                    ]
+                };
+            }
+
+            function showDeckListModal() {
+                let savedDecks = JSON.parse(localStorage.getItem('ygoDecks')) || [];
+                if (savedDecks.length === 0) {
+                    savedDecks.push(createDefaultDeck());
+                    localStorage.setItem('ygoDecks', JSON.stringify(savedDecks));
+                }
+                const deckListItems = document.getElementById('deck-list-items');
+                deckListItems.innerHTML = '';
+                savedDecks.forEach((deckData, index) => {
+                    const deckItem = document.createElement('div');
+                    deckItem.className = 'deck-item';
+                    const mainCount = deckData.main.reduce((sum, card) => sum + card.count, 0);
+                    const extraCount = deckData.extra.reduce((sum, card) => sum + card.count, 0);
+                    const date = new Date(deckData.date).toLocaleString();
+                    deckItem.innerHTML = `
+                        <div class="deck-item-name">${deckData.name}</div>
+                        <div class="deck-item-info">
+                            <div>主卡组: ${mainCount}张 | 额外卡组: ${extraCount}张</div>
+                            <div>技能: ${deckData.skill || '无'}</div>
+                            <div class="deck-item-date">${date}</div>
+                        </div>
+                        <div class="deck-item-actions">
+                            <button class="deck-action-btn btn btn-primary" data-index="${index}">
+                                <i class="fas fa-folder-open"></i> 加载
+                            </button>
+                            <button class="deck-action-btn btn btn-danger" data-index="${index}">
+                                <i class="fas fa-trash-alt"></i> 删除
+                            </button>
+                        </div>
+                    `;
+                    deckListItems.appendChild(deckItem);
+                });
+                document.querySelectorAll('.deck-action-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const index = parseInt(btn.dataset.index);
+                        if (btn.classList.contains('btn-danger')) {
+                            if (confirm(`确定要删除"${savedDecks[index].name}"卡组吗？`)) {
+                                savedDecks.splice(index, 1);
+                                localStorage.setItem('ygoDecks', JSON.stringify(savedDecks));
+                                showDeckListModal();
+                                showNotification('卡组已删除');
+                            }
+                        } else {
+                            loadDeck(savedDecks[index]);
+                            deckListModal.style.display = 'none';
+                        }
+                    });
+                });
+                deckListModal.style.display = 'flex';
+            }
+
+            function loadDeck(deckData) {
+                deck.main = [];
+                deck.extra = [];
+                deck.skill = deckData.skill || "";
+                deckSkillInput.value = deckData.skill || "";
+                deckData.main.forEach(card => {
+                    deck.main.push({ ...card, id: 0, type: '', desc: '' });
+                });
+                deckData.extra.forEach(card => {
+                    deck.extra.push({ ...card, id: 0, type: '', desc: '' });
+                });
+                updateDeckDisplay();
+                loadDeckCards(deckData);
+                showNotification(`已加载卡组"${deckData.name}"`);
+            }
+
+            function loadDeckCards(deckData) {
+                deckData.main.forEach(card => fetchCardData(card.name, 'main'));
+                deckData.extra.forEach(card => fetchCardData(card.name, 'extra'));
+            }
+
+            function fetchCardData(cardName, deckType) {
+                fetch(`https://ygocdb.com/api/v0/?search=${encodeURIComponent(cardName)}&limit=1`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.result && data.result.length > 0) {
+                            const card = data.result[0];
+                            const targetDeck = deckType === 'main' ? deck.main : deck.extra;
+                            const deckCard = targetDeck.find(c => c.name === cardName);
+                            if (deckCard) {
+                                deckCard.id = card.id;
+                                deckCard.type = card.text?.types || card.type || '';
+                                deckCard.desc = card.text?.desc || card.desc || '';
+                                updateDeckDisplay();
+                            }
+                        }
+                    })
+                    .catch(error => console.error('获取卡片数据失败:', cardName, error));
+            }
+
+            function adjustResultsContainerHeight() {
+                const deckSection = document.querySelector('.deck-section');
+                const resultsContainer = document.getElementById('results-container');
+                if (deckSection && resultsContainer) {
+                    const cardHeight = 150;
+                    const gap = 12;
+                    const padding = 15;
+                    const titleHeight = 30;
+                    const skillHeight = 60;
+                    const mainHeight = 5 * cardHeight + 4 * gap + titleHeight + padding * 2;
+                    const extraHeight = 2 * cardHeight + 1 * gap + titleHeight + padding * 2;
+                    const totalHeight = skillHeight + mainHeight + extraHeight + 40;
+                    resultsContainer.style.maxHeight = `${totalHeight}px`;
+                }
+            }
+
+            window.addEventListener('DOMContentLoaded', () => {
+                adjustResultsContainerHeight();
+                createDefaultDeck();
+                window.addEventListener('resize', adjustResultsContainerHeight);
+            });
+        })();
+    </script>
+</body>
+</html>
