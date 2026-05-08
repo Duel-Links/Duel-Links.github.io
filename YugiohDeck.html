@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Duel-Links</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎴</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -43,6 +43,7 @@
             height: 100%;
         }
 
+        /* 移动端布局优化 */
         @media (max-width: 1000px) {
             .app-container {
                 grid-template-columns: 1fr;
@@ -103,12 +104,8 @@
             .add-card-content,
             .deck-list-content,
             .share-content,
-            .screenshot-content,
             .save-deck-content {
                 width: 95% !important;
-                max-width: 95% !important;
-            }
-            .screenshot-content {
                 max-width: 95% !important;
             }
             .card-detail {
@@ -156,6 +153,15 @@
             .results-container {
                 max-height: 300px !important;
                 overflow-y: auto;
+            }
+
+            /* 移动端卡组区域允许横向滚动 */
+            .deck-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .deck-grid {
+                min-width: max-content;
             }
         }
 
@@ -348,6 +354,7 @@
             flex-direction: column;
             height: 100%;
             flex: 1;
+            overflow-x: auto;
         }
 
         .deck-skill-section {
@@ -519,7 +526,7 @@
             height: 24px;
             border-radius: 50%;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: center;
             font-weight: bold;
             cursor: pointer;
@@ -1030,15 +1037,80 @@
             color: white;
         }
 
-        .screenshot-preview-area {
-            text-align: center;
+        /* ---------- 截图预览模态框（全屏） ---------- */
+        .screenshot-preview-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
 
-        .screenshot-preview-area img {
-            max-width: 100%;
-            max-height: 60vh;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        .screenshot-preview-modal img {
+            max-width: 95%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+            background: white;
+        }
+
+        .close-screenshot-btn {
+            margin-top: 20px;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 30px;
+            background: #e74c3c;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.3s;
+        }
+
+        .close-screenshot-btn:hover {
+            background: #c0392b;
+        }
+
+        /* ---------- 加载提示 ---------- */
+        .share-loading {
+            display: none;
+            position: fixed;
+            z-index: 3000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .share-loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        .share-loading-text {
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
         }
 
         .load-by-code-section {
@@ -1156,6 +1228,8 @@
             </div>
         </div>
     </div>
+
+    <!-- 卡片详情模态框 -->
     <div class="modal" id="card-modal">
         <div class="modal-content">
             <span class="close-modal" id="close-modal">&times;</span>
@@ -1166,13 +1240,13 @@
                 <div class="card-info">
                     <h2 class="card-name" id="detail-name">卡片名称</h2>
                     <div class="card-type" id="detail-type">卡片类型</div>
-                    <div class="card-desc" id="detail-desc">
-                        卡片效果描述将显示在这里...
-                    </div>
+                    <div class="card-desc" id="detail-desc">卡片效果描述将显示在这里...</div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- 添加卡片模态框 -->
     <div class="add-card-modal" id="add-card-modal">
         <div class="add-card-content">
             <div class="add-card-container">
@@ -1198,6 +1272,8 @@
             </div>
         </div>
     </div>
+
+    <!-- 卡组列表模态框 -->
     <div class="deck-list-modal" id="deck-list-modal">
         <div class="deck-list-content">
             <div class="load-by-code-section">
@@ -1206,13 +1282,14 @@
                     <i class="fas fa-code"></i> 通过代码加载卡组
                 </button>
             </div>
-            <div class="deck-list-items" id="deck-list-items">
-            </div>
+            <div class="deck-list-items" id="deck-list-items"></div>
             <button class="btn btn-primary" id="close-deck-list">
                 <i class="fas fa-times"></i> 关闭
             </button>
         </div>
     </div>
+
+    <!-- 分享卡组模态框（仅含代码） -->
     <div class="share-modal" id="share-modal">
         <div class="share-content">
             <div class="share-options">
@@ -1231,10 +1308,6 @@
                     <div class="option-title">
                         <i class="fas fa-camera"></i> 卡组截图
                     </div>
-                    <div class="screenshot-preview-area" id="screenshot-area" style="display:none;">
-                        <img id="deck-screenshot-img" alt="卡组截图" style="width:100%; max-height:60vh; object-fit:contain; border-radius:8px;" />
-                        <p style="font-size:0.8em; color:#718096; margin-top:8px;">长按图片即可保存</p>
-                    </div>
                     <div class="share-buttons">
                         <button class="share-btn-action download-btn" id="generate-screenshot-btn">
                             <i class="fas fa-camera"></i> 生成截图
@@ -1249,6 +1322,22 @@
             </div>
         </div>
     </div>
+
+    <!-- 截图预览模态框（全屏深色背景，支持长按保存） -->
+    <div class="screenshot-preview-modal" id="screenshot-preview-modal">
+        <img id="screenshot-preview-image" alt="卡组截图" />
+        <button class="close-screenshot-btn" id="close-screenshot-btn">
+            <i class="fas fa-times"></i> 关闭
+        </button>
+    </div>
+
+    <!-- 生成截图时的加载提示 -->
+    <div class="share-loading" id="share-loading">
+        <div class="share-loading-spinner"></div>
+        <div class="share-loading-text">正在生成卡组截图，请稍候…</div>
+    </div>
+
+    <!-- 保存卡组模态框 -->
     <div class="save-deck-modal" id="save-deck-modal">
         <div class="save-deck-content">
             <h2><i class="fas fa-save"></i> 保存卡组</h2>
@@ -1261,23 +1350,19 @@
             </div>
         </div>
     </div>
+
+    <!-- 通知 -->
     <div class="notification" id="notification">操作成功！</div>
+
     <script>
         (function() {
-            let deck = {
-                main: [],
-                extra: [],
-                skill: ""
-            };
-            let searchState = {
-                currentPage: 1,
-                pageSize: 30,
-                totalResults: 0,
-                currentSearchTerm: ''
-            };
+            // 状态变量
+            let deck = { main: [], extra: [], skill: "" };
+            let searchState = { currentPage: 1, pageSize: 30, totalResults: 0, currentSearchTerm: '' };
             let currentSelectedCard = null;
             let selectedQuantity = 1;
 
+            // DOM 元素
             const mainDeckEl = document.getElementById('main-deck');
             const extraDeckEl = document.getElementById('extra-deck');
             const mainCountEl = document.getElementById('main-count');
@@ -1293,101 +1378,83 @@
             const saveDeckModal = document.getElementById('save-deck-modal');
             const deckSkillInput = document.getElementById('deck-skill');
             const deckSection = document.getElementById('deck-section');
-            const screenshotArea = document.getElementById('screenshot-area');
-            const deckScreenshotImg = document.getElementById('deck-screenshot-img');
+            const screenshotPreviewModal = document.getElementById('screenshot-preview-modal');
+            const screenshotPreviewImage = document.getElementById('screenshot-preview-image');
+            const shareLoading = document.getElementById('share-loading');
             const generateScreenshotBtn = document.getElementById('generate-screenshot-btn');
 
-            deckSkillInput.addEventListener('change', () => {
-                deck.skill = deckSkillInput.value;
-            });
-
+            // 初始化事件绑定
+            deckSkillInput.addEventListener('change', () => { deck.skill = deckSkillInput.value; });
             document.getElementById('search-btn').addEventListener('click', searchCards);
-            document.getElementById('card-search').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') searchCards();
-            });
+            document.getElementById('card-search').addEventListener('keypress', (e) => { if (e.key === 'Enter') searchCards(); });
 
+            // 搜索卡片
             function searchCards() {
                 const searchTerm = document.getElementById('card-search').value.trim();
-                if (!searchTerm) {
-                    showNotification('请输入卡片名称', true);
-                    return;
-                }
+                if (!searchTerm) { showNotification('请输入卡片名称', true); return; }
                 searchState.currentSearchTerm = searchTerm;
                 loaderEl.style.display = 'block';
                 resultsContainer.innerHTML = '';
-                fetch(`https://ygocdb.com/api/v0/?search=${encodeURIComponent(searchTerm)}&limit=${searchState
-                .pageSize}`)
-                    .then(response => response.json())
+                fetch(`https://ygocdb.com/api/v0/?search=${encodeURIComponent(searchTerm)}&limit=${searchState.pageSize}`)
+                    .then(r => r.json())
                     .then(data => {
                         loaderEl.style.display = 'none';
-                        if (data.result && data.result.length > 0) {
+                        if (data.result?.length) {
                             searchState.totalResults = data.total;
                             displaySearchResults(data.result);
                         } else {
-                            resultsContainer.innerHTML =
-                                '<div class="result-item"><div class="result-info"><div class="result-name">未找到相关卡片</div><div class="result-type">请尝试其他关键词</div></div></div>';
+                            resultsContainer.innerHTML = '<div class="result-item"><div class="result-info"><div class="result-name">未找到相关卡片</div><div class="result-type">请尝试其他关键词</div></div></div>';
                         }
                     })
-                    .catch(error => {
+                    .catch(err => {
                         loaderEl.style.display = 'none';
-                        console.error('API调用失败:', error);
-                        resultsContainer.innerHTML =
-                            '<div class="result-item"><div class="result-info"><div class="result-name">API调用失败</div><div class="result-type">请稍后重试</div></div></div>';
-                        showNotification('API调用失败，请稍后重试', true);
+                        resultsContainer.innerHTML = '<div class="result-item"><div class="result-info"><div class="result-name">API调用失败</div><div class="result-type">请稍后重试</div></div></div>';
+                        showNotification('API调用失败', true);
                     });
             }
 
             function displaySearchResults(cards) {
                 resultsContainer.innerHTML = '';
                 cards.forEach(card => {
-                    const resultItem = document.createElement('div');
-                    resultItem.className = 'result-item';
-                    resultItem.dataset.id = card.id;
-                    resultItem.dataset.name = card.cn_name || card.name;
+                    const item = document.createElement('div');
+                    item.className = 'result-item';
                     const cardType = card.text?.types || card.type || '';
                     const cardDesc = card.text?.desc || card.desc || '';
-                    resultItem.innerHTML = `
+                    item.innerHTML = `
                         <img src="https://cdn.233.momobako.com/ygopro/pics/${card.id}.jpg" alt="${card.cn_name || card.name}">
                         <div class="result-info">
                             <div class="result-name">${card.cn_name || card.name}</div>
                             <div class="result-type">${cardType}</div>
                             <div class="result-desc">${cardDesc}</div>
-                        </div>
-                    `;
-                    resultItem.addEventListener('click', () => {
-                        showAddCardModal({
-                            id: card.id,
-                            name: card.cn_name || card.name,
-                            type: cardType,
-                            desc: cardDesc
-                        });
-                    });
-                    resultsContainer.appendChild(resultItem);
+                        </div>`;
+                    item.addEventListener('click', () => showAddCardModal({
+                        id: card.id,
+                        name: card.cn_name || card.name,
+                        type: cardType,
+                        desc: cardDesc
+                    }));
+                    resultsContainer.appendChild(item);
                 });
-                adjustResultsContainerHeight();
             }
 
+            // 添加卡片弹窗
             function showAddCardModal(card) {
                 currentSelectedCard = card;
                 selectedQuantity = 1;
-                document.getElementById('add-card-image').src =
-                    `https://cdn.233.momobako.com/ygopro/pics/${card.id}.jpg`;
+                document.getElementById('add-card-image').src = `https://cdn.233.momobako.com/ygopro/pics/${card.id}.jpg`;
                 document.getElementById('add-card-name').textContent = card.name;
                 document.getElementById('add-card-type').textContent = card.type;
                 document.getElementById('add-card-desc').textContent = card.desc;
-                document.querySelectorAll('.quantity-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.dataset.quantity === '1') btn.classList.add('active');
-                });
+                document.querySelectorAll('.quantity-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('.quantity-btn[data-quantity="1"]').classList.add('active');
                 addCardModal.style.display = 'flex';
             }
 
             document.querySelectorAll('.quantity-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.quantity-btn').forEach(b => b.classList.remove(
-                        'active'));
-                    btn.classList.add('active');
-                    selectedQuantity = parseInt(btn.dataset.quantity);
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.quantity-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedQuantity = parseInt(this.dataset.quantity);
                 });
             });
 
@@ -1397,33 +1464,21 @@
                     addCardModal.style.display = 'none';
                 }
             });
-
-            document.getElementById('cancel-add').addEventListener('click', () => {
-                addCardModal.style.display = 'none';
-            });
+            document.getElementById('cancel-add').addEventListener('click', () => addCardModal.style.display = 'none');
 
             function addCardToDeck(card, quantity) {
-                const isExtraDeckCard = card.type.includes('融合') || card.type.includes('同调') || card.type
-                    .includes('超量') || card.type.includes('连接');
-                const targetDeck = isExtraDeckCard ? deck.extra : deck.main;
-                const deckName = isExtraDeckCard ? '额外卡组' : '主卡组';
-                const currentCount = targetDeck.reduce((sum, c) => sum + c.count, 0);
-                const maxCount = isExtraDeckCard ? 8 : 30;
-                if (currentCount + quantity > maxCount) {
-                    const available = maxCount - currentCount;
-                    showNotification(`${deckName}空间不足，只能添加${available}张`, true);
-                    return;
-                }
-                const existingCard = targetDeck.find(c => c.id === card.id);
-                if (existingCard) {
-                    if (existingCard.count + quantity > 3) {
-                        const available = 3 - existingCard.count;
-                        showNotification(`"${card.name}"在${deckName}中最多还能添加${available}张`, true);
-                        return;
-                    }
-                    existingCard.count += quantity;
+                const isExtra = card.type.includes('融合') || card.type.includes('同调') || card.type.includes('超量') || card.type.includes('连接');
+                const target = isExtra ? deck.extra : deck.main;
+                const deckName = isExtra ? '额外卡组' : '主卡组';
+                const current = target.reduce((s, c) => s + c.count, 0);
+                const max = isExtra ? 8 : 30;
+                if (current + quantity > max) return showNotification(`${deckName}空间不足，只能添加${max - current}张`, true);
+                const exist = target.find(c => c.id === card.id);
+                if (exist) {
+                    if (exist.count + quantity > 3) return showNotification(`"${card.name}"最多还能添加${3 - exist.count}张`, true);
+                    exist.count += quantity;
                 } else {
-                    targetDeck.push({ ...card, count: quantity });
+                    target.push({ ...card, count: quantity });
                 }
                 updateDeckDisplay();
                 showNotification(`已添加${quantity}张"${card.name}"到${deckName}`);
@@ -1432,502 +1487,270 @@
             function updateDeckDisplay() {
                 mainDeckEl.innerHTML = '';
                 extraDeckEl.innerHTML = '';
-                const mainCount = deck.main.reduce((sum, card) => sum + card.count, 0);
-                const extraCount = deck.extra.reduce((sum, card) => sum + card.count, 0);
-                mainCountEl.textContent = mainCount;
-                extraCountEl.textContent = extraCount;
-                const uniqueMainCount = deck.main.length;
-                if (uniqueMainCount <= 20) {
-                    mainDeckEl.className = "deck-grid main-deck-grid";
-                } else if (uniqueMainCount <= 25) {
-                    mainDeckEl.className = "deck-grid main-deck-grid medium";
-                } else {
-                    mainDeckEl.className = "deck-grid main-deck-grid large";
-                }
-                if (deck.main.length === 0) {
-                    mainDeckEl.innerHTML = '<div class="card-placeholder">添加主卡组卡片 (20-30张)</div>';
-                } else {
-                    deck.main.forEach(card => mainDeckEl.appendChild(createCardElement(card, 'main')));
-                }
-                if (deck.extra.length === 0) {
-                    extraDeckEl.innerHTML = '<div class="card-placeholder">添加额外卡组卡片 (最多8张)</div>';
-                } else {
-                    deck.extra.forEach(card => extraDeckEl.appendChild(createCardElement(card, 'extra')));
-                }
-                adjustResultsContainerHeight();
+                const mainCnt = deck.main.reduce((s, c) => s + c.count, 0);
+                const extraCnt = deck.extra.reduce((s, c) => s + c.count, 0);
+                mainCountEl.textContent = mainCnt;
+                extraCountEl.textContent = extraCnt;
+
+                if (deck.main.length === 0) mainDeckEl.innerHTML = '<div class="card-placeholder">添加主卡组卡片 (20-30张)</div>';
+                else deck.main.forEach(c => mainDeckEl.appendChild(createCardEl(c, 'main')));
+                if (deck.extra.length === 0) extraDeckEl.innerHTML = '<div class="card-placeholder">添加额外卡组卡片 (最多8张)</div>';
+                else deck.extra.forEach(c => extraDeckEl.appendChild(createCardEl(c, 'extra')));
             }
 
-            function createCardElement(card, deckType) {
-                const cardEl = document.createElement('div');
-                cardEl.className = 'card-item';
-                cardEl.dataset.id = card.id;
-                cardEl.dataset.deck = deckType;
-                cardEl.innerHTML = `
+            function createCardEl(card, type) {
+                const el = document.createElement('div');
+                el.className = 'card-item';
+                el.innerHTML = `
                     <img src="https://cdn.233.momobako.com/ygopro/pics/${card.id}.jpg" alt="${card.name}">
                     <div class="card-count">${card.count}</div>
                     <div class="card-controls">
-                        <button class="card-btn card-increase" title="增加数量">+</button>
-                        <button class="card-btn card-decrease" title="减少数量">-</button>
-                    </div>
-                `;
-                cardEl.querySelector('img').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    showCardDetail(card);
-                });
-                cardEl.querySelector('.card-increase').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    increaseCardQuantity(card.id, deckType);
-                });
-                cardEl.querySelector('.card-decrease').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    decreaseCardQuantity(card.id, deckType);
-                });
-                return cardEl;
+                        <button class="card-btn card-increase">+</button>
+                        <button class="card-btn card-decrease">-</button>
+                    </div>`;
+                el.querySelector('img').onclick = (e) => { e.stopPropagation(); showCardDetail(card); };
+                el.querySelector('.card-increase').onclick = (e) => { e.stopPropagation(); increase(card.id, type); };
+                el.querySelector('.card-decrease').onclick = (e) => { e.stopPropagation(); decrease(card.id, type); };
+                return el;
             }
 
-            function increaseCardQuantity(cardId, deckType) {
-                const targetDeck = deckType === 'main' ? deck.main : deck.extra;
-                const card = targetDeck.find(c => c.id === cardId);
+            function increase(id, type) {
+                const arr = type === 'main' ? deck.main : deck.extra;
+                const card = arr.find(c => c.id === id);
                 if (!card) return;
-                if (card.count >= 3) {
-                    showNotification(`"${card.name}"已达到最大数量(3张)`, true);
-                    return;
-                }
-                const currentCount = targetDeck.reduce((sum, c) => sum + c.count, 0);
-                const maxCount = deckType === 'main' ? 30 : 8;
-                if (currentCount >= maxCount) {
-                    showNotification(`${deckType === 'main' ? '主卡组' : '额外卡组'}已满`, true);
-                    return;
-                }
+                if (card.count >= 3) return showNotification('已达最大数量(3张)', true);
+                const total = arr.reduce((s, c) => s + c.count, 0);
+                const max = type === 'main' ? 30 : 8;
+                if (total >= max) return showNotification(`${type === 'main' ? '主卡组' : '额外卡组'}已满`, true);
                 card.count++;
                 updateDeckDisplay();
-                showNotification(`已增加1张"${card.name}"`);
             }
 
-            function decreaseCardQuantity(cardId, deckType) {
-                const targetDeck = deckType === 'main' ? deck.main : deck.extra;
-                const cardIndex = targetDeck.findIndex(c => c.id === cardId);
-                if (cardIndex === -1) return;
-                const card = targetDeck[cardIndex];
-                if (card.count > 1) {
-                    card.count--;
-                } else {
-                    targetDeck.splice(cardIndex, 1);
-                }
+            function decrease(id, type) {
+                const arr = type === 'main' ? deck.main : deck.extra;
+                const idx = arr.findIndex(c => c.id === id);
+                if (idx === -1) return;
+                if (arr[idx].count > 1) arr[idx].count--;
+                else arr.splice(idx, 1);
                 updateDeckDisplay();
-                showNotification(`已减少1张"${card.name}"`);
             }
 
             function showCardDetail(card) {
-                document.getElementById('detail-image').src =
-                    `https://cdn.233.momobako.com/ygopro/pics/${card.id}.jpg`;
+                document.getElementById('detail-image').src = `https://cdn.233.momobako.com/ygopro/pics/${card.id}.jpg`;
                 document.getElementById('detail-name').textContent = card.name;
                 document.getElementById('detail-type').textContent = card.type;
-                document.getElementById('detail-desc').textContent = card.desc || '无描述信息';
+                document.getElementById('detail-desc').textContent = card.desc || '无描述';
                 cardModal.style.display = 'flex';
             }
 
-            function showNotification(message, isError = false, isWarning = false) {
-                notification.textContent = message;
-                notification.className = 'notification';
-                if (isError) notification.classList.add('error');
-                else if (isWarning) notification.classList.add('warning');
+            function showNotification(msg, isErr = false) {
+                notification.textContent = msg;
+                notification.className = 'notification' + (isErr ? ' error' : '');
                 notification.classList.add('show');
                 setTimeout(() => notification.classList.remove('show'), 3000);
             }
 
-            document.getElementById('save-btn').addEventListener('click', () => {
-                document.getElementById('deck-name-input').value = "";
-                saveDeckModal.style.display = 'flex';
-            });
-
-            document.getElementById('save-deck-confirm').addEventListener('click', () => {
-                const deckName = document.getElementById('deck-name-input').value.trim();
-                if (!deckName) {
-                    showNotification('请输入卡组名称', true);
-                    return;
-                }
-                const deckData = {
-                    name: deckName,
-                    date: new Date().toISOString(),
-                    main: [...deck.main],
-                    extra: [...deck.extra],
-                    skill: deck.skill
-                };
-                let savedDecks = JSON.parse(localStorage.getItem('ygoDecks')) || [];
-                if (savedDecks.length >= 20) {
-                    showNotification('最多只能保存20个卡组，请删除一些旧卡组', true);
-                    return;
-                }
-                savedDecks.push(deckData);
-                localStorage.setItem('ygoDecks', JSON.stringify(savedDecks));
-                showNotification(`卡组"${deckName}"保存成功！`);
+            // 保存/加载/分享逻辑
+            document.getElementById('save-btn').onclick = () => { document.getElementById('deck-name-input').value = ''; saveDeckModal.style.display = 'flex'; };
+            document.getElementById('save-deck-confirm').onclick = () => {
+                const name = document.getElementById('deck-name-input').value.trim();
+                if (!name) return showNotification('请输入卡组名称', true);
+                const data = { name, date: new Date().toISOString(), main: [...deck.main], extra: [...deck.extra], skill: deck.skill };
+                let saved = JSON.parse(localStorage.getItem('ygoDecks') || '[]');
+                if (saved.length >= 20) return showNotification('最多保存20个卡组', true);
+                saved.push(data);
+                localStorage.setItem('ygoDecks', JSON.stringify(saved));
                 saveDeckModal.style.display = 'none';
-            });
+                showNotification(`卡组"${name}"保存成功`);
+            };
+            document.getElementById('save-deck-cancel').onclick = () => saveDeckModal.style.display = 'none';
 
-            document.getElementById('save-deck-cancel').addEventListener('click', () => {
-                saveDeckModal.style.display = 'none';
-            });
-
-            document.getElementById('load-btn').addEventListener('click', () => {
-                showDeckListModal();
-            });
-
-            document.getElementById('share-btn').addEventListener('click', () => {
-                shareDeck();
-            });
-
-            function shareDeck() {
-                const mainCount = deck.main.reduce((sum, card) => sum + card.count, 0);
-                const extraCount = deck.extra.reduce((sum, card) => sum + card.count, 0);
-                if (mainCount === 0 && extraCount === 0) {
-                    showNotification('卡组为空，无法分享', true);
-                    return;
-                }
-                let shareCode = "";
-                shareCode += `!${deck.skill || '无技能'}\n#main\n`;
-                deck.main.forEach(card => {
-                    shareCode += `${card.name} ${card.count}\n`;
-                });
-                if (deck.extra.length > 0) {
-                    shareCode += "#extra\n";
-                    deck.extra.forEach(card => {
-                        shareCode += `${card.name} ${card.count}\n`;
-                    });
-                }
-                document.getElementById('deck-code').textContent = shareCode;
-                screenshotArea.style.display = 'none';
-                deckScreenshotImg.src = '';
+            document.getElementById('load-btn').onclick = () => showDeckListModal();
+            document.getElementById('share-btn').onclick = () => {
+                const mainCnt = deck.main.reduce((s, c) => s + c.count, 0);
+                const extraCnt = deck.extra.reduce((s, c) => s + c.count, 0);
+                if (mainCnt === 0 && extraCnt === 0) return showNotification('卡组为空', true);
+                let code = `!${deck.skill || '无技能'}\n#main\n`;
+                deck.main.forEach(c => code += `${c.name} ${c.count}\n`);
+                if (deck.extra.length) { code += '#extra\n'; deck.extra.forEach(c => code += `${c.name} ${c.count}\n`); }
+                document.getElementById('deck-code').textContent = code;
                 shareModal.style.display = 'flex';
-            }
-
-            document.getElementById('copy-code-btn').addEventListener('click', () => {
-                const codeText = document.getElementById('deck-code').textContent;
-                navigator.clipboard.writeText(codeText)
-                    .then(() => showNotification('卡组代码已复制到剪贴板！'))
+            };
+            document.getElementById('copy-code-btn').onclick = () => {
+                navigator.clipboard.writeText(document.getElementById('deck-code').textContent)
+                    .then(() => showNotification('代码已复制'))
                     .catch(() => showNotification('复制失败，请手动复制', true));
-            });
+            };
+            document.getElementById('close-share-btn').onclick = () => shareModal.style.display = 'none';
 
-            function getProxiedImageUrl(originalUrl) {
-                return `https://images.weserv.nl/?url=${encodeURIComponent(originalUrl)}`;
-            }
+            // 生成截图：关闭分享框，生成后在新预览窗口显示
+            generateScreenshotBtn.onclick = async function() {
+                if (this.disabled) return;
+                this.disabled = true;
+                shareModal.style.display = 'none';   // 关闭分享模态框
+                shareLoading.style.display = 'flex';  // 显示加载提示
 
-            async function generateScreenshot() {
-                if (generateScreenshotBtn.disabled) return;
-                generateScreenshotBtn.disabled = true;
-                screenshotArea.style.display = 'block';
-                deckScreenshotImg.src = '';
-                showNotification('正在生成截图，请稍候...', false, true);
+                const clone = deckSection.cloneNode(true);
+                clone.style.position = 'absolute';
+                clone.style.left = '-9999px';
+                clone.style.width = deckSection.offsetWidth + 'px';
+                document.body.appendChild(clone);
 
-                const tempContainer = document.createElement('div');
-                tempContainer.style.position = 'absolute';
-                tempContainer.style.left = '-9999px';
-                tempContainer.style.background = 'white';
-                tempContainer.style.borderRadius = '12px';
-                tempContainer.style.padding = '20px';
-                tempContainer.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.05)';
-                tempContainer.style.width = deckSection.offsetWidth + 'px';
-
-                const skillClone = document.querySelector('.deck-skill-section').cloneNode(true);
-                const mainDeckClone = document.querySelector('#main-deck').parentElement.cloneNode(true);
-                const extraDeckClone = document.querySelector('#extra-deck').parentElement.cloneNode(true);
-                tempContainer.appendChild(skillClone);
-                tempContainer.appendChild(mainDeckClone);
-                tempContainer.appendChild(extraDeckClone);
-                document.body.appendChild(tempContainer);
-
-                const images = tempContainer.querySelectorAll('img');
-                const loadPromises = [];
-                images.forEach(img => {
-                    if (img.src) {
-                        const proxyUrl = getProxiedImageUrl(img.src);
-                        img.crossOrigin = 'anonymous';
-                        img.src = proxyUrl;
-                        loadPromises.push(new Promise(resolve => {
-                            img.onload = resolve;
-                            img.onerror = resolve;
-                            setTimeout(resolve, 3000);
-                        }));
-                    }
-                });
+                const imgs = clone.querySelectorAll('img');
+                const proxy = url => `https://images.weserv.nl/?url=${encodeURIComponent(url)}`;
+                await Promise.all([...imgs].map(img => new Promise(resolve => {
+                    img.crossOrigin = 'anonymous';
+                    img.src = proxy(img.src);
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                    setTimeout(resolve, 3000);
+                })));
 
                 try {
-                    await Promise.all(loadPromises);
-                    await new Promise(resolve => setTimeout(resolve, 200));
-                    const canvas = await html2canvas(tempContainer, {
+                    await new Promise(r => setTimeout(r, 200));
+                    const canvas = await html2canvas(clone, {
                         scale: 2,
                         backgroundColor: '#ffffff',
                         useCORS: true,
                         allowTaint: false,
                         logging: false
                     });
-                    const dataUrl = canvas.toDataURL('image/png');
-                    deckScreenshotImg.src = dataUrl;
-                    showNotification('截图生成成功！长按图片即可保存');
-                } catch (error) {
-                    console.error('截图生成失败:', error);
-                    screenshotArea.style.display = 'none';
-                    showNotification('截图生成失败，请重试', true);
+                    screenshotPreviewImage.src = canvas.toDataURL('image/png');
+                    screenshotPreviewModal.style.display = 'flex';
+                } catch (e) {
+                    showNotification('截图生成失败', true);
                 } finally {
-                    document.body.removeChild(tempContainer);
-                    generateScreenshotBtn.disabled = false;
+                    document.body.removeChild(clone);
+                    shareLoading.style.display = 'none';
+                    this.disabled = false;
                 }
-            }
+            };
 
-            generateScreenshotBtn.addEventListener('click', generateScreenshot);
+            // 关闭截图预览
+            document.getElementById('close-screenshot-btn').onclick = () => screenshotPreviewModal.style.display = 'none';
+            screenshotPreviewModal.onclick = function(e) { if (e.target === this) this.style.display = 'none'; };
 
-            document.getElementById('reset-btn').addEventListener('click', () => {
-                if (confirm('确定要重置整个卡组吗？')) {
-                    deck.main = [];
-                    deck.extra = [];
-                    deck.skill = "";
-                    deckSkillInput.value = "";
+            // 重置
+            document.getElementById('reset-btn').onclick = () => {
+                if (confirm('确定重置卡组？')) {
+                    deck.main = []; deck.extra = []; deck.skill = '';
+                    deckSkillInput.value = '';
                     updateDeckDisplay();
                     showNotification('卡组已重置');
                 }
-            });
+            };
 
-            closeModal.addEventListener('click', () => cardModal.style.display = 'none');
-
-            window.addEventListener('click', (e) => {
+            // 关闭模态框
+            closeModal.onclick = () => cardModal.style.display = 'none';
+            window.onclick = (e) => {
                 if (e.target === cardModal) cardModal.style.display = 'none';
                 if (e.target === addCardModal) addCardModal.style.display = 'none';
                 if (e.target === deckListModal) deckListModal.style.display = 'none';
                 if (e.target === shareModal) shareModal.style.display = 'none';
                 if (e.target === saveDeckModal) saveDeckModal.style.display = 'none';
-            });
+            };
 
-            document.getElementById('close-deck-list')?.addEventListener('click', () => deckListModal.style.display =
-                'none');
-            document.getElementById('close-share-btn')?.addEventListener('click', () => shareModal.style.display =
-            'none');
+            document.getElementById('close-deck-list').onclick = () => deckListModal.style.display = 'none';
 
-            document.getElementById('load-by-code-btn').addEventListener('click', loadDeckByCode);
-
+            // 代码加载
+            document.getElementById('load-by-code-btn').onclick = loadDeckByCode;
             function loadDeckByCode() {
-                const codeText = document.getElementById('deck-code-input').value.trim();
-                if (!codeText) {
-                    showNotification('请输入卡组代码', true);
-                    return;
-                }
-                try {
-                    const lines = codeText.split('\n');
-                    const mainDeck = [];
-                    const extraDeck = [];
-                    let deckSkill = "";
-                    let currentSection = 'main';
-                    for (const line of lines) {
-                        const trimmedLine = line.trim();
-                        if (!trimmedLine) continue;
-                        if (trimmedLine.startsWith('!')) {
-                            deckSkill = trimmedLine.substring(1).trim();
-                            continue;
+                const text = document.getElementById('deck-code-input').value.trim();
+                if (!text) return showNotification('请输入卡组代码', true);
+                const lines = text.split('\n');
+                const mainList = [], extraList = [];
+                let skill = '', sec = 'main';
+                lines.forEach(l => {
+                    l = l.trim();
+                    if (!l) return;
+                    if (l.startsWith('!')) { skill = l.substring(1).trim(); return; }
+                    if (l.toLowerCase() === '#main') { sec = 'main'; return; }
+                    if (l.toLowerCase() === '#extra') { sec = 'extra'; return; }
+                    const parts = l.split(' ');
+                    const cnt = parseInt(parts.pop());
+                    if (isNaN(cnt)) return;
+                    const name = parts.join(' ').trim();
+                    if (name && cnt > 0) (sec === 'main' ? mainList : extraList).push({ name, cnt });
+                });
+                deck.main = []; deck.extra = []; deck.skill = skill; deckSkillInput.value = skill;
+                showNotification('正在加载卡组...');
+                const load = (name, isExtra) => fetch(`https://ygocdb.com/api/v0/?search=${encodeURIComponent(name)}&limit=1`)
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d.result?.length) {
+                            const c = d.result[0];
+                            addCardToDeck({ id: c.id, name: c.cn_name || c.name, type: c.text?.types || c.type || '', desc: c.text?.desc || '' }, 1);
                         }
-                        if (trimmedLine.toLowerCase() === '#main') {
-                            currentSection = 'main';
-                            continue;
-                        }
-                        if (trimmedLine.toLowerCase() === '#extra') {
-                            currentSection = 'extra';
-                            continue;
-                        }
-                        const parts = trimmedLine.split(' ');
-                        if (parts.length < 2) continue;
-                        const countPart = parts.pop();
-                        const count = parseInt(countPart);
-                        if (isNaN(count)) {
-                            parts.push(countPart);
-                        } else {
-                            const cardName = parts.join(' ').trim();
-                            if (cardName && count > 0) {
-                                if (currentSection === 'main') mainDeck.push({ name: cardName, count });
-                                else extraDeck.push({ name: cardName, count });
-                            }
-                        }
-                    }
-                    deck.main = [];
-                    deck.extra = [];
-                    deck.skill = deckSkill;
-                    deckSkillInput.value = deckSkill;
-                    let mainLoadCount = 0;
-                    let extraLoadCount = 0;
-                    const loadCard = (cardName, count, isExtra) => {
-                        return new Promise(resolve => {
-                            fetch(
-                                    `https://ygocdb.com/api/v0/?search=${encodeURIComponent(cardName)}&limit=1`)
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.result && data.result.length > 0) {
-                                        const card = data.result[0];
-                                        const cardType = card.text?.types || card.type || '';
-                                        addCardToDeck({
-                                            id: card.id,
-                                            name: card.cn_name || card.name,
-                                            type: cardType,
-                                            desc: card.text?.desc || card.desc || ''
-                                        }, count);
-                                        if (isExtra) extraLoadCount++;
-                                        else mainLoadCount++;
-                                    }
-                                    resolve();
-                                })
-                                .catch(() => resolve());
-                        });
-                    };
-                    showNotification('正在加载卡组，请稍候...', false, true);
-                    const loadPromises = [];
-                    mainDeck.forEach(card => {
-                        for (let i = 0; i < card.count; i++) loadPromises.push(loadCard(card.name, 1,
-                            false));
-                    });
-                    extraDeck.forEach(card => {
-                        for (let i = 0; i < card.count; i++) loadPromises.push(loadCard(card.name, 1, true));
-                    });
-                    Promise.all(loadPromises).then(() => {
-                        updateDeckDisplay();
-                        showNotification(
-                            `卡组加载完成！主卡组:${mainLoadCount}张, 额外卡组:${extraLoadCount}张`);
-                        deckListModal.style.display = 'none';
-                    });
-                } catch (error) {
-                    console.error('解析卡组代码失败:', error);
-                    showNotification('解析卡组代码失败，请检查格式', true);
-                }
-            }
-
-            function createDefaultDeck() {
-                return {
-                    name: "默认卡组",
-                    date: new Date().toISOString(),
-                    skill: "战斗编年史",
-                    main: [
-                        { name: "青眼亚白龙", count: 2 }, { name: "白色灵龙", count: 3 },
-                        { name: "最强混沌战士", count: 1 }, { name: "青眼白龙", count: 3 },
-                        { name: "继承之魂", count: 2 }, { name: "究极融合", count: 1 },
-                        { name: "龙觉醒旋律", count: 3 }, { name: "摇号机GO！GO！", count: 1 },
-                        { name: "复活之福音", count: 2 }, { name: "王者的看破", count: 2 }
-                    ],
-                    extra: [
-                        { name: "究极龙骑士", count: 1 }, { name: "真青眼究极龙", count: 1 },
-                        { name: "青眼究极龙", count: 1 }, { name: "青眼双爆裂龙", count: 1 },
-                        { name: "宵星之机神 丁吉尔苏", count: 1 }, { name: "银河眼光波龙", count: 1 },
-                        { name: "银河眼重铠光子龙", count: 1 }, { name: "银河眼光波刃龙", count: 1 }
-                    ]
-                };
+                    }).catch(() => {});
+                const all = [];
+                mainList.forEach(c => { for (let i = 0; i < c.cnt; i++) all.push(load(c.name, false)); });
+                extraList.forEach(c => { for (let i = 0; i < c.cnt; i++) all.push(load(c.name, true)); });
+                Promise.all(all).then(() => {
+                    updateDeckDisplay();
+                    deckListModal.style.display = 'none';
+                });
             }
 
             function showDeckListModal() {
-                let savedDecks = JSON.parse(localStorage.getItem('ygoDecks')) || [];
-                if (savedDecks.length === 0) {
-                    savedDecks.push(createDefaultDeck());
-                    localStorage.setItem('ygoDecks', JSON.stringify(savedDecks));
+                let saved = JSON.parse(localStorage.getItem('ygoDecks') || '[]');
+                if (!saved.length) {
+                    saved = [{
+                        name: '默认青眼卡组', date: new Date().toISOString(),
+                        skill: '战斗编年史',
+                        main: [{ name: '青眼亚白龙', count: 2 }, { name: '白色灵龙', count: 3 }, { name: '最强混沌战士', count: 1 }, { name: '青眼白龙', count: 3 }, { name: '继承之魂', count: 2 }, { name: '究极融合', count: 1 }, { name: '龙觉醒旋律', count: 3 }, { name: '摇号机GO！GO！', count: 1 }, { name: '复活之福音', count: 2 }, { name: '王者的看破', count: 2 }],
+                        extra: [{ name: '究极龙骑士', count: 1 }, { name: '真青眼究极龙', count: 1 }, { name: '青眼究极龙', count: 1 }, { name: '青眼双爆裂龙', count: 1 }, { name: '宵星之机神 丁吉尔苏', count: 1 }, { name: '银河眼光波龙', count: 1 }, { name: '银河眼重铠光子龙', count: 1 }, { name: '银河眼光波刃龙', count: 1 }]
+                    }];
+                    localStorage.setItem('ygoDecks', JSON.stringify(saved));
                 }
-                const deckListItems = document.getElementById('deck-list-items');
-                deckListItems.innerHTML = '';
-                savedDecks.forEach((deckData, index) => {
-                    const deckItem = document.createElement('div');
-                    deckItem.className = 'deck-item';
-                    const mainCount = deckData.main.reduce((sum, card) => sum + card.count, 0);
-                    const extraCount = deckData.extra.reduce((sum, card) => sum + card.count, 0);
-                    const date = new Date(deckData.date).toLocaleString();
-                    deckItem.innerHTML = `
-                        <div class="deck-item-name">${deckData.name}</div>
-                        <div class="deck-item-info">
-                            <div>主卡组: ${mainCount}张 | 额外卡组: ${extraCount}张</div>
-                            <div>技能: ${deckData.skill || '无'}</div>
-                            <div class="deck-item-date">${date}</div>
-                        </div>
+                const list = document.getElementById('deck-list-items');
+                list.innerHTML = saved.map((d, i) => `
+                    <div class="deck-item">
+                        <div class="deck-item-name">${d.name}</div>
+                        <div>主卡组: ${d.main.reduce((s,c)=>s+c.count,0)} | 额外: ${d.extra.reduce((s,c)=>s+c.count,0)}</div>
+                        <div>技能: ${d.skill || '无'}</div>
                         <div class="deck-item-actions">
-                            <button class="deck-action-btn btn btn-primary" data-index="${index}">
-                                <i class="fas fa-folder-open"></i> 加载
-                            </button>
-                            <button class="deck-action-btn btn btn-danger" data-index="${index}">
-                                <i class="fas fa-trash-alt"></i> 删除
-                            </button>
+                            <button class="deck-action-btn btn btn-primary" data-idx="${i}"><i class="fas fa-folder-open"></i>加载</button>
+                            <button class="deck-action-btn btn btn-danger" data-idx="${i}"><i class="fas fa-trash-alt"></i>删除</button>
                         </div>
-                    `;
-                    deckListItems.appendChild(deckItem);
+                    </div>`).join('');
+                list.querySelectorAll('.btn-primary').forEach(b => b.onclick = () => {
+                    loadDeck(saved[parseInt(b.dataset.idx)]);
+                    deckListModal.style.display = 'none';
                 });
-                document.querySelectorAll('.deck-action-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const index = parseInt(btn.dataset.index);
-                        if (btn.classList.contains('btn-danger')) {
-                            if (confirm(`确定要删除"${savedDecks[index].name}"卡组吗？`)) {
-                                savedDecks.splice(index, 1);
-                                localStorage.setItem('ygoDecks', JSON.stringify(savedDecks));
-                                showDeckListModal();
-                                showNotification('卡组已删除');
-                            }
-                        } else {
-                            loadDeck(savedDecks[index]);
-                            deckListModal.style.display = 'none';
-                        }
-                    });
+                list.querySelectorAll('.btn-danger').forEach(b => b.onclick = () => {
+                    if (confirm('确定删除？')) {
+                        saved.splice(parseInt(b.dataset.idx), 1);
+                        localStorage.setItem('ygoDecks', JSON.stringify(saved));
+                        showDeckListModal();
+                    }
                 });
                 deckListModal.style.display = 'flex';
             }
 
-            function loadDeck(deckData) {
-                deck.main = [];
-                deck.extra = [];
-                deck.skill = deckData.skill || "";
-                deckSkillInput.value = deckData.skill || "";
-                deckData.main.forEach(card => {
-                    deck.main.push({ ...card, id: 0, type: '', desc: '' });
-                });
-                deckData.extra.forEach(card => {
-                    deck.extra.push({ ...card, id: 0, type: '', desc: '' });
-                });
+            function loadDeck(data) {
+                deck.main = []; deck.extra = []; deck.skill = data.skill || ''; deckSkillInput.value = deck.skill;
+                data.main.forEach(c => deck.main.push({ ...c, id: 0, type: '', desc: '' }));
+                data.extra.forEach(c => deck.extra.push({ ...c, id: 0, type: '', desc: '' }));
                 updateDeckDisplay();
-                loadDeckCards(deckData);
-                showNotification(`已加载卡组"${deckData.name}"`);
-            }
-
-            function loadDeckCards(deckData) {
-                deckData.main.forEach(card => fetchCardData(card.name, 'main'));
-                deckData.extra.forEach(card => fetchCardData(card.name, 'extra'));
-            }
-
-            function fetchCardData(cardName, deckType) {
-                fetch(`https://ygocdb.com/api/v0/?search=${encodeURIComponent(cardName)}&limit=1`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.result && data.result.length > 0) {
-                            const card = data.result[0];
-                            const targetDeck = deckType === 'main' ? deck.main : deck.extra;
-                            const deckCard = targetDeck.find(c => c.name === cardName);
-                            if (deckCard) {
-                                deckCard.id = card.id;
-                                deckCard.type = card.text?.types || card.type || '';
-                                deckCard.desc = card.text?.desc || card.desc || '';
-                                updateDeckDisplay();
-                            }
+                const fetchCard = (name, type) => fetch(`https://ygocdb.com/api/v0/?search=${encodeURIComponent(name)}&limit=1`)
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d.result?.length) {
+                            const c = d.result[0];
+                            const arr = type === 'main' ? deck.main : deck.extra;
+                            const card = arr.find(x => x.name === name);
+                            if (card) { card.id = c.id; card.type = c.text?.types || c.type || ''; card.desc = c.text?.desc || ''; }
                         }
-                    })
-                    .catch(error => console.error('获取卡片数据失败:', cardName, error));
+                    }).catch(() => {});
+                data.main.forEach(c => fetchCard(c.name, 'main'));
+                data.extra.forEach(c => fetchCard(c.name, 'extra'));
+                setTimeout(updateDeckDisplay, 500);
             }
 
-            function adjustResultsContainerHeight() {
-                const deckSection = document.querySelector('.deck-section');
-                const resultsContainer = document.getElementById('results-container');
-                if (deckSection && resultsContainer) {
-                    const cardHeight = 150;
-                    const gap = 12;
-                    const padding = 15;
-                    const titleHeight = 30;
-                    const skillHeight = 60;
-                    const mainHeight = 5 * cardHeight + 4 * gap + titleHeight + padding * 2;
-                    const extraHeight = 2 * cardHeight + 1 * gap + titleHeight + padding * 2;
-                    const totalHeight = skillHeight + mainHeight + extraHeight + 40;
-                    resultsContainer.style.maxHeight = `${totalHeight}px`;
-                }
-            }
-
+            // 页面加载完成
             window.addEventListener('DOMContentLoaded', () => {
-                adjustResultsContainerHeight();
-                createDefaultDeck();
-                window.addEventListener('resize', adjustResultsContainerHeight);
+                // 默认空卡组
+                updateDeckDisplay();
             });
         })();
     </script>
