@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>B站直播弹幕获取</title>
+    <title>B站直播弹幕获取器</title>
     <style>
         body {
             font-family: "Microsoft YaHei", sans-serif;
@@ -111,21 +111,42 @@
         let currentHostIndex = 0;
         let manualDisconnect = false;
 
-        /**
-         * 请求 JSON 数据，带 CORS 代理回退
-         */
+        // 可用的公共 CORS 代理列表（按顺序尝试）
+        const PROXY_LIST = [
+            (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+            (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+            (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+            (url) => `https://cors-anywhere.herokuapp.com/${url}`,
+            (url) => `https://proxy.cors.sh/${url}`
+        ];
+
         async function fetchJson(url) {
+            // 先尝试直接请求（如果浏览器或插件允许）
             try {
                 const res = await fetch(url);
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                return await res.json();
+                if (res.ok) return await res.json();
             } catch (e) {
-                // 尝试通过公共 CORS 代理
-                const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-                const res = await fetch(proxyUrl);
-                if (!res.ok) throw new Error('代理请求失败: ' + e.message);
-                return await res.json();
+                console.warn('直接请求失败，尝试代理...');
             }
+
+            // 依次尝试公共代理
+            for (const proxy of PROXY_LIST) {
+                try {
+                    const proxyUrl = proxy(url);
+                    const res = await fetch(proxyUrl, {
+                        headers: {
+                            'Origin': window.location.origin // 某些代理需要
+                        }
+                    });
+                    if (!res.ok) continue;
+                    const data = await res.json();
+                    return data;
+                } catch (e) {
+                    console.warn(`代理失败: ${proxy(url)}`, e);
+                }
+            }
+
+            throw new Error('所有请求方式均失败，请检查网络或使用自建代理');
         }
 
         /**
