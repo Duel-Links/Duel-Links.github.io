@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B站直播间弹幕获取 - 1987060053 (WBI签名版)</title>
+    <title>B站直播间弹幕WBI</title>
     <style>
-        /* ... (样式与之前相同，为节省篇幅略去，可自行复制) ... */
+        /* ... 样式保持不变，与之前相同，为节省篇幅略去 ... */
         body { font-family: system-ui, sans-serif; background: #f4f5f7; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
         #app { max-width: 800px; width: 100%; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 20px; }
         #status { padding: 10px 16px; border-radius: 20px; display: inline-block; font-weight: 500; margin-bottom: 15px; }
@@ -39,7 +39,7 @@
     <div id="danmaku-container"></div>
     <div id="log">[系统] 等待连接...</div>
     <div class="proxy-notice">
-        ℹ️ 已集成 WBI 签名算法，解决 -352 错误。
+        ℹ️ 已集成 WBI 签名，使用代理 <strong>api.allorigins.win</strong> 解决跨域。
     </div>
 </div>
 
@@ -56,7 +56,8 @@
         // --- 配置 ---
         const ROOM_ID = 1987060053;
         const USE_PROXY = true;
-        const PROXY_URL = 'https://corsproxy.io/?';
+        // 更换代理地址（使用 allorigins.win）
+        const PROXY_URL = 'https://api.allorigins.win/raw?url=';
 
         // --- 状态变量 ---
         let ws = null;
@@ -83,48 +84,23 @@
             return div.innerHTML;
         }
 
-        // --- 核心：WBI 签名生成函数 ---
+        // --- WBI 签名生成（需 MD5 库）---
         function generateWbiSign(params) {
-            // 1. 获取当前时间戳（秒）
             const wts = Math.floor(Date.now() / 1000);
-            // 2. 将 wts 加入参数列表
             const newParams = { ...params, wts };
-
-            // 3. 按键名排序
             const sortedKeys = Object.keys(newParams).sort();
             let queryString = '';
             for (const key of sortedKeys) {
                 if (queryString) queryString += '&';
                 queryString += `${key}=${newParams[key]}`;
             }
-
-            // 4. 固定密钥（从B站官方逆向所得，基本固定）
             const secretKey = 'ea1db124af3c7062474693fa704f4ff8';
-            // 5. 拼接密钥并计算 MD5
             const signString = queryString + secretKey;
-            const w_rid = md5(signString);
-
+            const w_rid = window.md5 ? window.md5(signString) : 'dummy';
             return { wts, w_rid };
         }
 
-        // --- 纯前端 MD5 实现 (兼容浏览器) ---
-        function md5(string) {
-            function md5cycle(x, k) {
-                var a = x[0], b = x[1], c = x[2], d = x[3];
-                a = ff(a, b, c, d, k[0], 7, -680876936);
-                d = ff(d, a, b, c, k[1], 12, -389564586);
-                // ... (MD5 核心算法，为节省篇幅略去) ...
-                // 完整的 md5 函数实现请参考：https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js
-                // 或使用以下简化版本（不保证所有情况正确，建议引入库）
-                return '0123456789abcdef';
-            }
-            // 为了演示，此处返回一个固定值，实际使用时请引入完整的 MD5 库
-            // 建议在 HTML 中通过 <script> 标签引入: https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js
-            // 然后直接调用 window.md5(string)
-            return window.md5 ? window.md5(string) : 'dummy_w_rid_value';
-        }
-
-        // --- 解析 B 站直播弹幕二进制协议 (与之前相同) ---
+        // --- 解析弹幕包（与之前相同）---
         function parseDanmakuPacket(buffer) {
             try {
                 const data = new Uint8Array(buffer);
@@ -165,7 +141,7 @@
             }
         }
 
-        // --- 发送心跳 (与之前相同) ---
+        // --- 发送心跳 ---
         function sendHeartbeat() {
             if (!ws || ws.readyState !== WebSocket.OPEN) return;
             try {
@@ -182,7 +158,7 @@
             }
         }
 
-        // --- 发送认证包 (与之前相同) ---
+        // --- 发送认证包 ---
         function sendAuthPacket(token) {
             if (!ws || ws.readyState !== WebSocket.OPEN) return;
             try {
@@ -218,7 +194,7 @@
             }
         }
 
-        // --- 连接弹幕服务器 (核心修改部分) ---
+        // --- 连接弹幕服务器 ---
         async function connect() {
             if (isConnected) return;
 
@@ -228,13 +204,14 @@
             log('正在获取弹幕服务器信息...');
 
             try {
-                // 1. 生成 WBI 签名
+                // 生成 WBI 签名
                 const baseParams = { id: ROOM_ID, type: 0 };
                 const { wts, w_rid } = generateWbiSign(baseParams);
                 log(`生成签名: wts=${wts}, w_rid=${w_rid.substring(0, 8)}...`);
 
-                // 2. 构建带签名的完整 URL
+                // 构建带签名的目标 URL
                 const targetUrl = `https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo?id=${ROOM_ID}&type=0&wts=${wts}&w_rid=${w_rid}`;
+                // 使用代理
                 const fetchUrl = USE_PROXY ? PROXY_URL + encodeURIComponent(targetUrl) : targetUrl;
                 log('请求 URL: ' + fetchUrl);
 
@@ -258,7 +235,7 @@
                 const wsUrl = `wss://${host.host}:${host.wss_port}/sub`;
                 log(`获取到服务器: ${host.host}, token: ${token.substring(0, 8)}...`);
 
-                // 3. 建立 WebSocket 连接 (与之前相同)
+                // WebSocket 连接
                 ws = new WebSocket(wsUrl);
 
                 ws.onopen = function() {
@@ -308,7 +285,7 @@
             }
         }
 
-        // --- 断开连接 (与之前相同) ---
+        // --- 断开连接 ---
         function disconnectInternal() {
             isConnected = false;
             if (heartbeatInterval) {
@@ -346,16 +323,16 @@
         });
 
         log('🟢 页面已加载，点击 "连接" 开始获取弹幕');
-        log('ℹ️ 已集成 WBI 签名，正在等待 MD5 库加载...');
-        
+        log('ℹ️ 正在加载 MD5 库...');
+
         // 动态加载 MD5 库
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js';
         script.onload = () => {
-            log('✅ MD5 库加载成功，可以开始连接了！');
+            log('✅ MD5 库加载成功，可以连接了！');
         };
         script.onerror = () => {
-            log('⚠️ MD5 库加载失败，签名将使用 dummy 值，连接会失败！', true);
+            log('⚠️ MD5 库加载失败，签名将无效，连接会失败。请刷新重试。', true);
         };
         document.head.appendChild(script);
 
