@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>B站直播间弹幕获取 - 1987060053</title>
     <style>
-        /* 简单的页面样式 */
         body {
             font-family: system-ui, -apple-system, sans-serif;
             background: #f4f5f7;
@@ -74,6 +73,7 @@
             display: flex;
             gap: 10px;
             align-items: center;
+            flex-wrap: wrap;
         }
         button {
             padding: 10px 24px;
@@ -101,6 +101,14 @@
             white-space: pre-wrap;
             word-break: break-all;
         }
+        .proxy-notice {
+            font-size: 13px;
+            color: #888;
+            margin-top: 10px;
+            background: #fff3cd;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
     </style>
 </head>
 <body>
@@ -120,6 +128,9 @@
     <div id="danmaku-container"></div>
 
     <div id="log">[系统] 等待连接...</div>
+    <div class="proxy-notice">
+        ℹ️ 当前使用公共 CORS 代理（corsproxy.io）获取 token，可能受频率限制，仅供测试。
+    </div>
 </div>
 
 <script>
@@ -132,13 +143,20 @@
         const container = document.getElementById('danmaku-container');
         const logEl = document.getElementById('log');
 
-        // --- 状态变量 ---
-        let ws = null;                 // WebSocket 实例
-        let heartbeatInterval = null;  // 心跳定时器
-        let isConnected = false;
-        const ROOM_ID = 1987060053;    // 目标直播间 ID
+        // --- 配置 ---
+        const ROOM_ID = 1987060053;
+        // 是否使用 CORS 代理（解决跨域问题）
+        const USE_PROXY = true;
+        // 代理地址（选择其中一个）
+        const PROXY_URL = 'https://corsproxy.io/?';   // 直接透传，返回原始内容
+        // 备选：'https://api.allorigins.win/raw?url='  （如需可自行替换）
 
-        // --- 辅助函数：日志输出 ---
+        // --- 状态变量 ---
+        let ws = null;
+        let heartbeatInterval = null;
+        let isConnected = false;
+
+        // --- 辅助函数 ---
         function log(message, isError = false) {
             const time = new Date().toLocaleTimeString();
             const prefix = isError ? '❌' : 'ℹ️';
@@ -147,10 +165,15 @@
             logEl.scrollTop = logEl.scrollHeight;
         }
 
-        // --- 更新连接状态 UI ---
         function setStatus(state, text) {
             statusEl.textContent = text;
             statusEl.className = 'status-' + state;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         // --- 解析 B 站直播弹幕二进制协议 ---
@@ -161,23 +184,14 @@
                 const packets = [];
 
                 while (offset < data.length) {
-                    // 1. 读取包总长度 (4字节, 大端序)
                     if (offset + 4 > data.length) break;
                     const totalLen = (data[offset] << 24) | (data[offset+1] << 16) | 
                                      (data[offset+2] << 8) | data[offset+3];
                     if (totalLen === 0 || offset + totalLen > data.length) break;
 
-                    // 2. 读取头部长度 (2字节)
                     const headerLen = (data[offset+4] << 8) | data[offset+5];
-
-                    // 3. 读取协议版本 (2字节)
-                    // const ver = (data[offset+6] << 8) | data[offset+7];
-
-                    // 4. 读取操作码 (2字节) 
-                    // 3 = 弹幕消息, 5 = 礼物, 8 = 心跳响应
                     const op = (data[offset+8] << 8) | data[offset+9];
 
-                    // 5. 读取 body (JSON 数据)
                     let body = null;
                     if (totalLen > headerLen) {
                         const bodyStart = offset + headerLen;
@@ -186,23 +200,18 @@
                         try {
                             const jsonStr = new TextDecoder('utf-8').decode(bodyBytes);
                             body = JSON.parse(jsonStr);
-                        } catch (e) {
-                            // 非 JSON 数据忽略
-                        }
+                        } catch (e) {}
                     }
 
-                    // 如果是弹幕消息 (操作码 3)
                     if (op === 3 && body && body.cmd === 'DANMU_MSG') {
-                        // 提取弹幕信息
                         const info = body.info;
                         if (info && info.length >= 3) {
-                            const msg = info[1];           // 弹幕内容
-                            const user = info[2][1];       // 用户名
+                            const msg = info[1];
+                            const user = info[2][1];
                             const time = new Date().toLocaleTimeString();
                             packets.push({ user, msg, time });
                         }
                     }
-
                     offset += totalLen;
                 }
                 return packets;
@@ -212,36 +221,34 @@
             }
         }
 
-        // --- 发送心跳包 (保持连接) ---
+        // --- 发送心跳 ---
         function sendHeartbeat() {
             if (!ws || ws.readyState !== WebSocket.OPEN) return;
             try {
-                // 心跳包: 总长度16, 头部长度16, 协议版本1, 操作码2
                 const buffer = new ArrayBuffer(16);
                 const view = new DataView(buffer);
-                view.setUint32(0, 16);    // 总长度
-                view.setUint16(4, 16);    // 头部长度
-                view.setUint16(6, 1);     // 协议版本
-                view.setUint16(8, 2);     // 操作码 (2 = 心跳)
-                view.setUint32(12, 0);    // 序列号 (可忽略)
+                view.setUint32(0, 16);
+                view.setUint16(4, 16);
+                view.setUint16(6, 1);
+                view.setUint16(8, 2);
+                view.setUint32(12, 0);
                 ws.send(buffer);
             } catch (e) {
                 log('发送心跳失败: ' + e.message, true);
             }
         }
 
-        // --- 发送认证包 (加入房间) ---
+        // --- 发送认证包 ---
         function sendAuthPacket(token) {
             if (!ws || ws.readyState !== WebSocket.OPEN) return;
             try {
-                // 构造认证数据 (JSON)
                 const authData = {
-                    uid: 0,                       // 用户ID, 0 表示未登录
+                    uid: 0,
                     roomid: ROOM_ID,
-                    protover: 2,                  // 协议版本, 固定为2
+                    protover: 2,
                     platform: 'web',
-                    type: 1,                      // 1 = 弹幕
-                    key: token                    // 从接口获取的 token
+                    type: 1,
+                    key: token
                 };
                 const jsonStr = JSON.stringify(authData);
                 const encoder = new TextEncoder();
@@ -250,18 +257,16 @@
 
                 const buffer = new ArrayBuffer(totalLen);
                 const view = new DataView(buffer);
-                view.setUint32(0, totalLen);      // 总长度
-                view.setUint16(4, 16);            // 头部长度
-                view.setUint16(6, 1);             // 协议版本
-                view.setUint16(8, 7);             // 操作码 (7 = 认证)
-                view.setUint32(12, 1);            // 序列号
+                view.setUint32(0, totalLen);
+                view.setUint16(4, 16);
+                view.setUint16(6, 1);
+                view.setUint16(8, 7);
+                view.setUint32(12, 1);
 
-                // 写入 JSON 数据
                 const bodyStart = 16;
                 for (let i = 0; i < jsonBytes.length; i++) {
                     view.setUint8(bodyStart + i, jsonBytes[i]);
                 }
-
                 ws.send(buffer);
                 log('✅ 认证包已发送 (房间: ' + ROOM_ID + ')');
             } catch (e) {
@@ -279,10 +284,15 @@
             log('正在获取弹幕服务器信息...');
 
             try {
-                // 1. 获取 WebSocket 地址和 token
-                const resp = await fetch(
-                    `https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo?id=${ROOM_ID}&type=0`
-                );
+                // 1. 获取 WebSocket 地址和 token (使用代理解决跨域)
+                const targetUrl = `https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo?id=${ROOM_ID}&type=0`;
+                const fetchUrl = USE_PROXY ? PROXY_URL + encodeURIComponent(targetUrl) : targetUrl;
+                log('请求 URL: ' + fetchUrl);
+
+                const resp = await fetch(fetchUrl);
+                if (!resp.ok) {
+                    throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+                }
                 const data = await resp.json();
 
                 if (data.code !== 0) {
@@ -295,7 +305,6 @@
                     throw new Error('未获取到有效的服务器地址或 token');
                 }
 
-                // 选择第一个可用的服务器 (wss 协议)
                 const host = hostList[0];
                 const wsUrl = `wss://${host.host}:${host.wss_port}/sub`;
                 log(`获取到服务器: ${host.host}, token: ${token.substring(0, 8)}...`);
@@ -310,10 +319,8 @@
                     disconnectBtn.disabled = false;
                     log('WebSocket 连接已建立');
 
-                    // 发送认证包
                     sendAuthPacket(token);
 
-                    // 启动心跳 (每 30 秒)
                     if (heartbeatInterval) clearInterval(heartbeatInterval);
                     heartbeatInterval = setInterval(sendHeartbeat, 30000);
                 };
@@ -322,7 +329,6 @@
                     if (event.data instanceof ArrayBuffer) {
                         const packets = parseDanmakuPacket(event.data);
                         for (const p of packets) {
-                            // 在弹幕容器中显示
                             const item = document.createElement('div');
                             item.className = 'danmaku-item';
                             item.innerHTML = `
@@ -332,8 +338,6 @@
                             `;
                             container.appendChild(item);
                             container.scrollTop = container.scrollHeight;
-
-                            // 同时在日志中显示
                             log(`💬 ${p.user}: ${p.msg}`);
                         }
                     }
@@ -379,37 +383,23 @@
             disconnectInternal();
         }
 
-        // --- 清空弹幕显示 ---
         function clearDanmaku() {
             container.innerHTML = '';
             log('弹幕列表已清空');
         }
 
-        // --- 简单的防 XSS 转义 ---
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // --- 绑定 UI 事件 ---
+        // --- 绑定事件 ---
         connectBtn.addEventListener('click', connect);
         disconnectBtn.addEventListener('click', disconnect);
         clearBtn.addEventListener('click', clearDanmaku);
 
-        // 页面关闭时断开连接
         window.addEventListener('beforeunload', function() {
-            if (ws) {
-                try { ws.close(); } catch (e) {}
-            }
-            if (heartbeatInterval) {
-                clearInterval(heartbeatInterval);
-            }
+            if (ws) try { ws.close(); } catch (e) {}
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
         });
 
         log('🟢 页面已加载，点击 "连接" 开始获取弹幕');
     })();
 </script>
-
 </body>
 </html>
