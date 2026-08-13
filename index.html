@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B站直播间弹幕WBI</title>
+    <title>B站直播间弹幕(cors-anywhere)</title>
     <style>
-        /* ... 样式保持不变，与之前相同，为节省篇幅略去 ... */
+        /* 样式与之前相同，省略，可复用前文样式 */
         body { font-family: system-ui, sans-serif; background: #f4f5f7; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
         #app { max-width: 800px; width: 100%; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 20px; }
         #status { padding: 10px 16px; border-radius: 20px; display: inline-block; font-weight: 500; margin-bottom: 15px; }
@@ -39,7 +39,9 @@
     <div id="danmaku-container"></div>
     <div id="log">[系统] 等待连接...</div>
     <div class="proxy-notice">
-        ℹ️ 已集成 WBI 签名，使用代理 <strong>api.allorigins.win</strong> 解决跨域。
+        ⚠️ 使用 <strong>cors-anywhere</strong> 代理，<br> 
+        请先访问 <a href="https://cors-anywhere.herokuapp.com/" target="_blank">https://cors-anywhere.herokuapp.com/</a> 
+        点击 “Request temporary access” 授权后再连接。
     </div>
 </div>
 
@@ -56,8 +58,7 @@
         // --- 配置 ---
         const ROOM_ID = 1987060053;
         const USE_PROXY = true;
-        // 更换代理地址（使用 allorigins.win）
-        const PROXY_URL = 'https://api.allorigins.win/raw?url=';
+        const PROXY_URL = 'https://cors-anywhere.herokuapp.com/';  // 使用 cors-anywhere
 
         // --- 状态变量 ---
         let ws = null;
@@ -84,7 +85,7 @@
             return div.innerHTML;
         }
 
-        // --- WBI 签名生成（需 MD5 库）---
+        // --- WBI 签名生成 ---
         function generateWbiSign(params) {
             const wts = Math.floor(Date.now() / 1000);
             const newParams = { ...params, wts };
@@ -100,7 +101,7 @@
             return { wts, w_rid };
         }
 
-        // --- 解析弹幕包（与之前相同）---
+        // --- 解析弹幕包 ---
         function parseDanmakuPacket(buffer) {
             try {
                 const data = new Uint8Array(buffer);
@@ -209,14 +210,17 @@
                 const { wts, w_rid } = generateWbiSign(baseParams);
                 log(`生成签名: wts=${wts}, w_rid=${w_rid.substring(0, 8)}...`);
 
-                // 构建带签名的目标 URL
                 const targetUrl = `https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo?id=${ROOM_ID}&type=0&wts=${wts}&w_rid=${w_rid}`;
-                // 使用代理
-                const fetchUrl = USE_PROXY ? PROXY_URL + encodeURIComponent(targetUrl) : targetUrl;
+                // 注意：cors-anywhere 的用法是直接在原 URL 前加代理地址
+                const fetchUrl = USE_PROXY ? PROXY_URL + targetUrl : targetUrl;
                 log('请求 URL: ' + fetchUrl);
 
                 const resp = await fetch(fetchUrl);
                 if (!resp.ok) {
+                    // 如果返回 403，可能是未授权，提示用户先访问 cors-anywhere 授权
+                    if (resp.status === 403) {
+                        throw new Error('代理返回 403，请先访问 https://cors-anywhere.herokuapp.com/ 点击 "Request temporary access" 授权');
+                    }
                     throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
                 }
                 const data = await resp.json();
@@ -323,19 +327,18 @@
         });
 
         log('🟢 页面已加载，点击 "连接" 开始获取弹幕');
-        log('ℹ️ 正在加载 MD5 库...');
+        log('ℹ️ 请先访问 cors-anywhere 授权页面 (见页面提示)');
 
         // 动态加载 MD5 库
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js';
         script.onload = () => {
-            log('✅ MD5 库加载成功，可以连接了！');
+            log('✅ MD5 库加载成功');
         };
         script.onerror = () => {
-            log('⚠️ MD5 库加载失败，签名将无效，连接会失败。请刷新重试。', true);
+            log('⚠️ MD5 库加载失败，签名无效', true);
         };
         document.head.appendChild(script);
-
     })();
 </script>
 </body>
