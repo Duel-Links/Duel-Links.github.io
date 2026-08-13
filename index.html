@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B站自动存票系统 (原生WebSocket)</title>
+    <title>B站自动存票系统 (CORS代理版)</title>
     <style>
-        /* 与之前完全相同的样式，此处省略以节省篇幅，但你必须复制完整的style */
-        /* 请直接复制我此前消息中的样式部分，或使用下面的简略版（也可直接套用之前样式） */
+        /* ===== 完全相同的样式（与之前一致） ===== */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -172,6 +171,15 @@
             .flex-row button { flex: 1 1 auto; }
             td:last-child { white-space: normal; }
         }
+        .proxy-warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #856404;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -179,11 +187,15 @@
 <div class="container">
     <h1>
         📦 自动存票系统
-        <small>原生 WebSocket · 零依赖</small>
+        <small>CORS代理 · 硬编码</small>
     </h1>
 
     <div class="fixed-info">
         🔒 已固定配置：直播间 <strong>1987060053</strong> ｜ 用户 UID <strong>3461580045945354</strong> ｜ 自动监听弹幕
+    </div>
+
+    <div class="proxy-warning">
+        ⚠️ 使用公共 CORS 代理（cors-anywhere），首次使用可能需要 <a href="https://cors-anywhere.herokuapp.com/" target="_blank">点击这里</a> 申请临时访问（只需一次）。
     </div>
 
     <div class="section">
@@ -227,8 +239,10 @@
 // ================================================================
 const CONFIG = {
     ROOM_ID: 1987060053,
-    COOKIE: "buvid3=223501E9-A560-28C2-7A61-E292FB74402D49871infoc; b_nut=1767662749; _uuid=61171E9E-10497-110D1-28102-4968153C8C81052051infoc; buvid_fp=c6384a8548e2aae2e109a5bbb95ad582; rpdid=|(u))RJuYull0J'u~Y~YYk~lu; buvid4=16C5AE38-1A08-0899-6684-98C1C032321C51311-026010609-eo3VCPNLURmqbSVDjdB/6g%3D%3D; DedeUserID=3461580045945354; DedeUserID__ckMd5=095a841800f14c1a; theme-tip-show=SHOWED; theme-avatar-tip-show=SHOWED; hit-dyn-v1=1; hit-dyn-v2=1; LIVE_BUVID=AUTO5517689234119651; CURRENT_QUALITY=100; theme-switch-show=SHOWED; home_feed_column=4; CURRENT_FNVAL=4048; bili_ticket=eyJhbGciOiJIUzI1NiIsImtpZCI6InMwMyIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODY1ODkzNzYsImlhdCI6MTc4NjMzMDExNiwicGx0IjotMX0.JUdJT5B7clNSrvnDLk7EfW8okPmDOtleGy5cVQ-IJkg; bili_ticket_expires=1786589316; SESSDATA=3f897343%2C1802139228%2C35b96%2A82CjCK91oYkLWdUsyYiuqeqXOglLa4NAVyleetFuzmx5Blekw_AY9UEt0oQ-PpOv6M4kASVlJwZFFPOXZ2X0hxTEt1eUJGSjZQWmhoR09BTktseURwSWJfRlk4d0VhTUdLcU1hclhiV1k3WlBCb2hSenN6bGxoalVKLV9MLUlfa3JDemY2YWR4UGJ3IIEC; bili_jct=a021d7438671dec2f999e36c161b6e7a; sid=ox1qix5z; browser_resolution=1265-768; bp_t_offset_3461580045945354=1235872037650563072; b_lsid=66CDB675_19FF8E7A0F9",
-    UID: 3461580045945354
+    COOKIE: "buvid3=223501E9-A560-28C2-7A61-E292FB74402D49871infoc; b_nut=1767662749; _uuid=61171E9E-10497-110D1-28102-4968153C8C81052051infoc; buvid_fp=c6384a8548e2aae2e109a5bbb95ad582; rpdid=|(u))RJuYull0J'u~Y~YYk~lu; buvid4=16C5AE38-1A08-0899-6684-98C1C032321C51311-026010609-eo3VCPNLURmqbSVDjdB/6g%3D%3D; DedeUserID=3461580045945354; DedeUserID__ckMd5=095a841800f14c1a; theme-tip-show=SHOWED; theme-avatar-tip-show=SHOWED; hit-dyn-v2=1; LIVE_BUVID=AUTO5517689234119651; CURRENT_QUALITY=100; theme-switch-show=SHOWED; home_feed_column=4; CURRENT_FNVAL=4048; bili_ticket=eyJhbGciOiJIUzI1NiIsImtpZCI6InMwMyIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODY1ODkzNzYsImlhdCI6MTc4NjMzMDExNiwicGx0IjotMX0.JUdJT5B7clNSrvnDLk7EfW8okPmDOtleGy5cVQ-IJkg; bili_ticket_expires=1786589316; SESSDATA=3f897343%2C1802139228%2C35b96%2A82CjCK91oYkLWdUsyYiuqeqXOglLa4NAVyleetFuzmx5Blekw_AY9UEt0oQ-PpOv6M4kASVlJwZFFPOXZ2X0hxTEt1eUJGSjZQWmhoR09BTktseURwSWJfRlk4d0VhTUdLcU1hclhiV1k3WlBCb2hSenN6bGxoalVKLV9MLUlfa3JDemY2YWR4UGJ3IIEC; bili_jct=a021d7438671dec2f999e36c161b6e7a; sid=ox1qix5z; browser_resolution=1265-768; bp_t_offset_3461580045945354=1235872037650563072; b_lsid=66CDB675_19FF8E7A0F9",
+    UID: 3461580045945354,
+    // CORS 代理地址（可更换）
+    PROXY: 'https://cors-anywhere.herokuapp.com/'
 };
 
 // ================================================================
@@ -358,90 +372,88 @@ function processDanmu(username, content) {
 }
 
 // ================================================================
-// 原生 WebSocket 连接 B站弹幕服务器
+// 使用 CORS 代理获取房间信息
+// ================================================================
+async function getRoomInfo(roomId) {
+    const proxy = CONFIG.PROXY;
+    // 获取真实房间号
+    const initUrl = `https://api.live.bilibili.com/room/v1/Room/room_init?id=${roomId}`;
+    const initResp = await fetch(proxy + initUrl, {
+        headers: {
+            'Cookie': CONFIG.COOKIE,
+            'Origin': window.location.origin,
+            'Referer': 'https://live.bilibili.com/'
+        }
+    });
+    if (!initResp.ok) throw new Error(`获取房间信息失败 (HTTP ${initResp.status})`);
+    const initData = await initResp.json();
+    if (initData.code !== 0) throw new Error(`API错误: ${initData.message}`);
+    const realRoomId = initData.data.room_id;
+
+    // 获取弹幕配置（token + host）
+    const confUrl = `https://api.live.bilibili.com/room/v1/Danmu/getConf?room_id=${realRoomId}&platform=pc&player=web`;
+    const confResp = await fetch(proxy + confUrl, {
+        headers: {
+            'Cookie': CONFIG.COOKIE,
+            'Origin': window.location.origin,
+            'Referer': 'https://live.bilibili.com/'
+        }
+    });
+    if (!confResp.ok) throw new Error(`获取弹幕配置失败 (HTTP ${confResp.status})`);
+    const confData = await confResp.json();
+    if (confData.code !== 0) throw new Error(`API错误: ${confData.message}`);
+    const host = confData.data.host;
+    const token = confData.data.token;
+
+    return { realRoomId, host, token };
+}
+
+// ================================================================
+// 原生 WebSocket 连接（与之前相同）
 // ================================================================
 let ws = null;
 let wsHeartbeatTimer = null;
 let isConnected = false;
 
-/**
- * 获取直播间真实房间号和 token
- */
-async function getRoomInfo(roomId) {
-    // 第一步：获取真实房间号（长号）
-    const initRes = await fetch(`https://api.live.bilibili.com/room/v1/Room/room_init?id=${roomId}`);
-    const initData = await initRes.json();
-    if (initData.code !== 0) throw new Error(`获取房间信息失败: ${initData.message}`);
-    const realRoomId = initData.data.room_id;
-
-    // 第二步：获取弹幕服务器地址和 token
-    const confRes = await fetch(`https://api.live.bilibili.com/room/v1/Danmu/getConf?room_id=${realRoomId}&platform=pc&player=web`);
-    const confData = await confRes.json();
-    if (confData.code !== 0) throw new Error(`获取弹幕配置失败: ${confData.message}`);
-    const host = confData.data.host;
-    const token = confData.data.token;
-    return { realRoomId, host, token };
-}
-
-/**
- * 构建 B站弹幕协议数据包（二进制）
- */
 function encodePacket(data, op) {
-    // 数据包结构: 长度(4字节) + 头部(16字节) + 数据
     const body = typeof data === 'string' ? new TextEncoder().encode(data) : data;
     const packet = new ArrayBuffer(16 + body.length);
     const view = new DataView(packet);
-    view.setUint32(0, 16 + body.length, false);          // 总长度
-    view.setUint16(4, 16, false);                         // 头部长度
-    view.setUint16(6, 1, false);                          // 协议版本 (1=普通, 3=压缩)
-    view.setUint32(8, op, false);                         // 操作码 (2=心跳, 7=认证, 8=心跳回复)
-    view.setUint32(12, 1, false);                         // 序列号
+    view.setUint32(0, 16 + body.length, false);
+    view.setUint16(4, 16, false);
+    view.setUint16(6, 1, false);
+    view.setUint32(8, op, false);
+    view.setUint32(12, 1, false);
     if (body.length > 0) {
         new Uint8Array(packet, 16).set(new Uint8Array(body));
     }
     return packet;
 }
 
-/**
- * 解码弹幕数据包（处理可能的 zlib 压缩）
- */
 function decodePacket(data) {
-    // 这里简化处理，仅解析普通的 JSON 弹幕，不处理压缩
-    // 实际上 B站使用 protobuf，但弹幕消息是 JSON 格式
-    // 我们只提取 DANMU_MSG 类型的消息
     try {
         const view = new DataView(data);
         const length = view.getUint32(0, false);
         const headerLen = view.getUint16(4, false);
         const protoVer = view.getUint16(6, false);
         const op = view.getUint32(8, false);
-        const seq = view.getUint32(12, false);
-
-        if (op === 5) { // 消息
+        if (op === 5) {
             const body = new Uint8Array(data, headerLen, length - headerLen);
-            // 如果 protoVer === 2 或 3，可能需要 zlib 解压，但这里我们先尝试直接解析文本
-            // B站弹幕通常是 JSON 字符串
             const text = new TextDecoder().decode(body);
             try {
                 const json = JSON.parse(text);
                 if (json.cmd === 'DANMU_MSG') {
-                    // 解析弹幕
                     const info = json.info;
-                    const username = info[2][1]; // 用户名
-                    const content = info[1];     // 弹幕内容
+                    const username = info[2][1];
+                    const content = info[1];
                     return { username, content };
                 }
-            } catch (e) {
-                // 忽略非 JSON 数据
-            }
+            } catch (e) {}
         }
     } catch (e) {}
     return null;
 }
 
-/**
- * 启动弹幕监听
- */
 async function startDanmuListener() {
     if (isConnected) {
         addLog('⚠️ 已处于连接状态', 'warn');
@@ -449,20 +461,18 @@ async function startDanmuListener() {
     }
 
     try {
-        addLog(`🔄 正在获取直播间 ${CONFIG.ROOM_ID} 信息...`, 'info');
+        addLog(`🔄 正在通过代理获取直播间 ${CONFIG.ROOM_ID} 信息...`, 'info');
         connectionStatus.textContent = '连接中...';
         connectionStatus.className = 'status';
 
         const { realRoomId, host, token } = await getRoomInfo(CONFIG.ROOM_ID);
         addLog(`✅ 获取成功，真实房间号: ${realRoomId}`, 'ok');
 
-        // 建立 WebSocket
         const wsUrl = `wss://${host}/sub`;
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-            addLog(`🔗 WebSocket 已连接，正在发送认证包...`, 'info');
-            // 发送认证包 (操作码 7)
+            addLog(`🔗 WebSocket 已连接，发送认证包...`, 'info');
             const authData = {
                 uid: CONFIG.UID,
                 roomid: realRoomId,
@@ -470,13 +480,11 @@ async function startDanmuListener() {
                 platform: 'web',
                 clientver: '1.0.0',
                 token: token,
-                // 也可以带上 cookie，但一般 token 就够了
             };
             const authJson = JSON.stringify(authData);
             const packet = encodePacket(authJson, 7);
             ws.send(packet);
 
-            // 启动心跳 (每 30 秒)
             if (wsHeartbeatTimer) clearInterval(wsHeartbeatTimer);
             wsHeartbeatTimer = setInterval(() => {
                 if (ws && ws.readyState === WebSocket.OPEN) {
@@ -487,16 +495,8 @@ async function startDanmuListener() {
         };
 
         ws.onmessage = (event) => {
-            // 可能收到多个数据包（合并），需要循环解析
-            const data = event.data;
-            if (typeof data === 'string') {
-                // 如果是文本，可能是 JSON（但 B站通常二进制）
-                return;
-            }
-            // 处理 ArrayBuffer
-            const buffer = data;
-            // 简单假设一个包只包含一条消息，实际可能多个，但我们可以循环处理
-            const result = decodePacket(buffer);
+            if (typeof event.data === 'string') return;
+            const result = decodePacket(event.data);
             if (result) {
                 processDanmu(result.username, result.content);
             }
@@ -516,11 +516,8 @@ async function startDanmuListener() {
 
         ws.onerror = (err) => {
             addLog(`⚠️ WebSocket 错误: ${err.message || '未知错误'}`, 'err');
-            // 不会自动重连，需要用户手动点重连
         };
 
-        // 等待 onopen 触发，但为了及时反馈，先假设连接成功，后续通过 onopen/onclose 更新状态
-        // 但我们需要一个超时检测
         let timeout = setTimeout(() => {
             if (!isConnected && ws && ws.readyState !== WebSocket.OPEN) {
                 addLog('⏳ 连接超时，请检查网络或 Cookie 是否有效', 'warn');
@@ -530,7 +527,6 @@ async function startDanmuListener() {
             }
         }, 15000);
 
-        // 在 onopen 中清除超时
         const originalOnOpen = ws.onopen;
         ws.onopen = function(e) {
             clearTimeout(timeout);
@@ -553,14 +549,8 @@ async function startDanmuListener() {
 }
 
 function stopDanmuListener() {
-    if (ws) {
-        try { ws.close(); } catch (e) {}
-        ws = null;
-    }
-    if (wsHeartbeatTimer) {
-        clearInterval(wsHeartbeatTimer);
-        wsHeartbeatTimer = null;
-    }
+    if (ws) { try { ws.close(); } catch (e) {} ws = null; }
+    if (wsHeartbeatTimer) { clearInterval(wsHeartbeatTimer); wsHeartbeatTimer = null; }
     isConnected = false;
     connectionStatus.textContent = '已断开';
     connectionStatus.className = 'status offline';
