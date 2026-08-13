@@ -2,344 +2,446 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B站直播间弹幕(cors-anywhere)</title>
+    <title>B站直播弹幕获取</title>
     <style>
-        /* 样式与之前相同，省略，可复用前文样式 */
-        body { font-family: system-ui, sans-serif; background: #f4f5f7; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
-        #app { max-width: 800px; width: 100%; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 20px; }
-        #status { padding: 10px 16px; border-radius: 20px; display: inline-block; font-weight: 500; margin-bottom: 15px; }
-        .status-connected { background: #e8f5e9; color: #2e7d32; }
-        .status-connecting { background: #fff3e0; color: #e65100; }
-        .status-error { background: #ffebee; color: #c62828; }
-        .status-disconnected { background: #f5f5f5; color: #616161; }
-        #danmaku-container { height: 500px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; background: #fafafa; display: flex; flex-direction: column; gap: 6px; }
-        .danmaku-item { padding: 8px 12px; background: white; border-radius: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 14px; border-left: 4px solid #00a1d6; animation: fadeIn 0.3s ease; word-break: break-all; }
-        .danmaku-item .user { color: #00a1d6; font-weight: 600; margin-right: 8px; }
-        .danmaku-item .time { color: #999; font-size: 12px; margin-left: 8px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-        #controls { margin-top: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        button { padding: 10px 24px; border: none; border-radius: 20px; font-size: 16px; font-weight: 500; background: #00a1d6; color: white; cursor: pointer; transition: background 0.2s; }
-        button:hover { background: #0088b0; }
-        button:disabled { background: #b0bec5; cursor: not-allowed; }
-        #log { margin-top: 15px; padding: 10px; background: #263238; color: #aed581; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px; height: 150px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
-        .proxy-notice { font-size: 13px; color: #888; margin-top: 10px; background: #fff3cd; padding: 8px 12px; border-radius: 6px; }
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 800px;
+            max-width: 100%;
+            padding: 20px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        .control {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .control input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .control button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            background: #00a1d6;
+            color: #fff;
+        }
+        .control button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #status {
+            padding: 8px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: #666;
+        }
+        #danmaku {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            padding: 10px;
+            background: #fafafa;
+        }
+        .danmaku-item {
+            margin-bottom: 6px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-break: break-all;
+        }
+        .danmaku-item .user {
+            color: #00a1d6;
+            font-weight: bold;
+            margin-right: 6px;
+        }
+        .danmaku-item .text {
+            color: #333;
+        }
+        .gift-item {
+            color: #ff9900;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
     </style>
 </head>
 <body>
-<div id="app">
-    <h2>🎤 直播间弹幕实时监控</h2>
-    <p>房间号: <strong>1987060053</strong></p>
-    <div id="status" class="status-disconnected">⚪ 未连接</div>
-    <div id="controls">
-        <button id="connectBtn">🔌 连接</button>
-        <button id="disconnectBtn" disabled>⏹️ 断开</button>
-        <button id="clearBtn">🗑️ 清空</button>
+    <div class="container">
+        <h2>B站直播弹幕获取器</h2>
+        <div class="control">
+            <input type="text" id="roomId" value="1987060053" placeholder="请输入B站直播间房间号">
+            <button id="connectBtn" onclick="connect()">连接</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>断开</button>
+        </div>
+        <div id="status">未连接</div>
+        <div id="danmaku"></div>
     </div>
-    <div id="danmaku-container"></div>
-    <div id="log">[系统] 等待连接...</div>
-    <div class="proxy-notice">
-        ⚠️ 使用 <strong>cors-anywhere</strong> 代理，<br> 
-        请先访问 <a href="https://cors-anywhere.herokuapp.com/" target="_blank">https://cors-anywhere.herokuapp.com/</a> 
-        点击 “Request temporary access” 授权后再连接。
-    </div>
-</div>
 
-<script>
-    (function() {
-        // --- DOM 引用 ---
-        const statusEl = document.getElementById('status');
-        const connectBtn = document.getElementById('connectBtn');
-        const disconnectBtn = document.getElementById('disconnectBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const container = document.getElementById('danmaku-container');
-        const logEl = document.getElementById('log');
-
-        // --- 配置 ---
-        const ROOM_ID = 1987060053;
-        const USE_PROXY = true;
-        const PROXY_URL = 'https://cors-anywhere.herokuapp.com/';  // 使用 cors-anywhere
-
-        // --- 状态变量 ---
+    <!-- 引入 pako 用于解压 zlib 数据 -->
+    <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+    <script>
         let ws = null;
-        let heartbeatInterval = null;
-        let isConnected = false;
+        let heartbeatTimer = null;
+        let realRoomId = null;
+        let token = null;
+        let hostList = [];
+        let currentHostIndex = 0;
+        let manualDisconnect = false;
 
-        // --- 辅助函数 ---
-        function log(message, isError = false) {
-            const time = new Date().toLocaleTimeString();
-            const prefix = isError ? '❌' : 'ℹ️';
-            const line = `[${time}] ${prefix} ${message}`;
-            logEl.textContent += line + '\n';
-            logEl.scrollTop = logEl.scrollHeight;
-        }
-
-        function setStatus(state, text) {
-            statusEl.textContent = text;
-            statusEl.className = 'status-' + state;
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // --- WBI 签名生成 ---
-        function generateWbiSign(params) {
-            const wts = Math.floor(Date.now() / 1000);
-            const newParams = { ...params, wts };
-            const sortedKeys = Object.keys(newParams).sort();
-            let queryString = '';
-            for (const key of sortedKeys) {
-                if (queryString) queryString += '&';
-                queryString += `${key}=${newParams[key]}`;
-            }
-            const secretKey = 'ea1db124af3c7062474693fa704f4ff8';
-            const signString = queryString + secretKey;
-            const w_rid = window.md5 ? window.md5(signString) : 'dummy';
-            return { wts, w_rid };
-        }
-
-        // --- 解析弹幕包 ---
-        function parseDanmakuPacket(buffer) {
+        /**
+         * 请求 JSON 数据，带 CORS 代理回退
+         */
+        async function fetchJson(url) {
             try {
-                const data = new Uint8Array(buffer);
-                let offset = 0;
-                const packets = [];
-                while (offset < data.length) {
-                    if (offset + 4 > data.length) break;
-                    const totalLen = (data[offset] << 24) | (data[offset+1] << 16) | 
-                                     (data[offset+2] << 8) | data[offset+3];
-                    if (totalLen === 0 || offset + totalLen > data.length) break;
-                    const headerLen = (data[offset+4] << 8) | data[offset+5];
-                    const op = (data[offset+8] << 8) | data[offset+9];
-                    let body = null;
-                    if (totalLen > headerLen) {
-                        const bodyStart = offset + headerLen;
-                        const bodyLen = totalLen - headerLen;
-                        const bodyBytes = data.slice(bodyStart, bodyStart + bodyLen);
-                        try {
-                            const jsonStr = new TextDecoder('utf-8').decode(bodyBytes);
-                            body = JSON.parse(jsonStr);
-                        } catch (e) {}
-                    }
-                    if (op === 3 && body && body.cmd === 'DANMU_MSG') {
-                        const info = body.info;
-                        if (info && info.length >= 3) {
-                            const msg = info[1];
-                            const user = info[2][1];
-                            const time = new Date().toLocaleTimeString();
-                            packets.push({ user, msg, time });
-                        }
-                    }
-                    offset += totalLen;
-                }
-                return packets;
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return await res.json();
             } catch (e) {
-                log('解析数据包时出错: ' + e.message, true);
-                return [];
+                // 尝试通过公共 CORS 代理
+                const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+                const res = await fetch(proxyUrl);
+                if (!res.ok) throw new Error('代理请求失败: ' + e.message);
+                return await res.json();
             }
         }
 
-        // --- 发送心跳 ---
-        function sendHeartbeat() {
-            if (!ws || ws.readyState !== WebSocket.OPEN) return;
-            try {
-                const buffer = new ArrayBuffer(16);
-                const view = new DataView(buffer);
-                view.setUint32(0, 16);
-                view.setUint16(4, 16);
-                view.setUint16(6, 1);
-                view.setUint16(8, 2);
-                view.setUint32(12, 0);
-                ws.send(buffer);
-            } catch (e) {
-                log('发送心跳失败: ' + e.message, true);
-            }
-        }
-
-        // --- 发送认证包 ---
-        function sendAuthPacket(token) {
-            if (!ws || ws.readyState !== WebSocket.OPEN) return;
-            try {
-                const authData = {
-                    uid: 0,
-                    roomid: ROOM_ID,
-                    protover: 2,
-                    platform: 'web',
-                    type: 1,
-                    key: token
-                };
-                const jsonStr = JSON.stringify(authData);
-                const encoder = new TextEncoder();
-                const jsonBytes = encoder.encode(jsonStr);
-                const totalLen = 16 + jsonBytes.length;
-
-                const buffer = new ArrayBuffer(totalLen);
-                const view = new DataView(buffer);
-                view.setUint32(0, totalLen);
-                view.setUint16(4, 16);
-                view.setUint16(6, 1);
-                view.setUint16(8, 7);
-                view.setUint32(12, 1);
-
-                const bodyStart = 16;
-                for (let i = 0; i < jsonBytes.length; i++) {
-                    view.setUint8(bodyStart + i, jsonBytes[i]);
-                }
-                ws.send(buffer);
-                log('✅ 认证包已发送 (房间: ' + ROOM_ID + ')');
-            } catch (e) {
-                log('发送认证包失败: ' + e.message, true);
-            }
-        }
-
-        // --- 连接弹幕服务器 ---
+        /**
+         * 连接直播间
+         */
         async function connect() {
-            if (isConnected) return;
+            const roomIdInput = document.getElementById('roomId').value.trim();
+            if (!roomIdInput) {
+                alert('请输入房间号');
+                return;
+            }
 
-            setStatus('connecting', '⏳ 正在连接...');
-            connectBtn.disabled = true;
-            disconnectBtn.disabled = true;
-            log('正在获取弹幕服务器信息...');
+            manualDisconnect = false;
+            setStatus('正在获取房间信息...');
+            document.getElementById('connectBtn').disabled = true;
+            document.getElementById('disconnectBtn').disabled = false;
+            clearDanmaku();
 
             try {
-                // 生成 WBI 签名
-                const baseParams = { id: ROOM_ID, type: 0 };
-                const { wts, w_rid } = generateWbiSign(baseParams);
-                log(`生成签名: wts=${wts}, w_rid=${w_rid.substring(0, 8)}...`);
+                // 1. 获取真实房间号
+                const roomInit = await fetchJson(
+                    `https://api.live.bilibili.com/room/v1/Room/room_init?id=${roomIdInput}`
+                );
+                if (roomInit.code !== 0) throw new Error('获取房间信息失败: ' + roomInit.msg);
+                realRoomId = roomInit.data.room_id;
+                setStatus(`真实房间号: ${realRoomId}，正在获取弹幕服务器...`);
 
-                const targetUrl = `https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo?id=${ROOM_ID}&type=0&wts=${wts}&w_rid=${w_rid}`;
-                // 注意：cors-anywhere 的用法是直接在原 URL 前加代理地址
-                const fetchUrl = USE_PROXY ? PROXY_URL + targetUrl : targetUrl;
-                log('请求 URL: ' + fetchUrl);
+                // 2. 获取弹幕服务器配置
+                const danmuInfo = await fetchJson(
+                    `https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo?id=${realRoomId}`
+                );
+                if (danmuInfo.code !== 0) throw new Error('获取弹幕服务器信息失败: ' + danmuInfo.msg);
 
-                const resp = await fetch(fetchUrl);
-                if (!resp.ok) {
-                    // 如果返回 403，可能是未授权，提示用户先访问 cors-anywhere 授权
-                    if (resp.status === 403) {
-                        throw new Error('代理返回 403，请先访问 https://cors-anywhere.herokuapp.com/ 点击 "Request temporary access" 授权');
-                    }
-                    throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
-                }
-                const data = await resp.json();
+                token = danmuInfo.data.token;
+                hostList = danmuInfo.data.host_list;
+                if (!hostList || hostList.length === 0) throw new Error('未获取到弹幕服务器地址');
 
-                if (data.code !== 0) {
-                    throw new Error(`API 返回错误: ${data.code} - ${data.message || '未知错误'}`);
-                }
-
-                const hostList = data.data.host_list;
-                const token = data.data.token;
-                if (!hostList || hostList.length === 0 || !token) {
-                    throw new Error('未获取到有效的服务器地址或 token');
-                }
-
-                const host = hostList[0];
-                const wsUrl = `wss://${host.host}:${host.wss_port}/sub`;
-                log(`获取到服务器: ${host.host}, token: ${token.substring(0, 8)}...`);
-
-                // WebSocket 连接
-                ws = new WebSocket(wsUrl);
-
-                ws.onopen = function() {
-                    isConnected = true;
-                    setStatus('connected', '✅ 已连接');
-                    connectBtn.disabled = true;
-                    disconnectBtn.disabled = false;
-                    log('WebSocket 连接已建立');
-                    sendAuthPacket(token);
-                    if (heartbeatInterval) clearInterval(heartbeatInterval);
-                    heartbeatInterval = setInterval(sendHeartbeat, 30000);
-                };
-
-                ws.onmessage = function(event) {
-                    if (event.data instanceof ArrayBuffer) {
-                        const packets = parseDanmakuPacket(event.data);
-                        for (const p of packets) {
-                            const item = document.createElement('div');
-                            item.className = 'danmaku-item';
-                            item.innerHTML = `
-                                <span class="user">${escapeHtml(p.user)}</span>
-                                <span>${escapeHtml(p.msg)}</span>
-                                <span class="time">${p.time}</span>
-                            `;
-                            container.appendChild(item);
-                            container.scrollTop = container.scrollHeight;
-                            log(`💬 ${p.user}: ${p.msg}`);
-                        }
-                    }
-                };
-
-                ws.onerror = function(error) {
-                    log('WebSocket 错误: ' + (error.message || '未知错误'), true);
-                    setStatus('error', '⚠️ 连接错误');
-                };
-
-                ws.onclose = function(event) {
-                    log(`连接已关闭 (代码: ${event.code}, 原因: ${event.reason || '无'})`);
-                    disconnectInternal();
-                };
-
-            } catch (error) {
-                log('连接失败: ' + error.message, true);
-                setStatus('error', '❌ 连接失败');
-                connectBtn.disabled = false;
-                disconnectBtn.disabled = true;
+                currentHostIndex = 0;
+                connectToHost();
+            } catch (e) {
+                setStatus('连接失败: ' + e.message);
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = true;
             }
         }
 
-        // --- 断开连接 ---
-        function disconnectInternal() {
-            isConnected = false;
-            if (heartbeatInterval) {
-                clearInterval(heartbeatInterval);
-                heartbeatInterval = null;
+        /**
+         * 连接弹幕服务器（尝试 host_list 中的每个地址）
+         */
+        function connectToHost() {
+            if (currentHostIndex >= hostList.length) {
+                setStatus('所有弹幕服务器连接失败');
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = true;
+                return;
             }
+
+            const host = hostList[currentHostIndex];
+            const port = host.wss_port || host.ws_port || 443;
+            const url = `wss://${host.host}:${port}/sub`;
+            setStatus(`正在连接弹幕服务器 ${host.host}:${port} ...`);
+
+            // 关闭旧连接
             if (ws) {
-                try { ws.close(); } catch (e) {}
+                ws.onclose = null;
+                ws.onerror = null;
+                ws.close();
+            }
+
+            ws = new WebSocket(url);
+            ws.binaryType = 'arraybuffer';
+
+            ws.onopen = () => {
+                setStatus('已连接，正在发送认证...');
+                sendAuth();
+                startHeartbeat();
+            };
+
+            ws.onmessage = (event) => {
+                handleMessage(event);
+            };
+
+            ws.onerror = () => {
+                if (manualDisconnect) return;
+                console.error('WebSocket 连接错误，尝试下一个服务器...');
+                currentHostIndex++;
+                if (currentHostIndex < hostList.length) {
+                    connectToHost();
+                } else {
+                    setStatus('所有弹幕服务器连接失败');
+                    document.getElementById('connectBtn').disabled = false;
+                    document.getElementById('disconnectBtn').disabled = true;
+                }
+            };
+
+            ws.onclose = () => {
+                if (manualDisconnect) return;
+                setStatus('连接已关闭');
+                clearInterval(heartbeatTimer);
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = true;
+            };
+        }
+
+        /**
+         * 断开连接
+         */
+        function disconnect() {
+            manualDisconnect = true;
+            clearInterval(heartbeatTimer);
+            if (ws) {
+                ws.onclose = null;
+                ws.onerror = null;
+                ws.close();
                 ws = null;
             }
-            setStatus('disconnected', '⚪ 未连接');
-            connectBtn.disabled = false;
-            disconnectBtn.disabled = true;
-            log('已断开连接');
+            setStatus('已断开连接');
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('disconnectBtn').disabled = true;
         }
 
-        function disconnect() {
-            if (!isConnected) return;
-            disconnectInternal();
+        /**
+         * 发送认证包
+         */
+        function sendAuth() {
+            const authData = {
+                uid: 0,
+                roomid: realRoomId,
+                protover: 2,          // 期望服务器使用 zlib 压缩
+                platform: 'web',
+                type: 2,
+                key: token
+            };
+            const body = new TextEncoder().encode(JSON.stringify(authData));
+            sendPacket(7, body, 1);   // 操作码 7 = 认证，协议版本 1（未压缩）
         }
 
+        /**
+         * 发送心跳包（每 30 秒）
+         */
+        function startHeartbeat() {
+            clearInterval(heartbeatTimer);
+            heartbeatTimer = setInterval(() => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    // B站心跳包 body 通常为 "[object Object]"
+                    const body = new TextEncoder().encode('[object Object]');
+                    sendPacket(2, body, 1);  // 操作码 2 = 心跳
+                }
+            }, 30000);
+        }
+
+        /**
+         * 发送 B站弹幕协议数据包
+         * @param {number} op       操作码
+         * @param {Uint8Array} body 包体
+         * @param {number} protover 协议版本（当前包体是否压缩）
+         */
+        function sendPacket(op, body, protover = 1) {
+            const headerLen = 16;
+            const totalLen = headerLen + body.byteLength;
+            const buffer = new ArrayBuffer(totalLen);
+            const view = new DataView(buffer);
+
+            view.setUint32(0, totalLen);      // 总长度
+            view.setUint16(4, headerLen);     // 头部长度
+            view.setUint16(6, protover);      // 协议版本
+            view.setUint32(8, op);            // 操作码
+            view.setUint32(12, 1);            // 序列号
+
+            new Uint8Array(buffer, headerLen).set(body);
+            ws.send(buffer);
+        }
+
+        /**
+         * 处理 WebSocket 收到的消息
+         */
+        function handleMessage(event) {
+            const data = new Uint8Array(event.data);
+            parsePackets(data);
+        }
+
+        /**
+         * 解析 B站弹幕协议数据包（可能包含多条消息）
+         */
+        function parsePackets(data) {
+            const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+            let offset = 0;
+
+            while (offset < data.byteLength) {
+                const packetLen = view.getUint32(offset);
+                if (packetLen <= 0 || offset + packetLen > data.byteLength) break;
+
+                const headerLen = view.getUint16(offset + 4);
+                const protover = view.getUint16(offset + 6);
+                const op = view.getUint32(offset + 8);
+                // const seq = view.getUint32(offset + 12);
+
+                const body = data.subarray(offset + headerLen, offset + packetLen);
+
+                if (op === 5) {
+                    // 普通消息（弹幕等）
+                    if (protover === 2) {
+                        // zlib 压缩，需要解压
+                        try {
+                            const inflated = pako.inflate(body);
+                            parsePackets(inflated);  // 递归解析解压后的数据
+                        } catch (e) {
+                            console.error('解压数据失败', e);
+                        }
+                    } else if (protover === 0 || protover === 1) {
+                        // 未压缩的 JSON 字符串
+                        const text = new TextDecoder().decode(body);
+                        try {
+                            const json = JSON.parse(text);
+                            handleCommand(json);
+                        } catch (e) {
+                            // 忽略无法解析的消息
+                        }
+                    }
+                } else if (op === 8) {
+                    // 认证回应
+                    const text = new TextDecoder().decode(body);
+                    console.log('认证回应:', text);
+                    setStatus('已连接，正在接收弹幕...');
+                } else if (op === 3) {
+                    // 心跳回应，无需处理
+                }
+
+                offset += packetLen;
+            }
+        }
+
+        /**
+         * 处理具体命令
+         */
+        function handleCommand(json) {
+            switch (json.cmd) {
+                case 'DANMU_MSG': {
+                    const info = json.info;
+                    const text = info[1];
+                    const user = info[2] ? info[2][1] : '未知用户';
+                    addDanmaku(user, text);
+                    break;
+                }
+                case 'SEND_GIFT': {
+                    const data = json.data;
+                    const user = data.uname;
+                    const giftName = data.giftName;
+                    const num = data.num;
+                    addGift(`${user} 赠送 ${giftName} x${num}`);
+                    break;
+                }
+                case 'INTERACT_WORD': {
+                    // 进场消息，可选显示
+                    // const data = json.data;
+                    // addDanmaku('系统', `${data.uname} 进入直播间`);
+                    break;
+                }
+                default:
+                    // 其他消息忽略
+                    break;
+            }
+        }
+
+        /**
+         * 添加弹幕到显示区域
+         */
+        function addDanmaku(user, text) {
+            const container = document.getElementById('danmaku');
+            const item = document.createElement('div');
+            item.className = 'danmaku-item';
+            const userSpan = document.createElement('span');
+            userSpan.className = 'user';
+            userSpan.textContent = user + ':';
+            const textSpan = document.createElement('span');
+            textSpan.className = 'text';
+            textSpan.textContent = text;
+            item.appendChild(userSpan);
+            item.appendChild(textSpan);
+            container.appendChild(item);
+
+            // 限制显示数量，避免 DOM 过大
+            while (container.children.length > 200) {
+                container.removeChild(container.firstChild);
+            }
+            container.scrollTop = container.scrollHeight;
+        }
+
+        /**
+         * 添加礼物消息
+         */
+        function addGift(text) {
+            const container = document.getElementById('danmaku');
+            const item = document.createElement('div');
+            item.className = 'gift-item';
+            item.textContent = text;
+            container.appendChild(item);
+            while (container.children.length > 200) {
+                container.removeChild(container.firstChild);
+            }
+            container.scrollTop = container.scrollHeight;
+        }
+
+        /**
+         * 清空弹幕区域
+         */
         function clearDanmaku() {
-            container.innerHTML = '';
-            log('弹幕列表已清空');
+            document.getElementById('danmaku').innerHTML = '';
         }
 
-        // --- 绑定事件 ---
-        connectBtn.addEventListener('click', connect);
-        disconnectBtn.addEventListener('click', disconnect);
-        clearBtn.addEventListener('click', clearDanmaku);
-
-        window.addEventListener('beforeunload', function() {
-            if (ws) try { ws.close(); } catch (e) {}
-            if (heartbeatInterval) clearInterval(heartbeatInterval);
-        });
-
-        log('🟢 页面已加载，点击 "连接" 开始获取弹幕');
-        log('ℹ️ 请先访问 cors-anywhere 授权页面 (见页面提示)');
-
-        // 动态加载 MD5 库
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js';
-        script.onload = () => {
-            log('✅ MD5 库加载成功');
-        };
-        script.onerror = () => {
-            log('⚠️ MD5 库加载失败，签名无效', true);
-        };
-        document.head.appendChild(script);
-    })();
-</script>
+        /**
+         * 更新状态显示
+         */
+        function setStatus(text) {
+            document.getElementById('status').textContent = text;
+        }
+    </script>
 </body>
 </html>
