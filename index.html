@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B站自动存票系统 (多代理版)</title>
+    <title>B站自动存票系统 (CORS代理版)</title>
     <style>
-        /* 样式与之前完全相同，此处略，完整复制前面的样式即可 */
+        /* ===== 完全相同的样式（与之前一致） ===== */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -165,6 +165,12 @@
             border-radius: 4px;
             font-size: 12px;
         }
+        @media (max-width: 600px) {
+            .container { padding: 16px; }
+            .flex-row input, .flex-row select { flex: 1 1 100%; }
+            .flex-row button { flex: 1 1 auto; }
+            td:last-child { white-space: normal; }
+        }
         .proxy-warning {
             background: #fff3cd;
             border-left: 4px solid #ffc107;
@@ -174,22 +180,24 @@
             color: #856404;
             margin: 10px 0;
         }
-        @media (max-width: 600px) {
-            .container { padding: 16px; }
-            .flex-row input, .flex-row select { flex: 1 1 100%; }
-            .flex-row button { flex: 1 1 auto; }
-            td:last-child { white-space: normal; }
-        }
     </style>
 </head>
 <body>
+
 <div class="container">
-    <h1>📦 自动存票系统 <small>多代理 · 硬编码</small></h1>
-    <div class="fixed-info">🔒 已固定配置：直播间 <strong>1987060053</strong> ｜ 用户 UID <strong>3461580045945354</strong></div>
-    <div class="proxy-warning">
-        ⚠️ 使用公共CORS代理，若首次使用需<a href="https://cors-anywhere.herokuapp.com/" target="_blank">点击这里</a>申请临时访问（仅需一次）。
-        <br>若失败，可尝试切换代理（代码中已内置多个）。
+    <h1>
+        📦 自动存票系统
+        <small>CORS代理 · 硬编码</small>
+    </h1>
+
+    <div class="fixed-info">
+        🔒 已固定配置：直播间 <strong>1987060053</strong> ｜ 用户 UID <strong>3461580045945354</strong> ｜ 自动监听弹幕
     </div>
+
+    <div class="proxy-warning">
+        ⚠️ 使用公共 CORS 代理（cors-anywhere），首次使用可能需要 <a href="https://cors-anywhere.herokuapp.com/" target="_blank">点击这里</a> 申请临时访问（只需一次）。
+    </div>
+
     <div class="section">
         <div class="section-title">🔌 连接状态</div>
         <div class="flex-row">
@@ -198,6 +206,7 @@
             <button class="danger" id="btnDisconnect">🔴 断开连接</button>
         </div>
     </div>
+
     <div class="section">
         <div class="section-title">👤 用户管理</div>
         <div class="flex-row">
@@ -207,16 +216,20 @@
             <button class="outline" id="btnClearAll">🗑️ 清空所有数据</button>
         </div>
     </div>
-    <div class="section">
+
+    <div class="section" style="padding-bottom: 8px;">
         <div class="section-title">📊 用户存票列表</div>
-        <div style="overflow-x:auto;">
-            <table><thead><tr><th>用户</th><th style="text-align:center;">存票数</th><th style="text-align:right;">操作</th></tr></thead>
-            <tbody id="userTableBody"><tr><td colspan="3" class="empty-msg">暂无用户，请添加</td></tr></tbody></table>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead><tr><th>用户</th><th style="text-align:center;">存票数</th><th style="text-align:right;">操作</th></tr></thead>
+                <tbody id="userTableBody"><tr><td colspan="3" class="empty-msg">暂无用户，请添加</td></tr></tbody>
+            </table>
         </div>
     </div>
-    <div class="section">
+
+    <div class="section" style="padding-bottom: 8px;">
         <div class="section-title">📝 操作日志</div>
-        <div class="log-area" id="logArea"><div style="color:#b2bec3;">等待操作...</div></div>
+        <div class="log-area" id="logArea"><div style="color: #b2bec3;">等待操作...</div></div>
     </div>
 </div>
 
@@ -228,12 +241,8 @@ const CONFIG = {
     ROOM_ID: 1987060053,
     COOKIE: "buvid3=223501E9-A560-28C2-7A61-E292FB74402D49871infoc; b_nut=1767662749; _uuid=61171E9E-10497-110D1-28102-4968153C8C81052051infoc; buvid_fp=c6384a8548e2aae2e109a5bbb95ad582; rpdid=|(u))RJuYull0J'u~Y~YYk~lu; buvid4=16C5AE38-1A08-0899-6684-98C1C032321C51311-026010609-eo3VCPNLURmqbSVDjdB/6g%3D%3D; DedeUserID=3461580045945354; DedeUserID__ckMd5=095a841800f14c1a; theme-tip-show=SHOWED; theme-avatar-tip-show=SHOWED; hit-dyn-v2=1; LIVE_BUVID=AUTO5517689234119651; CURRENT_QUALITY=100; theme-switch-show=SHOWED; home_feed_column=4; CURRENT_FNVAL=4048; bili_ticket=eyJhbGciOiJIUzI1NiIsImtpZCI6InMwMyIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODY1ODkzNzYsImlhdCI6MTc4NjMzMDExNiwicGx0IjotMX0.JUdJT5B7clNSrvnDLk7EfW8okPmDOtleGy5cVQ-IJkg; bili_ticket_expires=1786589316; SESSDATA=3f897343%2C1802139228%2C35b96%2A82CjCK91oYkLWdUsyYiuqeqXOglLa4NAVyleetFuzmx5Blekw_AY9UEt0oQ-PpOv6M4kASVlJwZFFPOXZ2X0hxTEt1eUJGSjZQWmhoR09BTktseURwSWJfRlk4d0VhTUdLcU1hclhiV1k3WlBCb2hSenN6bGxoalVKLV9MLUlfa3JDemY2YWR4UGJ3IIEC; bili_jct=a021d7438671dec2f999e36c161b6e7a; sid=ox1qix5z; browser_resolution=1265-768; bp_t_offset_3461580045945354=1235872037650563072; b_lsid=66CDB675_19FF8E7A0F9",
     UID: 3461580045945354,
-    // 多个代理，按顺序尝试
-    PROXIES: [
-        'https://cors-anywhere.herokuapp.com/',
-        'https://api.allorigins.win/raw?url=',
-        'https://corsproxy.io/?'
-    ]
+    // CORS 代理地址（可更换）
+    PROXY: 'https://cors-anywhere.herokuapp.com/'
 };
 
 // ================================================================
@@ -251,9 +260,10 @@ const userTableBody = $('userTableBody');
 const logArea = $('logArea');
 
 // ================================================================
-// 数据层
+// 数据层 (localStorage)
 // ================================================================
 const STORAGE_KEY = 'ticket_system_data';
+
 function loadData() {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -362,64 +372,44 @@ function processDanmu(username, content) {
 }
 
 // ================================================================
-// 使用代理获取房间信息（自动切换代理）
+// 使用 CORS 代理获取房间信息
 // ================================================================
-async function getRoomInfoWithProxy(roomId) {
-    const proxies = CONFIG.PROXIES;
-    let lastError = null;
-    for (const proxy of proxies) {
-        try {
-            // 构造完整URL
-            const initUrl = `https://api.live.bilibili.com/room/v1/Room/room_init?id=${roomId}`;
-            const targetUrl = proxy + encodeURIComponent(initUrl);
-            const resp = await fetch(targetUrl, {
-                headers: {
-                    'Cookie': CONFIG.COOKIE,
-                    'Origin': window.location.origin,
-                    'Referer': 'https://live.bilibili.com/'
-                }
-            });
-            if (!resp.ok) {
-                throw new Error(`HTTP ${resp.status}`);
-            }
-            const initData = await resp.json();
-            if (initData.code !== 0) {
-                throw new Error(`API错误: ${initData.message}`);
-            }
-            const realRoomId = initData.data.room_id;
-
-            // 获取弹幕配置
-            const confUrl = `https://api.live.bilibili.com/room/v1/Danmu/getConf?room_id=${realRoomId}&platform=pc&player=web`;
-            const confTarget = proxy + encodeURIComponent(confUrl);
-            const confResp = await fetch(confTarget, {
-                headers: {
-                    'Cookie': CONFIG.COOKIE,
-                    'Origin': window.location.origin,
-                    'Referer': 'https://live.bilibili.com/'
-                }
-            });
-            if (!confResp.ok) {
-                throw new Error(`HTTP ${confResp.status}`);
-            }
-            const confData = await confResp.json();
-            if (confData.code !== 0) {
-                throw new Error(`API错误: ${confData.message}`);
-            }
-            const host = confData.data.host;
-            const token = confData.data.token;
-            addLog(`✅ 使用代理 ${proxy} 成功获取信息`, 'ok');
-            return { realRoomId, host, token, proxyUsed: proxy };
-        } catch (err) {
-            lastError = err;
-            addLog(`⚠️ 代理 ${proxy} 失败: ${err.message}`, 'warn');
-            continue;
+async function getRoomInfo(roomId) {
+    const proxy = CONFIG.PROXY;
+    // 获取真实房间号
+    const initUrl = `https://api.live.bilibili.com/room/v1/Room/room_init?id=${roomId}`;
+    const initResp = await fetch(proxy + initUrl, {
+        headers: {
+            'Cookie': CONFIG.COOKIE,
+            'Origin': window.location.origin,
+            'Referer': 'https://live.bilibili.com/'
         }
-    }
-    throw new Error(`所有代理均失败，最后一个错误: ${lastError?.message}`);
+    });
+    if (!initResp.ok) throw new Error(`获取房间信息失败 (HTTP ${initResp.status})`);
+    const initData = await initResp.json();
+    if (initData.code !== 0) throw new Error(`API错误: ${initData.message}`);
+    const realRoomId = initData.data.room_id;
+
+    // 获取弹幕配置（token + host）
+    const confUrl = `https://api.live.bilibili.com/room/v1/Danmu/getConf?room_id=${realRoomId}&platform=pc&player=web`;
+    const confResp = await fetch(proxy + confUrl, {
+        headers: {
+            'Cookie': CONFIG.COOKIE,
+            'Origin': window.location.origin,
+            'Referer': 'https://live.bilibili.com/'
+        }
+    });
+    if (!confResp.ok) throw new Error(`获取弹幕配置失败 (HTTP ${confResp.status})`);
+    const confData = await confResp.json();
+    if (confData.code !== 0) throw new Error(`API错误: ${confData.message}`);
+    const host = confData.data.host;
+    const token = confData.data.token;
+
+    return { realRoomId, host, token };
 }
 
 // ================================================================
-// WebSocket 连接
+// 原生 WebSocket 连接（与之前相同）
 // ================================================================
 let ws = null;
 let wsHeartbeatTimer = null;
@@ -471,12 +461,12 @@ async function startDanmuListener() {
     }
 
     try {
-        addLog(`🔄 正在获取直播间 ${CONFIG.ROOM_ID} 信息（尝试多个代理）...`, 'info');
+        addLog(`🔄 正在通过代理获取直播间 ${CONFIG.ROOM_ID} 信息...`, 'info');
         connectionStatus.textContent = '连接中...';
         connectionStatus.className = 'status';
 
-        const { realRoomId, host, token } = await getRoomInfoWithProxy(CONFIG.ROOM_ID);
-        addLog(`✅ 真实房间号: ${realRoomId}`, 'ok');
+        const { realRoomId, host, token } = await getRoomInfo(CONFIG.ROOM_ID);
+        addLog(`✅ 获取成功，真实房间号: ${realRoomId}`, 'ok');
 
         const wsUrl = `wss://${host}/sub`;
         ws = new WebSocket(wsUrl);
@@ -555,8 +545,6 @@ async function startDanmuListener() {
         if (ws) ws.close();
         ws = null;
         console.error(err);
-        // 给出提示
-        addLog('💡 请尝试: 1) 点击上方提示链接申请代理访问权限 2) 刷新页面重试 3) 检查Cookie是否过期', 'warn');
     }
 }
 
