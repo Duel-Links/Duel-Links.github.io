@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B站自动存票系统 (固定配置)</title>
+    <style>
+        /* 全局样式 */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f6fa;
+            color: #2d3436;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            padding: 24px 28px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        h1 small {
+            font-size: 14px;
+            font-weight: normal;
+            color: #888;
+        }
+        .section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #2d3436;
+        }
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .flex-row input, .flex-row select {
+            padding: 8px 12px;
+            border: 1px solid #dfe6e9;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            flex: 1 1 140px;
+            min-width: 100px;
+        }
+        .flex-row button {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            background: #0984e3;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .flex-row button:hover { background: #0873c7; }
+        .flex-row button.danger { background: #d63031; }
+        .flex-row button.danger:hover { background: #b52d2e; }
+        .flex-row button.success { background: #00b894; }
+        .flex-row button.success:hover { background: #00a381; }
+        .flex-row button.outline {
+            background: transparent;
+            color: #0984e3;
+            border: 1px solid #0984e3;
+        }
+        .flex-row button.outline:hover { background: #eef5ff; }
+        .flex-row .status {
+            font-size: 14px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: #dfe6e9;
+            color: #636e72;
+        }
+        .flex-row .status.online { background: #d4edda; color: #155724; }
+        .flex-row .status.offline { background: #f8d7da; color: #721c24; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th {
+            text-align: left;
+            padding: 10px 8px;
+            border-bottom: 2px solid #dfe6e9;
+            color: #636e72;
+            font-weight: 600;
+        }
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #f1f2f6;
+            vertical-align: middle;
+        }
+        td:last-child { white-space: nowrap; }
+        .ticket-num {
+            font-weight: 600;
+            font-size: 18px;
+            color: #2d3436;
+        }
+        .btn-sm {
+            padding: 4px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-right: 4px;
+        }
+        .btn-sm.blue { background: #74b9ff; color: #2d3436; }
+        .btn-sm.blue:hover { background: #0984e3; color: white; }
+        .btn-sm.red { background: #ff7675; color: #2d3436; }
+        .btn-sm.red:hover { background: #d63031; color: white; }
+        .btn-sm.green { background: #55efc4; color: #2d3436; }
+        .btn-sm.green:hover { background: #00b894; color: white; }
+
+        .log-area {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #2d3436;
+            color: #dfe6e9;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            margin-top: 8px;
+        }
+        .log-area .log-time { color: #74b9ff; }
+        .log-area .log-ok { color: #55efc4; }
+        .log-area .log-warn { color: #fdcb6e; }
+        .log-area .log-err { color: #ff7675; }
+
+        .empty-msg {
+            color: #b2bec3;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 16px; }
+            .flex-row input, .flex-row select { flex: 1 1 100%; }
+            .flex-row button { flex: 1 1 auto; }
+            td:last-child { white-space: normal; }
+        }
+
+        /* 固定配置提示 */
+        .fixed-info {
+            background: #eef5ff;
+            border-left: 4px solid #0984e3;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #2d3436;
+            margin-bottom: 12px;
+        }
+        .fixed-info code {
+            background: #dfe6e9;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>
+        📦 自动存票系统
+        <small>固定配置 · 自动连接</small>
+    </h1>
+
+    <!-- ====== 固定配置信息展示 ====== -->
+    <div class="fixed-info">
+        🔒 已固定配置：直播间 <strong>1987060053</strong> ｜ 用户 UID <strong>3461580045945354</strong> ｜ 自动监听弹幕
+    </div>
+
+    <!-- ====== 连接状态 ====== -->
+    <div class="section">
+        <div class="section-title">🔌 连接状态</div>
+        <div class="flex-row">
+            <span class="status" id="connectionStatus">⏳ 初始化中...</span>
+            <button class="success" id="btnReconnect">🔄 重新连接</button>
+            <button class="danger" id="btnDisconnect">🔴 断开连接</button>
+        </div>
+    </div>
+
+    <!-- ====== 用户管理 ====== -->
+    <div class="section">
+        <div class="section-title">👤 用户管理</div>
+        <div class="flex-row">
+            <input type="text" id="newUsername" placeholder="用户名">
+            <input type="number" id="newUserTickets" placeholder="初始票数" value="0">
+            <button id="btnAddUser">➕ 添加用户</button>
+            <button class="outline" id="btnClearAll">🗑️ 清空所有数据</button>
+        </div>
+    </div>
+
+    <!-- ====== 用户列表 ====== -->
+    <div class="section" style="padding-bottom: 8px;">
+        <div class="section-title">📊 用户存票列表</div>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>用户</th>
+                        <th style="text-align:center;">存票数</th>
+                        <th style="text-align:right;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    <tr><td colspan="3" class="empty-msg">暂无用户，请添加</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ====== 操作日志 ====== -->
+    <div class="section" style="padding-bottom: 8px;">
+        <div class="section-title">📝 操作日志</div>
+        <div class="log-area" id="logArea">
+            <div style="color: #b2bec3;">等待操作...</div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 使用 ES Module 方式引入 blive-message-listener -->
+<script type="importmap">
+{
+    "imports": {
+        "blive-message-listener": "https://cdn.jsdelivr.net/npm/blive-message-listener@0.5.5/dist/index.mjs",
+        "blive-message-listener/browser": "https://cdn.jsdelivr.net/npm/blive-message-listener@0.5.5/dist/browser.mjs"
+    }
+}
+</script>
+
+<script type="module">
+// ================================================================
+// 硬编码配置（固定不变）
+// ================================================================
+const CONFIG = {
+    ROOM_ID: 1987060053,                           // 直播间长号
+    COOKIE: "buvid3=223501E9-A560-28C2-7A61-E292FB74402D49871infoc; b_nut=1767662749; _uuid=61171E9E-10497-110D1-28102-4968153C8C81052051infoc; buvid_fp=c6384a8548e2aae2e109a5bbb95ad582; rpdid=|(u))RJuYull0J'u~Y~YYk~lu; buvid4=16C5AE38-1A08-0899-6684-98C1C032321C51311-026010609-eo3VCPNLURmqbSVDjdB/6g%3D%3D; DedeUserID=3461580045945354; DedeUserID__ckMd5=095a841800f14c1a; theme-tip-show=SHOWED; theme-avatar-tip-show=SHOWED; hit-dyn-v2=1; LIVE_BUVID=AUTO5517689234119651; CURRENT_QUALITY=100; theme-switch-show=SHOWED; home_feed_column=4; CURRENT_FNVAL=4048; bili_ticket=eyJhbGciOiJIUzI1NiIsImtpZCI6InMwMyIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODY1ODkzNzYsImlhdCI6MTc4NjMzMDExNiwicGx0IjotMX0.JUdJT5B7clNSrvnDLk7EfW8okPmDOtleGy5cVQ-IJkg; bili_ticket_expires=1786589316; SESSDATA=3f897343%2C1802139228%2C35b96%2A82CjCK91oYkLWdUsyYiuqeqXOglLa4NAVyleetFuzmx5Blekw_AY9UEt0oQ-PpOv6M4kASVlJwZFFPOXZ2X0hxTEt1eUJGSjZQWmhoR09BTktseURwSWJfRlk4d0VhTUdLcU1hclhiV1k3WlBCb2hSenN6bGxoalVKLV9MLUlfa3JDemY2YWR4UGJ3IIEC; bili_jct=a021d7438671dec2f999e36c161b6e7a; sid=ox1qix5z; browser_resolution=1265-768; bp_t_offset_3461580045945354=1235872037650563072; b_lsid=66CDB675_19FF8E7A0F9",
+    UID: 3461580045945354
+};
+
+// ================================================================
+// 模块导入
+// ================================================================
+import { startListen } from 'blive-message-listener/browser';
+
+// ================================================================
+// DOM 引用
+// ================================================================
+const $ = (id) => document.getElementById(id);
+const connectionStatus = $('connectionStatus');
+const btnReconnect = $('btnReconnect');
+const btnDisconnect = $('btnDisconnect');
+const newUsername = $('newUsername');
+const newUserTickets = $('newUserTickets');
+const btnAddUser = $('btnAddUser');
+const btnClearAll = $('btnClearAll');
+const userTableBody = $('userTableBody');
+const logArea = $('logArea');
+
+// ================================================================
+// 数据层 - localStorage
+// ================================================================
+const STORAGE_KEY = 'ticket_system_data';
+
+function loadData() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+            const data = JSON.parse(raw);
+            if (typeof data.users === 'object' && data.users !== null) {
+                return data;
+            }
+        }
+    } catch (e) { /* ignore */ }
+    return { users: {} };
+}
+
+function saveData(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function getUsers() {
+    return loadData().users;
+}
+
+function setUsers(users) {
+    const data = loadData();
+    data.users = users;
+    saveData(data);
+}
+
+function getUserTickets(username) {
+    const users = getUsers();
+    return users[username] ?? 0;
+}
+
+function updateTickets(username, delta, reason = '') {
+    const users = getUsers();
+    if (!(username in users)) {
+        users[username] = 0;
+    }
+    users[username] = Math.max(0, users[username] + delta);
+    setUsers(users);
+    const newTotal = users[username];
+    const sign = delta >= 0 ? '+' : '';
+    addLog(`${username} ${sign}${delta} 票 (${reason}) → 剩余 ${newTotal} 票`, 'ok');
+    renderUserList();
+    return newTotal;
+}
+
+function removeUser(username) {
+    if (!confirm(`确定删除用户 "${username}" 吗？`)) return;
+    const users = getUsers();
+    delete users[username];
+    setUsers(users);
+    addLog(`删除用户: ${username}`, 'warn');
+    renderUserList();
+}
+
+// ================================================================
+// 日志系统
+// ================================================================
+function addLog(message, type = 'info') {
+    const time = new Date().toLocaleString('zh-CN', { hour12: false });
+    const colorMap = {
+        info: '',
+        ok: 'log-ok',
+        warn: 'log-warn',
+        err: 'log-err',
+    };
+    const cls = colorMap[type] || '';
+    const entry = document.createElement('div');
+    entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="${cls}">${message}</span>`;
+    logArea.appendChild(entry);
+    // 保留最新 200 条
+    while (logArea.children.length > 200) {
+        logArea.removeChild(logArea.firstChild);
+    }
+    logArea.scrollTop = logArea.scrollHeight;
+}
+
+function clearLog() {
+    logArea.innerHTML = '';
+    addLog('日志已清空', 'info');
+}
+
+// ================================================================
+// 渲染用户列表
+// ================================================================
+function renderUserList() {
+    const users = getUsers();
+    const entries = Object.entries(users);
+    if (entries.length === 0) {
+        userTableBody.innerHTML = `<tr><td colspan="3" class="empty-msg">暂无用户，请添加</td></tr>`;
+        return;
+    }
+    entries.sort((a, b) => b[1] - a[1]);
+
+    let html = '';
+    for (const [name, tickets] of entries) {
+        const safeName = name.replace(/'/g, "\\'");
+        html += `
+            <tr>
+                <td><strong>${escapeHtml(name)}</strong></td>
+                <td style="text-align:center;"><span class="ticket-num">${tickets}</span></td>
+                <td style="text-align:right;">
+                    <button class="btn-sm green" data-action="add" data-user="${safeName}" data-amount="10">+10</button>
+                    <button class="btn-sm blue" data-action="add" data-user="${safeName}" data-amount="1">+1</button>
+                    <button class="btn-sm red" data-action="sub" data-user="${safeName}" data-amount="1">-1</button>
+                    <button class="btn-sm red" data-action="sub" data-user="${safeName}" data-amount="10">-10</button>
+                    <button class="btn-sm" style="background:#b2bec3;color:#2d3436;" data-action="del" data-user="${safeName}">删除</button>
+                </td>
+            </tr>
+        `;
+    }
+    userTableBody.innerHTML = html;
+
+    // 事件委托
+    userTableBody.querySelectorAll('button[data-action]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const action = btn.dataset.action;
+            const user = btn.dataset.user;
+            const amount = parseInt(btn.dataset.amount) || 0;
+            if (action === 'add') {
+                updateTickets(user, amount, '手动加票');
+            } else if (action === 'sub') {
+                updateTickets(user, -amount, '手动扣票');
+            } else if (action === 'del') {
+                removeUser(user);
+            }
+        });
+    });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ================================================================
+// 弹幕处理核心逻辑
+// ================================================================
+let danmuInstance = null;
+let isConnected = false;
+
+function processDanmu(username, content) {
+    if (!username || !content) return;
+
+    // 匹配 "-10票" 或 "－10票" 等
+    const match = content.match(/^[-－](\d+)\s*[张张]?票$/);
+    if (!match) return;
+
+    const amount = parseInt(match[1]);
+    if (isNaN(amount) || amount <= 0) return;
+
+    // 自动创建用户
+    const users = getUsers();
+    if (!(username in users)) {
+        users[username] = 0;
+        setUsers(users);
+        addLog(`🔹 自动创建新用户: ${username}`, 'info');
+        renderUserList();
+    }
+
+    updateTickets(username, -amount, `弹幕: ${content}`);
+}
+
+// ================================================================
+// 启动 / 停止 弹幕监听（使用硬编码配置）
+// ================================================================
+async function startDanmuListener() {
+    if (isConnected) {
+        addLog('⚠️ 已处于连接状态，无需重复连接', 'warn');
+        return;
+    }
+
+    const roomId = CONFIG.ROOM_ID;
+    const cookie = CONFIG.COOKIE;
+    const uid = CONFIG.UID;
+
+    try {
+        addLog(`🔄 正在连接直播间 ${roomId} ...`, 'info');
+        connectionStatus.textContent = '连接中...';
+        connectionStatus.className = 'status';
+
+        const handler = {
+            onIncomeDanmu: (msg) => {
+                const user = msg.body?.user;
+                const username = user?.uname || '未知用户';
+                const content = msg.body?.content || '';
+                if (username && content) {
+                    processDanmu(username, content);
+                }
+            },
+            onError: (err) => {
+                addLog(`⚠️ 弹幕连接错误: ${err?.message || String(err)}`, 'err');
+                // 连接失败时更新状态
+                if (isConnected) {
+                    isConnected = false;
+                    danmuInstance = null;
+                    connectionStatus.textContent = '❌ 连接错误';
+                    connectionStatus.className = 'status offline';
+                }
+            },
+            onClose: () => {
+                if (isConnected) {
+                    isConnected = false;
+                    danmuInstance = null;
+                    connectionStatus.textContent = '已断开';
+                    connectionStatus.className = 'status offline';
+                    addLog('🔌 弹幕连接已断开', 'warn');
+                }
+            }
+        };
+
+        const options = {
+            ws: {
+                headers: { Cookie: cookie },
+                uid: uid
+            }
+        };
+
+        danmuInstance = startListen(roomId, handler, options);
+
+        // 由于 startListen 是同步返回的，无法立即确认是否成功，等待 onError/onClose 处理
+        isConnected = true;
+        connectionStatus.textContent = '✅ 已连接';
+        connectionStatus.className = 'status online';
+        addLog(`✅ 成功连接到直播间 ${roomId}，开始监听弹幕`, 'ok');
+
+    } catch (err) {
+        addLog(`❌ 连接失败: ${err?.message || String(err)}`, 'err');
+        connectionStatus.textContent = '❌ 连接失败';
+        connectionStatus.className = 'status offline';
+        isConnected = false;
+        danmuInstance = null;
+        console.error(err);
+    }
+}
+
+function stopDanmuListener() {
+    if (danmuInstance && typeof danmuInstance.close === 'function') {
+        try {
+            danmuInstance.close();
+        } catch (e) { /* ignore */ }
+    }
+    isConnected = false;
+    danmuInstance = null;
+    connectionStatus.textContent = '已断开';
+    connectionStatus.className = 'status offline';
+    addLog('⏹️ 已停止监听弹幕', 'info');
+}
+
+// ================================================================
+// UI 事件绑定
+// ================================================================
+
+// 重新连接
+btnReconnect.addEventListener('click', () => {
+    if (isConnected) {
+        stopDanmuListener();
+        // 稍等片刻再重连
+        setTimeout(startDanmuListener, 500);
+    } else {
+        startDanmuListener();
+    }
+});
+
+// 断开连接
+btnDisconnect.addEventListener('click', stopDanmuListener);
+
+// 添加用户
+btnAddUser.addEventListener('click', () => {
+    const name = newUsername.value.trim();
+    const tickets = parseInt(newUserTickets.value) || 0;
+    if (!name) {
+        addLog('⚠️ 请输入用户名', 'warn');
+        return;
+    }
+    const users = getUsers();
+    if (name in users) {
+        addLog(`⚠️ 用户 "${name}" 已存在`, 'warn');
+        return;
+    }
+    users[name] = tickets;
+    setUsers(users);
+    addLog(`➕ 添加用户: ${name}，初始 ${tickets} 票`, 'ok');
+    newUsername.value = '';
+    newUserTickets.value = '0';
+    renderUserList();
+});
+
+// 回车添加用户
+newUsername.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') btnAddUser.click();
+});
+newUserTickets.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') btnAddUser.click();
+});
+
+// 清空所有数据
+btnClearAll.addEventListener('click', () => {
+    if (!confirm('⚠️ 确定要清空所有用户数据和日志吗？此操作不可撤销！')) return;
+    setUsers({});
+    clearLog();
+    renderUserList();
+    addLog('🗑️ 已清空所有数据', 'warn');
+});
+
+// 页面关闭前自动断开
+window.addEventListener('beforeunload', () => {
+    if (danmuInstance && typeof danmuInstance.close === 'function') {
+        try { danmuInstance.close(); } catch (e) { /* ignore */ }
+    }
+});
+
+// ================================================================
+// 页面加载后自动连接
+// ================================================================
+renderUserList();
+addLog('🚀 系统已加载，正在自动连接直播间...', 'info');
+// 延迟一点点确保 DOM 完全渲染
+setTimeout(startDanmuListener, 300);
+
+</script>
+</body>
+</html>
