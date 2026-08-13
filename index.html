@@ -3,616 +3,413 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B站自动存票系统 (多代理版)</title>
+    <title>B站直播间弹幕获取 - 1987060053</title>
     <style>
-        /* 样式与之前完全相同，此处略，完整复制前面的样式即可 */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        /* 简单的页面样式 */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: #f5f6fa;
-            color: #2d3436;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f4f5f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        #app {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             padding: 20px;
         }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            padding: 24px 28px;
-        }
-        h1 {
-            font-size: 24px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        h1 small { font-size: 14px; font-weight: normal; color: #888; }
-        .section {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 16px 20px;
-            margin-bottom: 20px;
-        }
-        .section-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: #2d3436;
-        }
-        .flex-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-        }
-        .flex-row input, .flex-row select {
-            padding: 8px 12px;
-            border: 1px solid #dfe6e9;
-            border-radius: 8px;
-            font-size: 14px;
-            background: white;
-            flex: 1 1 140px;
-            min-width: 100px;
-        }
-        .flex-row button {
-            padding: 8px 18px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
+        #status {
+            padding: 10px 16px;
+            border-radius: 20px;
+            display: inline-block;
             font-weight: 500;
-            background: #0984e3;
+            margin-bottom: 15px;
+        }
+        .status-connected { background: #e8f5e9; color: #2e7d32; }
+        .status-connecting { background: #fff3e0; color: #e65100; }
+        .status-error { background: #ffebee; color: #c62828; }
+        .status-disconnected { background: #f5f5f5; color: #616161; }
+        #danmaku-container {
+            height: 500px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            background: #fafafa;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .danmaku-item {
+            padding: 8px 12px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            font-size: 14px;
+            border-left: 4px solid #00a1d6;
+            animation: fadeIn 0.3s ease;
+            word-break: break-all;
+        }
+        .danmaku-item .user {
+            color: #00a1d6;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .danmaku-item .time {
+            color: #999;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        button {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 500;
+            background: #00a1d6;
             color: white;
             cursor: pointer;
             transition: background 0.2s;
-            white-space: nowrap;
         }
-        .flex-row button:hover { background: #0873c7; }
-        .flex-row button.danger { background: #d63031; }
-        .flex-row button.danger:hover { background: #b52d2e; }
-        .flex-row button.success { background: #00b894; }
-        .flex-row button.success:hover { background: #00a381; }
-        .flex-row button.outline {
-            background: transparent;
-            color: #0984e3;
-            border: 1px solid #0984e3;
-        }
-        .flex-row button.outline:hover { background: #eef5ff; }
-        .flex-row .status {
-            font-size: 14px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            background: #dfe6e9;
-            color: #636e72;
-        }
-        .flex-row .status.online { background: #d4edda; color: #155724; }
-        .flex-row .status.offline { background: #f8d7da; color: #721c24; }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        th {
-            text-align: left;
-            padding: 10px 8px;
-            border-bottom: 2px solid #dfe6e9;
-            color: #636e72;
-            font-weight: 600;
-        }
-        td {
-            padding: 10px 8px;
-            border-bottom: 1px solid #f1f2f6;
-            vertical-align: middle;
-        }
-        td:last-child { white-space: nowrap; }
-        .ticket-num {
-            font-weight: 600;
-            font-size: 18px;
-            color: #2d3436;
-        }
-        .btn-sm {
-            padding: 4px 12px;
-            border: none;
-            border-radius: 6px;
-            font-size: 13px;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin-right: 4px;
-        }
-        .btn-sm.blue { background: #74b9ff; color: #2d3436; }
-        .btn-sm.blue:hover { background: #0984e3; color: white; }
-        .btn-sm.red { background: #ff7675; color: #2d3436; }
-        .btn-sm.red:hover { background: #d63031; color: white; }
-        .btn-sm.green { background: #55efc4; color: #2d3436; }
-        .btn-sm.green:hover { background: #00b894; color: white; }
-
-        .log-area {
-            max-height: 200px;
-            overflow-y: auto;
-            background: #2d3436;
-            color: #dfe6e9;
-            padding: 12px 16px;
+        button:hover { background: #0088b0; }
+        button:disabled { background: #b0bec5; cursor: not-allowed; }
+        #log {
+            margin-top: 15px;
+            padding: 10px;
+            background: #263238;
+            color: #aed581;
             border-radius: 8px;
             font-family: 'Courier New', monospace;
-            font-size: 13px;
-            line-height: 1.6;
-            margin-top: 8px;
-        }
-        .log-area .log-time { color: #74b9ff; }
-        .log-area .log-ok { color: #55efc4; }
-        .log-area .log-warn { color: #fdcb6e; }
-        .log-area .log-err { color: #ff7675; }
-
-        .empty-msg {
-            color: #b2bec3;
-            text-align: center;
-            padding: 20px 0;
-        }
-        .fixed-info {
-            background: #eef5ff;
-            border-left: 4px solid #0984e3;
-            padding: 8px 14px;
-            border-radius: 6px;
-            font-size: 13px;
-            color: #2d3436;
-            margin-bottom: 12px;
-        }
-        .fixed-info code {
-            background: #dfe6e9;
-            padding: 2px 8px;
-            border-radius: 4px;
             font-size: 12px;
-        }
-        .proxy-warning {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 8px 14px;
-            border-radius: 6px;
-            font-size: 13px;
-            color: #856404;
-            margin: 10px 0;
-        }
-        @media (max-width: 600px) {
-            .container { padding: 16px; }
-            .flex-row input, .flex-row select { flex: 1 1 100%; }
-            .flex-row button { flex: 1 1 auto; }
-            td:last-child { white-space: normal; }
+            height: 150px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>📦 自动存票系统 <small>多代理 · 硬编码</small></h1>
-    <div class="fixed-info">🔒 已固定配置：直播间 <strong>1987060053</strong> ｜ 用户 UID <strong>3461580045945354</strong></div>
-    <div class="proxy-warning">
-        ⚠️ 使用公共CORS代理，若首次使用需<a href="https://cors-anywhere.herokuapp.com/" target="_blank">点击这里</a>申请临时访问（仅需一次）。
-        <br>若失败，可尝试切换代理（代码中已内置多个）。
+
+<div id="app">
+    <h2>🎤 直播间弹幕实时监控</h2>
+    <p>房间号: <strong>1987060053</strong></p>
+    
+    <div id="status" class="status-disconnected">⚪ 未连接</div>
+
+    <div id="controls">
+        <button id="connectBtn">🔌 连接</button>
+        <button id="disconnectBtn" disabled>⏹️ 断开</button>
+        <button id="clearBtn">🗑️ 清空</button>
     </div>
-    <div class="section">
-        <div class="section-title">🔌 连接状态</div>
-        <div class="flex-row">
-            <span class="status" id="connectionStatus">⏳ 初始化中...</span>
-            <button class="success" id="btnReconnect">🔄 重新连接</button>
-            <button class="danger" id="btnDisconnect">🔴 断开连接</button>
-        </div>
-    </div>
-    <div class="section">
-        <div class="section-title">👤 用户管理</div>
-        <div class="flex-row">
-            <input type="text" id="newUsername" placeholder="用户名">
-            <input type="number" id="newUserTickets" placeholder="初始票数" value="0">
-            <button id="btnAddUser">➕ 添加用户</button>
-            <button class="outline" id="btnClearAll">🗑️ 清空所有数据</button>
-        </div>
-    </div>
-    <div class="section">
-        <div class="section-title">📊 用户存票列表</div>
-        <div style="overflow-x:auto;">
-            <table><thead><tr><th>用户</th><th style="text-align:center;">存票数</th><th style="text-align:right;">操作</th></tr></thead>
-            <tbody id="userTableBody"><tr><td colspan="3" class="empty-msg">暂无用户，请添加</td></tr></tbody></table>
-        </div>
-    </div>
-    <div class="section">
-        <div class="section-title">📝 操作日志</div>
-        <div class="log-area" id="logArea"><div style="color:#b2bec3;">等待操作...</div></div>
-    </div>
+
+    <div id="danmaku-container"></div>
+
+    <div id="log">[系统] 等待连接...</div>
 </div>
 
 <script>
-// ================================================================
-// 硬编码配置
-// ================================================================
-const CONFIG = {
-    ROOM_ID: 1987060053,
-    COOKIE: "buvid3=223501E9-A560-28C2-7A61-E292FB74402D49871infoc; b_nut=1767662749; _uuid=61171E9E-10497-110D1-28102-4968153C8C81052051infoc; buvid_fp=c6384a8548e2aae2e109a5bbb95ad582; rpdid=|(u))RJuYull0J'u~Y~YYk~lu; buvid4=16C5AE38-1A08-0899-6684-98C1C032321C51311-026010609-eo3VCPNLURmqbSVDjdB/6g%3D%3D; DedeUserID=3461580045945354; DedeUserID__ckMd5=095a841800f14c1a; theme-tip-show=SHOWED; theme-avatar-tip-show=SHOWED; hit-dyn-v2=1; LIVE_BUVID=AUTO5517689234119651; CURRENT_QUALITY=100; theme-switch-show=SHOWED; home_feed_column=4; CURRENT_FNVAL=4048; bili_ticket=eyJhbGciOiJIUzI1NiIsImtpZCI6InMwMyIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODY1ODkzNzYsImlhdCI6MTc4NjMzMDExNiwicGx0IjotMX0.JUdJT5B7clNSrvnDLk7EfW8okPmDOtleGy5cVQ-IJkg; bili_ticket_expires=1786589316; SESSDATA=3f897343%2C1802139228%2C35b96%2A82CjCK91oYkLWdUsyYiuqeqXOglLa4NAVyleetFuzmx5Blekw_AY9UEt0oQ-PpOv6M4kASVlJwZFFPOXZ2X0hxTEt1eUJGSjZQWmhoR09BTktseURwSWJfRlk4d0VhTUdLcU1hclhiV1k3WlBCb2hSenN6bGxoalVKLV9MLUlfa3JDemY2YWR4UGJ3IIEC; bili_jct=a021d7438671dec2f999e36c161b6e7a; sid=ox1qix5z; browser_resolution=1265-768; bp_t_offset_3461580045945354=1235872037650563072; b_lsid=66CDB675_19FF8E7A0F9",
-    UID: 3461580045945354,
-    // 多个代理，按顺序尝试
-    PROXIES: [
-        'https://cors-anywhere.herokuapp.com/',
-        'https://api.allorigins.win/raw?url=',
-        'https://corsproxy.io/?'
-    ]
-};
+    (function() {
+        // --- DOM 引用 ---
+        const statusEl = document.getElementById('status');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const container = document.getElementById('danmaku-container');
+        const logEl = document.getElementById('log');
 
-// ================================================================
-// DOM 引用
-// ================================================================
-const $ = id => document.getElementById(id);
-const connectionStatus = $('connectionStatus');
-const btnReconnect = $('btnReconnect');
-const btnDisconnect = $('btnDisconnect');
-const newUsername = $('newUsername');
-const newUserTickets = $('newUserTickets');
-const btnAddUser = $('btnAddUser');
-const btnClearAll = $('btnClearAll');
-const userTableBody = $('userTableBody');
-const logArea = $('logArea');
+        // --- 状态变量 ---
+        let ws = null;                 // WebSocket 实例
+        let heartbeatInterval = null;  // 心跳定时器
+        let isConnected = false;
+        const ROOM_ID = 1987060053;    // 目标直播间 ID
 
-// ================================================================
-// 数据层
-// ================================================================
-const STORAGE_KEY = 'ticket_system_data';
-function loadData() {
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-            const data = JSON.parse(raw);
-            if (typeof data.users === 'object' && data.users !== null) return data;
+        // --- 辅助函数：日志输出 ---
+        function log(message, isError = false) {
+            const time = new Date().toLocaleTimeString();
+            const prefix = isError ? '❌' : 'ℹ️';
+            const line = `[${time}] ${prefix} ${message}`;
+            logEl.textContent += line + '\n';
+            logEl.scrollTop = logEl.scrollHeight;
         }
-    } catch (e) {}
-    return { users: {} };
-}
-function saveData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
-function getUsers() { return loadData().users; }
-function setUsers(users) { const data = loadData(); data.users = users; saveData(data); }
 
-function updateTickets(username, delta, reason = '') {
-    const users = getUsers();
-    if (!(username in users)) users[username] = 0;
-    users[username] = Math.max(0, users[username] + delta);
-    setUsers(users);
-    const sign = delta >= 0 ? '+' : '';
-    addLog(`${username} ${sign}${delta} 票 (${reason}) → 剩余 ${users[username]} 票`, 'ok');
-    renderUserList();
-    return users[username];
-}
-function removeUser(username) {
-    if (!confirm(`确定删除用户 "${username}" 吗？`)) return;
-    const users = getUsers();
-    delete users[username];
-    setUsers(users);
-    addLog(`删除用户: ${username}`, 'warn');
-    renderUserList();
-}
-
-// ================================================================
-// 日志
-// ================================================================
-function addLog(message, type = 'info') {
-    const time = new Date().toLocaleString('zh-CN', { hour12: false });
-    const cls = { info: '', ok: 'log-ok', warn: 'log-warn', err: 'log-err' }[type] || '';
-    const entry = document.createElement('div');
-    entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="${cls}">${message}</span>`;
-    logArea.appendChild(entry);
-    while (logArea.children.length > 200) logArea.removeChild(logArea.firstChild);
-    logArea.scrollTop = logArea.scrollHeight;
-}
-
-// ================================================================
-// 渲染用户列表
-// ================================================================
-function renderUserList() {
-    const users = getUsers();
-    const entries = Object.entries(users);
-    if (entries.length === 0) {
-        userTableBody.innerHTML = `<tr><td colspan="3" class="empty-msg">暂无用户，请添加</td></tr>`;
-        return;
-    }
-    entries.sort((a, b) => b[1] - a[1]);
-    let html = '';
-    for (const [name, tickets] of entries) {
-        const safeName = name.replace(/'/g, "\\'");
-        html += `
-            <tr>
-                <td><strong>${escapeHtml(name)}</strong></td>
-                <td style="text-align:center;"><span class="ticket-num">${tickets}</span></td>
-                <td style="text-align:right;">
-                    <button class="btn-sm green" data-action="add" data-user="${safeName}" data-amount="10">+10</button>
-                    <button class="btn-sm blue" data-action="add" data-user="${safeName}" data-amount="1">+1</button>
-                    <button class="btn-sm red" data-action="sub" data-user="${safeName}" data-amount="1">-1</button>
-                    <button class="btn-sm red" data-action="sub" data-user="${safeName}" data-amount="10">-10</button>
-                    <button class="btn-sm" style="background:#b2bec3;color:#2d3436;" data-action="del" data-user="${safeName}">删除</button>
-                </td>
-            </tr>
-        `;
-    }
-    userTableBody.innerHTML = html;
-    userTableBody.querySelectorAll('button[data-action]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const action = btn.dataset.action;
-            const user = btn.dataset.user;
-            const amount = parseInt(btn.dataset.amount) || 0;
-            if (action === 'add') updateTickets(user, amount, '手动加票');
-            else if (action === 'sub') updateTickets(user, -amount, '手动扣票');
-            else if (action === 'del') removeUser(user);
-        });
-    });
-}
-function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
-
-// ================================================================
-// 弹幕处理
-// ================================================================
-function processDanmu(username, content) {
-    if (!username || !content) return;
-    const match = content.match(/^[-－](\d+)\s*[张张]?票$/);
-    if (!match) return;
-    const amount = parseInt(match[1]);
-    if (isNaN(amount) || amount <= 0) return;
-    const users = getUsers();
-    if (!(username in users)) {
-        users[username] = 0;
-        setUsers(users);
-        addLog(`🔹 自动创建新用户: ${username}`, 'info');
-        renderUserList();
-    }
-    updateTickets(username, -amount, `弹幕: ${content}`);
-}
-
-// ================================================================
-// 使用代理获取房间信息（自动切换代理）
-// ================================================================
-async function getRoomInfoWithProxy(roomId) {
-    const proxies = CONFIG.PROXIES;
-    let lastError = null;
-    for (const proxy of proxies) {
-        try {
-            // 构造完整URL
-            const initUrl = `https://api.live.bilibili.com/room/v1/Room/room_init?id=${roomId}`;
-            const targetUrl = proxy + encodeURIComponent(initUrl);
-            const resp = await fetch(targetUrl, {
-                headers: {
-                    'Cookie': CONFIG.COOKIE,
-                    'Origin': window.location.origin,
-                    'Referer': 'https://live.bilibili.com/'
-                }
-            });
-            if (!resp.ok) {
-                throw new Error(`HTTP ${resp.status}`);
-            }
-            const initData = await resp.json();
-            if (initData.code !== 0) {
-                throw new Error(`API错误: ${initData.message}`);
-            }
-            const realRoomId = initData.data.room_id;
-
-            // 获取弹幕配置
-            const confUrl = `https://api.live.bilibili.com/room/v1/Danmu/getConf?room_id=${realRoomId}&platform=pc&player=web`;
-            const confTarget = proxy + encodeURIComponent(confUrl);
-            const confResp = await fetch(confTarget, {
-                headers: {
-                    'Cookie': CONFIG.COOKIE,
-                    'Origin': window.location.origin,
-                    'Referer': 'https://live.bilibili.com/'
-                }
-            });
-            if (!confResp.ok) {
-                throw new Error(`HTTP ${confResp.status}`);
-            }
-            const confData = await confResp.json();
-            if (confData.code !== 0) {
-                throw new Error(`API错误: ${confData.message}`);
-            }
-            const host = confData.data.host;
-            const token = confData.data.token;
-            addLog(`✅ 使用代理 ${proxy} 成功获取信息`, 'ok');
-            return { realRoomId, host, token, proxyUsed: proxy };
-        } catch (err) {
-            lastError = err;
-            addLog(`⚠️ 代理 ${proxy} 失败: ${err.message}`, 'warn');
-            continue;
+        // --- 更新连接状态 UI ---
+        function setStatus(state, text) {
+            statusEl.textContent = text;
+            statusEl.className = 'status-' + state;
         }
-    }
-    throw new Error(`所有代理均失败，最后一个错误: ${lastError?.message}`);
-}
 
-// ================================================================
-// WebSocket 连接
-// ================================================================
-let ws = null;
-let wsHeartbeatTimer = null;
-let isConnected = false;
-
-function encodePacket(data, op) {
-    const body = typeof data === 'string' ? new TextEncoder().encode(data) : data;
-    const packet = new ArrayBuffer(16 + body.length);
-    const view = new DataView(packet);
-    view.setUint32(0, 16 + body.length, false);
-    view.setUint16(4, 16, false);
-    view.setUint16(6, 1, false);
-    view.setUint32(8, op, false);
-    view.setUint32(12, 1, false);
-    if (body.length > 0) {
-        new Uint8Array(packet, 16).set(new Uint8Array(body));
-    }
-    return packet;
-}
-
-function decodePacket(data) {
-    try {
-        const view = new DataView(data);
-        const length = view.getUint32(0, false);
-        const headerLen = view.getUint16(4, false);
-        const protoVer = view.getUint16(6, false);
-        const op = view.getUint32(8, false);
-        if (op === 5) {
-            const body = new Uint8Array(data, headerLen, length - headerLen);
-            const text = new TextDecoder().decode(body);
+        // --- 解析 B 站直播弹幕二进制协议 ---
+        function parseDanmakuPacket(buffer) {
             try {
-                const json = JSON.parse(text);
-                if (json.cmd === 'DANMU_MSG') {
-                    const info = json.info;
-                    const username = info[2][1];
-                    const content = info[1];
-                    return { username, content };
+                const data = new Uint8Array(buffer);
+                let offset = 0;
+                const packets = [];
+
+                while (offset < data.length) {
+                    // 1. 读取包总长度 (4字节, 大端序)
+                    if (offset + 4 > data.length) break;
+                    const totalLen = (data[offset] << 24) | (data[offset+1] << 16) | 
+                                     (data[offset+2] << 8) | data[offset+3];
+                    if (totalLen === 0 || offset + totalLen > data.length) break;
+
+                    // 2. 读取头部长度 (2字节)
+                    const headerLen = (data[offset+4] << 8) | data[offset+5];
+
+                    // 3. 读取协议版本 (2字节)
+                    // const ver = (data[offset+6] << 8) | data[offset+7];
+
+                    // 4. 读取操作码 (2字节) 
+                    // 3 = 弹幕消息, 5 = 礼物, 8 = 心跳响应
+                    const op = (data[offset+8] << 8) | data[offset+9];
+
+                    // 5. 读取 body (JSON 数据)
+                    let body = null;
+                    if (totalLen > headerLen) {
+                        const bodyStart = offset + headerLen;
+                        const bodyLen = totalLen - headerLen;
+                        const bodyBytes = data.slice(bodyStart, bodyStart + bodyLen);
+                        try {
+                            const jsonStr = new TextDecoder('utf-8').decode(bodyBytes);
+                            body = JSON.parse(jsonStr);
+                        } catch (e) {
+                            // 非 JSON 数据忽略
+                        }
+                    }
+
+                    // 如果是弹幕消息 (操作码 3)
+                    if (op === 3 && body && body.cmd === 'DANMU_MSG') {
+                        // 提取弹幕信息
+                        const info = body.info;
+                        if (info && info.length >= 3) {
+                            const msg = info[1];           // 弹幕内容
+                            const user = info[2][1];       // 用户名
+                            const time = new Date().toLocaleTimeString();
+                            packets.push({ user, msg, time });
+                        }
+                    }
+
+                    offset += totalLen;
                 }
-            } catch (e) {}
+                return packets;
+            } catch (e) {
+                log('解析数据包时出错: ' + e.message, true);
+                return [];
+            }
         }
-    } catch (e) {}
-    return null;
-}
 
-async function startDanmuListener() {
-    if (isConnected) {
-        addLog('⚠️ 已处于连接状态', 'warn');
-        return;
-    }
+        // --- 发送心跳包 (保持连接) ---
+        function sendHeartbeat() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            try {
+                // 心跳包: 总长度16, 头部长度16, 协议版本1, 操作码2
+                const buffer = new ArrayBuffer(16);
+                const view = new DataView(buffer);
+                view.setUint32(0, 16);    // 总长度
+                view.setUint16(4, 16);    // 头部长度
+                view.setUint16(6, 1);     // 协议版本
+                view.setUint16(8, 2);     // 操作码 (2 = 心跳)
+                view.setUint32(12, 0);    // 序列号 (可忽略)
+                ws.send(buffer);
+            } catch (e) {
+                log('发送心跳失败: ' + e.message, true);
+            }
+        }
 
-    try {
-        addLog(`🔄 正在获取直播间 ${CONFIG.ROOM_ID} 信息（尝试多个代理）...`, 'info');
-        connectionStatus.textContent = '连接中...';
-        connectionStatus.className = 'status';
+        // --- 发送认证包 (加入房间) ---
+        function sendAuthPacket(token) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            try {
+                // 构造认证数据 (JSON)
+                const authData = {
+                    uid: 0,                       // 用户ID, 0 表示未登录
+                    roomid: ROOM_ID,
+                    protover: 2,                  // 协议版本, 固定为2
+                    platform: 'web',
+                    type: 1,                      // 1 = 弹幕
+                    key: token                    // 从接口获取的 token
+                };
+                const jsonStr = JSON.stringify(authData);
+                const encoder = new TextEncoder();
+                const jsonBytes = encoder.encode(jsonStr);
+                const totalLen = 16 + jsonBytes.length;
 
-        const { realRoomId, host, token } = await getRoomInfoWithProxy(CONFIG.ROOM_ID);
-        addLog(`✅ 真实房间号: ${realRoomId}`, 'ok');
+                const buffer = new ArrayBuffer(totalLen);
+                const view = new DataView(buffer);
+                view.setUint32(0, totalLen);      // 总长度
+                view.setUint16(4, 16);            // 头部长度
+                view.setUint16(6, 1);             // 协议版本
+                view.setUint16(8, 7);             // 操作码 (7 = 认证)
+                view.setUint32(12, 1);            // 序列号
 
-        const wsUrl = `wss://${host}/sub`;
-        ws = new WebSocket(wsUrl);
-
-        ws.onopen = () => {
-            addLog(`🔗 WebSocket 已连接，发送认证包...`, 'info');
-            const authData = {
-                uid: CONFIG.UID,
-                roomid: realRoomId,
-                protover: 3,
-                platform: 'web',
-                clientver: '1.0.0',
-                token: token,
-            };
-            const authJson = JSON.stringify(authData);
-            const packet = encodePacket(authJson, 7);
-            ws.send(packet);
-
-            if (wsHeartbeatTimer) clearInterval(wsHeartbeatTimer);
-            wsHeartbeatTimer = setInterval(() => {
-                if (ws && ws.readyState === WebSocket.OPEN) {
-                    const heartbeatPacket = encodePacket('', 2);
-                    ws.send(heartbeatPacket);
+                // 写入 JSON 数据
+                const bodyStart = 16;
+                for (let i = 0; i < jsonBytes.length; i++) {
+                    view.setUint8(bodyStart + i, jsonBytes[i]);
                 }
-            }, 30000);
-        };
 
-        ws.onmessage = (event) => {
-            if (typeof event.data === 'string') return;
-            const result = decodePacket(event.data);
-            if (result) {
-                processDanmu(result.username, result.content);
+                ws.send(buffer);
+                log('✅ 认证包已发送 (房间: ' + ROOM_ID + ')');
+            } catch (e) {
+                log('发送认证包失败: ' + e.message, true);
             }
-        };
+        }
 
-        ws.onclose = (e) => {
-            if (isConnected) {
-                isConnected = false;
-                connectionStatus.textContent = '已断开';
-                connectionStatus.className = 'status offline';
-                addLog(`🔌 连接已关闭 (code: ${e.code})`, 'warn');
+        // --- 连接弹幕服务器 ---
+        async function connect() {
+            if (isConnected) return;
+
+            setStatus('connecting', '⏳ 正在连接...');
+            connectBtn.disabled = true;
+            disconnectBtn.disabled = true;
+            log('正在获取弹幕服务器信息...');
+
+            try {
+                // 1. 获取 WebSocket 地址和 token
+                const resp = await fetch(
+                    `https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo?id=${ROOM_ID}&type=0`
+                );
+                const data = await resp.json();
+
+                if (data.code !== 0) {
+                    throw new Error(`API 返回错误: ${data.message || '未知错误'}`);
+                }
+
+                const hostList = data.data.host_list;
+                const token = data.data.token;
+                if (!hostList || hostList.length === 0 || !token) {
+                    throw new Error('未获取到有效的服务器地址或 token');
+                }
+
+                // 选择第一个可用的服务器 (wss 协议)
+                const host = hostList[0];
+                const wsUrl = `wss://${host.host}:${host.wss_port}/sub`;
+                log(`获取到服务器: ${host.host}, token: ${token.substring(0, 8)}...`);
+
+                // 2. 建立 WebSocket 连接
+                ws = new WebSocket(wsUrl);
+
+                ws.onopen = function() {
+                    isConnected = true;
+                    setStatus('connected', '✅ 已连接');
+                    connectBtn.disabled = true;
+                    disconnectBtn.disabled = false;
+                    log('WebSocket 连接已建立');
+
+                    // 发送认证包
+                    sendAuthPacket(token);
+
+                    // 启动心跳 (每 30 秒)
+                    if (heartbeatInterval) clearInterval(heartbeatInterval);
+                    heartbeatInterval = setInterval(sendHeartbeat, 30000);
+                };
+
+                ws.onmessage = function(event) {
+                    if (event.data instanceof ArrayBuffer) {
+                        const packets = parseDanmakuPacket(event.data);
+                        for (const p of packets) {
+                            // 在弹幕容器中显示
+                            const item = document.createElement('div');
+                            item.className = 'danmaku-item';
+                            item.innerHTML = `
+                                <span class="user">${escapeHtml(p.user)}</span>
+                                <span>${escapeHtml(p.msg)}</span>
+                                <span class="time">${p.time}</span>
+                            `;
+                            container.appendChild(item);
+                            container.scrollTop = container.scrollHeight;
+
+                            // 同时在日志中显示
+                            log(`💬 ${p.user}: ${p.msg}`);
+                        }
+                    }
+                };
+
+                ws.onerror = function(error) {
+                    log('WebSocket 错误: ' + (error.message || '未知错误'), true);
+                    setStatus('error', '⚠️ 连接错误');
+                };
+
+                ws.onclose = function(event) {
+                    log(`连接已关闭 (代码: ${event.code}, 原因: ${event.reason || '无'})`);
+                    disconnectInternal();
+                };
+
+            } catch (error) {
+                log('连接失败: ' + error.message, true);
+                setStatus('error', '❌ 连接失败');
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
             }
-            clearInterval(wsHeartbeatTimer);
-            wsHeartbeatTimer = null;
-            ws = null;
-        };
+        }
 
-        ws.onerror = (err) => {
-            addLog(`⚠️ WebSocket 错误: ${err.message || '未知错误'}`, 'err');
-        };
-
-        let timeout = setTimeout(() => {
-            if (!isConnected && ws && ws.readyState !== WebSocket.OPEN) {
-                addLog('⏳ 连接超时，请检查网络或 Cookie 是否有效', 'warn');
-                connectionStatus.textContent = '⏳ 连接超时';
-                connectionStatus.className = 'status offline';
-                if (ws) ws.close();
+        // --- 断开连接 ---
+        function disconnectInternal() {
+            isConnected = false;
+            if (heartbeatInterval) {
+                clearInterval(heartbeatInterval);
+                heartbeatInterval = null;
             }
-        }, 15000);
+            if (ws) {
+                try { ws.close(); } catch (e) {}
+                ws = null;
+            }
+            setStatus('disconnected', '⚪ 未连接');
+            connectBtn.disabled = false;
+            disconnectBtn.disabled = true;
+            log('已断开连接');
+        }
 
-        const originalOnOpen = ws.onopen;
-        ws.onopen = function(e) {
-            clearTimeout(timeout);
-            isConnected = true;
-            connectionStatus.textContent = '✅ 已连接';
-            connectionStatus.className = 'status online';
-            addLog(`✅ 成功连接到直播间 ${realRoomId}，开始监听弹幕`, 'ok');
-            if (typeof originalOnOpen === 'function') originalOnOpen(e);
-        };
+        function disconnect() {
+            if (!isConnected) return;
+            disconnectInternal();
+        }
 
-    } catch (err) {
-        addLog(`❌ 连接失败: ${err.message || String(err)}`, 'err');
-        connectionStatus.textContent = '❌ 连接失败';
-        connectionStatus.className = 'status offline';
-        isConnected = false;
-        if (ws) ws.close();
-        ws = null;
-        console.error(err);
-        // 给出提示
-        addLog('💡 请尝试: 1) 点击上方提示链接申请代理访问权限 2) 刷新页面重试 3) 检查Cookie是否过期', 'warn');
-    }
-}
+        // --- 清空弹幕显示 ---
+        function clearDanmaku() {
+            container.innerHTML = '';
+            log('弹幕列表已清空');
+        }
 
-function stopDanmuListener() {
-    if (ws) { try { ws.close(); } catch (e) {} ws = null; }
-    if (wsHeartbeatTimer) { clearInterval(wsHeartbeatTimer); wsHeartbeatTimer = null; }
-    isConnected = false;
-    connectionStatus.textContent = '已断开';
-    connectionStatus.className = 'status offline';
-    addLog('⏹️ 已停止监听弹幕', 'info');
-}
+        // --- 简单的防 XSS 转义 ---
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
-// ================================================================
-// UI 事件绑定
-// ================================================================
-btnReconnect.addEventListener('click', () => {
-    if (isConnected) stopDanmuListener();
-    setTimeout(startDanmuListener, 500);
-});
-btnDisconnect.addEventListener('click', stopDanmuListener);
+        // --- 绑定 UI 事件 ---
+        connectBtn.addEventListener('click', connect);
+        disconnectBtn.addEventListener('click', disconnect);
+        clearBtn.addEventListener('click', clearDanmaku);
 
-btnAddUser.addEventListener('click', () => {
-    const name = newUsername.value.trim();
-    const tickets = parseInt(newUserTickets.value) || 0;
-    if (!name) { addLog('⚠️ 请输入用户名', 'warn'); return; }
-    const users = getUsers();
-    if (name in users) { addLog(`⚠️ 用户 "${name}" 已存在`, 'warn'); return; }
-    users[name] = tickets;
-    setUsers(users);
-    addLog(`➕ 添加用户: ${name}，初始 ${tickets} 票`, 'ok');
-    newUsername.value = '';
-    newUserTickets.value = '0';
-    renderUserList();
-});
-newUsername.addEventListener('keypress', e => { if (e.key === 'Enter') btnAddUser.click(); });
-newUserTickets.addEventListener('keypress', e => { if (e.key === 'Enter') btnAddUser.click(); });
+        // 页面关闭时断开连接
+        window.addEventListener('beforeunload', function() {
+            if (ws) {
+                try { ws.close(); } catch (e) {}
+            }
+            if (heartbeatInterval) {
+                clearInterval(heartbeatInterval);
+            }
+        });
 
-btnClearAll.addEventListener('click', () => {
-    if (!confirm('⚠️ 确定清空所有数据？')) return;
-    setUsers({});
-    logArea.innerHTML = '';
-    addLog('🗑️ 已清空所有数据', 'warn');
-    renderUserList();
-});
-
-window.addEventListener('beforeunload', () => {
-    if (ws) try { ws.close(); } catch (e) {}
-    if (wsHeartbeatTimer) clearInterval(wsHeartbeatTimer);
-});
-
-// ================================================================
-// 初始化
-// ================================================================
-renderUserList();
-addLog('🚀 系统已加载，正在自动连接直播间...', 'info');
-setTimeout(startDanmuListener, 500);
+        log('🟢 页面已加载，点击 "连接" 开始获取弹幕');
+    })();
 </script>
+
 </body>
 </html>
