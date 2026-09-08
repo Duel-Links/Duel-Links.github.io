@@ -7,7 +7,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗍</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* ===== CSS Variables ===== */
+        /* ===== CSS Variables (保持不变) ===== */
         :root {
             --bg-primary: #f0f4f8;
             --bg-secondary: #ffffff;
@@ -762,7 +762,7 @@
                     <label id="repeat-label">选择重复日</label>
                     <div id="repeat-picker"></div>
                 </div>
-                <!-- 时间选择：一次性用datetime-local，重复类型用time -->
+                <!-- 时间选择 -->
                 <div class="form-row" id="time-picker-row">
                     <div class="form-group" id="start-time-group">
                         <label id="start-time-label">开始时间</label>
@@ -831,17 +831,16 @@
 
     <script>
         // ================================================================
-        // JSONBin.io 配置（使用 XL Bins API）
-        // 参考: https://jsonbin.io/api-reference/xlbins/read
+        // JSONBin.io 配置 - 使用固定 Bin ID（标准 Bins API）
+        // 参考: https://jsonbin.io/api-reference/bins/read
         // ================================================================
         const MASTER_KEY = '$2a$10$sFmJWp8GqChHB2n8/Cg8gODPEbXEhGpXSbqTSKq8u.KVwnUSEY3I6';
         const ACCESS_KEY = '$2a$10$yc8kYQ4Q34qWJf5rwuGu0uT/m0HUVldwcH7pTPj7JcfuvUf4OcHZC';
-        // XL Bins API 端点
-        const BIN_API_BASE = 'https://api.jsonbin.io/v3/xl/b';
-        const BIN_ID_KEY = 'aiims_bin_id';
+        const FIXED_BIN_ID = '6a9fcbbdffd5d16053ec6011';  // 用户提供的 Bin ID
+        const BIN_API_BASE = 'https://api.jsonbin.io/v3/b';
 
         // ================================================================
-        // 默认数据（仅保留管理员）
+        // 默认数据（仅保留管理员，用于首次写入或重置）
         // ================================================================
         const DEFAULT_ROLES = [
             { id: 1, name: '管理员', level: 0 },
@@ -861,132 +860,87 @@
         // ================================================================
         let roles = [], users = [], todos = [];
         let currentUser = null;
-        let binId = localStorage.getItem(BIN_ID_KEY);
         let currentPage = 'dashboard';
         let calendarDate = new Date();
         let todoFilter = 'all', dashboardFilter = 'all', todoSearchTerm = '', todoDateSearch = '';
         let dashboardRange = 3;
 
         // ================================================================
-        // JSONBin XL API 操作
+        // JSONBin API 操作（标准 Bins，非 XL）
         // ================================================================
 
-        // 创建 XL Bin
-        async function createBin(data) {
-            const resp = await fetch(BIN_API_BASE, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': MASTER_KEY,
-                    'X-Bin-Meta': 'false'
-                },
-                body: JSON.stringify(data)
-            });
-            if (!resp.ok) {
-                const errText = await resp.text();
-                throw new Error(`创建XL Bin失败 (${resp.status}): ${errText}`);
-            }
-            const result = await resp.json();
-            return result.id;
-        }
-
-        // 读取 XL Bin
+        // 读取 Bin
         async function readBin(binId) {
             const resp = await fetch(`${BIN_API_BASE}/${binId}?meta=false`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Master-Key': MASTER_KEY,
-                    'X-Bin-Meta': 'false'
+                    'X-Access-Key': ACCESS_KEY
                 }
             });
             if (!resp.ok) {
                 const errText = await resp.text();
-                throw new Error(`读取XL Bin失败 (${resp.status}): ${errText}`);
+                throw new Error(`读取Bin失败 (${resp.status}): ${errText}`);
             }
             return await resp.json();
         }
 
-        // 更新 XL Bin
+        // 更新 Bin
         async function updateBin(binId, data) {
             const resp = await fetch(`${BIN_API_BASE}/${binId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Master-Key': MASTER_KEY,
-                    'X-Bin-Meta': 'false'
+                    'X-Access-Key': ACCESS_KEY
                 },
                 body: JSON.stringify(data)
             });
             if (!resp.ok) {
                 const errText = await resp.text();
-                throw new Error(`更新XL Bin失败 (${resp.status}): ${errText}`);
-            }
-            return await resp.json();
-        }
-
-        // 删除 XL Bin
-        async function deleteBin(binId) {
-            const resp = await fetch(`${BIN_API_BASE}/${binId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': MASTER_KEY,
-                    'X-Bin-Meta': 'false'
-                }
-            });
-            if (!resp.ok) {
-                const errText = await resp.text();
-                throw new Error(`删除XL Bin失败 (${resp.status}): ${errText}`);
+                throw new Error(`更新Bin失败 (${resp.status}): ${errText}`);
             }
             return await resp.json();
         }
 
         // ================================================================
-        // 数据加载与同步
+        // 数据加载与同步（固定 Bin）
         // ================================================================
 
         async function loadAllData() {
             try {
-                if (!binId) {
-                    const initialData = { roles: DEFAULT_ROLES, users: DEFAULT_USERS, todos: DEFAULT_TODOS };
-                    binId = await createBin(initialData);
-                    localStorage.setItem(BIN_ID_KEY, binId);
-                    roles = DEFAULT_ROLES;
-                    users = DEFAULT_USERS;
-                    todos = DEFAULT_TODOS;
-                    return true;
-                }
+                const data = await readBin(FIXED_BIN_ID);
+                roles = data.roles || [];
+                users = data.users || [];
+                todos = data.todos || [];
 
-                try {
-                    const data = await readBin(binId);
-                    roles = data.roles || [];
-                    users = data.users || [];
-                    todos = data.todos || [];
-                    ensureAdminExists();
-                    if (roles.length === 0) {
-                        roles = DEFAULT_ROLES;
-                    }
-                    const employeeRole = roles.find(r => r.name === '员工');
-                    users.forEach(u => {
-                        if (!roles.find(r => r.id === u.roleId)) {
-                            u.roleId = employeeRole ? employeeRole.id : roles[0].id;
-                        }
-                    });
-                    await syncAllData();
-                    return true;
-                } catch (readError) {
-                    console.warn('读取XL Bin失败，将重新创建:', readError.message);
-                    localStorage.removeItem(BIN_ID_KEY);
-                    binId = null;
-                    return loadAllData();
+                // 确保管理员存在（如果数据为空，则填充默认值）
+                if (roles.length === 0) {
+                    roles = DEFAULT_ROLES;
                 }
+                if (users.length === 0) {
+                    users = DEFAULT_USERS;
+                }
+                // 确保所有用户有有效角色
+                const employeeRole = roles.find(r => r.name === '员工');
+                users.forEach(u => {
+                    if (!roles.find(r => r.id === u.roleId)) {
+                        u.roleId = employeeRole ? employeeRole.id : roles[0].id;
+                    }
+                });
+                // 确保管理员存在
+                ensureAdminExists();
+
+                // 同步数据（确保结构完整）
+                await syncAllData();
+                return true;
             } catch (error) {
                 console.error('加载数据失败:', error);
                 let msg = '加载数据失败，请检查：\n';
-                if (error.message.includes('创建XL Bin失败') || error.message.includes('更新XL Bin失败')) {
-                    msg += '1. 请确认主钥匙（MASTER_KEY）是否正确有效。\n';
-                    msg += '2. 请确认访问密钥（ACCESS_KEY）是否正确有效。\n';
-                    msg += '3. 可参考官方文档: https://jsonbin.io/api-reference/xlbins/read\n';
+                if (error.message.includes('读取Bin失败')) {
+                    msg += '1. 请确认 Bin ID 是否正确（当前为 ' + FIXED_BIN_ID + '）。\n';
+                    msg += '2. 请确认主钥匙（MASTER_KEY）和访问密钥（ACCESS_KEY）是否正确有效。\n';
+                    msg += '3. 请确认该 Bin 是否存在且您有权限访问。\n';
                     msg += `错误详情: ${error.message}`;
                 } else if (error.message.includes('fetch')) {
                     msg += '网络连接异常，请检查网络后刷新重试。';
@@ -1022,30 +976,17 @@
         }
 
         async function syncAllData() {
-            if (!binId) {
-                const initialData = { roles, users, todos };
-                binId = await createBin(initialData);
-                localStorage.setItem(BIN_ID_KEY, binId);
-                return;
-            }
             try {
-                await updateBin(binId, { roles, users, todos });
-                console.log('数据已同步到 JSONBin.io (XL Bin)');
+                await updateBin(FIXED_BIN_ID, { roles, users, todos });
+                console.log('数据已同步到 JSONBin.io (Bin ID: ' + FIXED_BIN_ID + ')');
             } catch (error) {
                 console.error('同步失败:', error);
-                if (error.message.includes('404') || error.message.includes('Not Found')) {
-                    console.warn('XL Bin 不存在，尝试重新创建');
-                    localStorage.removeItem(BIN_ID_KEY);
-                    binId = null;
-                    await syncAllData();
-                } else {
-                    alert('数据保存失败，请检查网络或钥匙！\n' + error.message);
-                }
+                alert('数据保存失败，请检查网络或权限！\n' + error.message);
             }
         }
 
         // ================================================================
-        // 辅助函数
+        // 辅助函数（与之前相同）
         // ================================================================
         function getRoleName(id) { const r = roles.find(x => x.id === id); return r ? r.name : '未知'; }
         function getRoleLevel(id) { const r = roles.find(x => x.id === id); return r ? r.level : 999; }
@@ -1203,7 +1144,7 @@
         }
 
         // ================================================================
-        // 渲染函数
+        // 渲染函数（与之前相同）
         // ================================================================
         function renderSidebar() {
             if (!currentUser) return;
@@ -1300,10 +1241,8 @@
                     todoDateSearch = date;
                     document.getElementById('todo-date-search').value = date;
                     showDayTodos(date);
-                    // 高亮选中的日期
                     document.querySelectorAll('.day-cell').forEach(c => c.classList.remove('selected'));
                     this.classList.add('selected');
-                    // 同时更新待办列表，按日期筛选
                     renderTodoList('todo-list', todoFilter, true, todoSearchTerm, null, date);
                 });
             });
@@ -1355,7 +1294,6 @@
             if (!container) return;
             let list = todos.filter(t => canViewTodo(currentUser, t));
 
-            // 日期筛选（优先使用传入的 dateFilter，否则使用全局 todoDateSearch）
             const effectiveDateFilter = dateFilter || todoDateSearch;
             if (effectiveDateFilter && /^\d{4}-\d{2}-\d{2}$/.test(effectiveDateFilter)) {
                 const [y, m, d] = effectiveDateFilter.split('-').map(Number);
@@ -1367,7 +1305,6 @@
                 });
             }
 
-            // 文本搜索
             if (search) {
                 const s = search.toLowerCase();
                 list = list.filter(t => t.title.toLowerCase().includes(s));
@@ -1570,7 +1507,7 @@
         }
 
         // ================================================================
-        // 重复选择器（迷你日历）
+        // 重复选择器
         // ================================================================
         function renderRepeatPicker(repeatType, selectedDays) {
             const container = document.getElementById('repeat-picker');
@@ -1624,7 +1561,7 @@
         }
 
         // ================================================================
-        // 时间选择器切换（一次性用datetime-local，重复类型用time）
+        // 时间选择器切换
         // ================================================================
         function updateTimePicker(repeatType) {
             const startGroup = document.getElementById('start-time-group');
@@ -1635,12 +1572,10 @@
             const endLabel = document.getElementById('end-time-label');
 
             if (repeatType === 'once') {
-                // 一次性：使用 datetime-local
                 startInput.type = 'datetime-local';
                 endInput.type = 'datetime-local';
                 startLabel.textContent = '开始时间';
                 endLabel.textContent = '结束时间';
-                // 如果当前值是 time 格式，转换为 datetime-local
                 if (startInput.value && !startInput.value.includes('T') && startInput.value.length === 5) {
                     const tomorrow = new Date();
                     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -1648,7 +1583,6 @@
                     startInput.value = dateStr + 'T' + startInput.value + ':00';
                     endInput.value = dateStr + 'T' + endInput.value + ':00';
                 }
-                // 如果没有值，设置默认次日
                 if (!startInput.value) {
                     const tomorrow = new Date();
                     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -1659,12 +1593,10 @@
                     endInput.value = end.toISOString().slice(0,16);
                 }
             } else {
-                // 重复类型：使用 time（仅时分）
                 startInput.type = 'time';
                 endInput.type = 'time';
                 startLabel.textContent = '开始时间 (时分)';
                 endLabel.textContent = '结束时间 (时分)';
-                // 如果当前值是 datetime-local 格式，提取时间部分
                 if (startInput.value && startInput.value.includes('T')) {
                     const timePart = startInput.value.split('T')[1];
                     if (timePart) {
@@ -1700,7 +1632,6 @@
             document.getElementById('repeat-selector').style.display = 'none';
             document.getElementById('repeat-picker').innerHTML = '';
 
-            // 默认设置为一次性，并设置次日时间
             document.getElementById('todo-repeat').value = 'once';
             updateTimePicker('once');
 
@@ -1719,7 +1650,6 @@
                 (todo.steps || []).forEach(s => addStepInput(s));
                 if (todo.steps.length === 0) addStepInput('');
 
-                // 设置时间
                 const repeat = todo.repeatType || 'once';
                 updateTimePicker(repeat);
                 if (repeat === 'once') {
@@ -1740,7 +1670,6 @@
                     }
                 }
 
-                // 重复选择器
                 if (repeat !== 'once') {
                     document.getElementById('repeat-selector').style.display = 'block';
                     const label = document.getElementById('repeat-label');
@@ -1750,7 +1679,6 @@
                     renderRepeatPicker(repeat, todo.repeatDays || []);
                 }
             } else {
-                // 新建：默认一次性，次日
                 const tomorrow = new Date();
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 tomorrow.setHours(9, 0, 0, 0);
@@ -1768,10 +1696,7 @@
             const repeat = this.value;
             const selector = document.getElementById('repeat-selector');
             const label = document.getElementById('repeat-label');
-
-            // 更新时间选择器类型
             updateTimePicker(repeat);
-
             if (repeat === 'once') {
                 selector.style.display = 'none';
                 return;
@@ -1810,15 +1735,12 @@
 
         function buildStartEndTime(repeatType, startVal, endVal) {
             if (repeatType === 'once') {
-                // datetime-local 格式
                 return { startTime: startVal, endTime: endVal };
             } else {
-                // time 格式，需要拼接到今天的日期（或者使用固定日期）
                 const today = new Date();
                 const dateStr = today.toISOString().slice(0,10);
                 let start = dateStr + 'T' + startVal + ':00';
                 let end = dateStr + 'T' + endVal + ':00';
-                // 如果结束时间小于开始时间，将结束时间设为第二天
                 if (startVal >= endVal) {
                     const tomorrow = new Date(today);
                     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -1847,7 +1769,6 @@
                 repeatDays = getSelectedDays();
             }
 
-            // 构建开始和结束时间
             const { startTime, endTime } = buildStartEndTime(repeatType, startRaw, endRaw);
 
             const todoData = {
@@ -1981,7 +1902,7 @@
         }
 
         // ================================================================
-        // 自动清理过期待办
+        // 自动清理
         // ================================================================
         async function autoCleanup() {
             const now = new Date();
@@ -2045,7 +1966,6 @@
                 const today = new Date();
                 const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
                 showDayTodos(dateStr);
-                // 高亮今天
                 document.querySelectorAll('.day-cell').forEach(el => {
                     el.classList.toggle('selected', el.dataset.date === dateStr);
                 });
@@ -2060,7 +1980,6 @@
             renderSidebar();
             const now = new Date();
             calendarDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            // 设置默认日期搜索为今天
             const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
             todoDateSearch = todayStr;
             document.getElementById('todo-date-search').value = todayStr;
@@ -2140,7 +2059,6 @@
                     html.setAttribute('data-theme', 'dark');
                     this.innerHTML = '<i class="fas fa-sun"></i>';
                 }
-                // 同步登录页主题按钮
                 const loginBtn = document.getElementById('login-theme-toggle');
                 if (loginBtn) {
                     loginBtn.innerHTML = html.getAttribute('data-theme') === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
@@ -2223,7 +2141,6 @@
                     todoDateSearch = dateVal;
                     todoSearchTerm = '';
                     document.getElementById('todo-search').value = '';
-                    // 更新日历高亮
                     document.querySelectorAll('.day-cell').forEach(el => {
                         el.classList.toggle('selected', el.dataset.date === dateVal);
                     });
@@ -2238,7 +2155,6 @@
             // 文本搜索
             document.getElementById('todo-search').addEventListener('input', function() {
                 todoSearchTerm = this.value;
-                // 如果有文本搜索，清除日期搜索
                 if (todoSearchTerm) {
                     todoDateSearch = '';
                     document.getElementById('todo-date-search').value = '';
@@ -2277,8 +2193,8 @@
                 });
             });
 
-            console.log('✅ AI-IMS 已启动 (数据存储在 JSONBin.io XL Bin)');
-            console.log('📖 API 参考: https://jsonbin.io/api-reference/xlbins/read');
+            console.log('✅ AI-IMS 已启动 (使用固定 Bin ID: ' + FIXED_BIN_ID + ')');
+            console.log('📖 API 参考: https://jsonbin.io/api-reference/bins/read');
         });
     </script>
 </body>
