@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Intelligent Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ===== CSS Variables ===== */
+        :root {
+            --bg-primary: #f0f4f8;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-input: #f7f9fc;
+            --text-primary: #1a2332;
+            --text-secondary: #4a5a72;
+            --text-muted: #8a9aa8;
+            --border-color: #dce4ec;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.12);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --transition: 0.3s ease;
+            --accent: #4f6ef7;
+            --accent-hover: #3a56d4;
+            --danger: #ef476f;
+            --success: #06d6a0;
+            --warning: #ffb347;
+            --urgent-color: #ef476f;
+            --important-color: #ffb347;
+            --general-color: #06d6a0;
+            --sidebar-width: 220px;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f1724;
+            --bg-secondary: #1a2332;
+            --bg-card: #1e2a3a;
+            --bg-input: #253040;
+            --text-primary: #e8edf5;
+            --text-secondary: #b0c0d0;
+            --text-muted: #6a7a8a;
+            --border-color: #2a3a4a;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+            --shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.5);
+            --accent: #6a8aff;
+            --accent-hover: #5a7aee;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background var(--transition), color var(--transition);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+
+        /* Login */
+        #login-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            background: var(--bg-primary);
+        }
+        .login-box {
+            background: var(--bg-card);
+            padding: 40px 36px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-hover);
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid var(--border-color);
+        }
+        .login-box h1 { font-size: 28px; font-weight: 700; text-align: center; margin-bottom: 6px; }
+        .login-box .subtitle { text-align: center; color: var(--text-muted); margin-bottom: 28px; font-size: 14px; }
+        .login-box .form-group { margin-bottom: 18px; }
+        .login-box label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 5px; }
+        .login-box input {
+            width: 100%; padding: 10px 14px; border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm); background: var(--bg-input); color: var(--text-primary);
+            font-size: 14px; transition: border var(--transition), box-shadow var(--transition);
+            outline: none;
+        }
+        .login-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,110,247,0.15); }
+        .login-box .btn-login {
+            width: 100%; padding: 12px; background: var(--accent); color: #fff;
+            border: none; border-radius: var(--radius-sm); font-size: 16px; font-weight: 600;
+            cursor: pointer; transition: background var(--transition);
+        }
+        .login-box .btn-login:hover { background: var(--accent-hover); }
+        .login-box .error-msg { color: var(--danger); font-size: 13px; text-align: center; margin-top: 12px; min-height: 20px; }
+        .login-box .demo-hint {
+            margin-top: 18px; padding: 12px 14px; background: var(--bg-input);
+            border-radius: var(--radius-sm); font-size: 13px; color: var(--text-muted);
+            border: 1px dashed var(--border-color);
+        }
+
+        /* Main Layout */
+        #main-app { display: none; min-height: 100vh; }
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: var(--sidebar-width); height: 100vh;
+            background: var(--bg-secondary); border-right: 1px solid var(--border-color);
+            padding: 20px 0; display: flex; flex-direction: column;
+            transition: background var(--transition), border var(--transition);
+            z-index: 100; overflow-y: auto;
+        }
+        .sidebar .logo {
+            padding: 0 20px 20px; font-size: 20px; font-weight: 700; color: var(--accent);
+            display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid var(--border-color); margin-bottom: 16px;
+        }
+        .sidebar .logo i { font-size: 22px; }
+        .sidebar .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 20px;
+            color: var(--text-secondary); text-decoration: none; cursor: pointer;
+            transition: background var(--transition), color var(--transition);
+            border-left: 3px solid transparent; font-size: 14px; font-weight: 500;
+        }
+        .sidebar .nav-item:hover { background: var(--bg-input); color: var(--text-primary); }
+        .sidebar .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--bg-input); }
+        .sidebar .nav-item i { width: 20px; text-align: center; font-size: 16px; }
+        .sidebar .nav-section { padding: 12px 20px 6px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+        .sidebar .user-info {
+            margin-top: auto; padding: 16px 20px; border-top: 1px solid var(--border-color);
+            display: flex; align-items: center; gap: 12px;
+        }
+        .sidebar .user-info .avatar {
+            width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: #fff;
+            display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;
+            flex-shrink: 0;
+        }
+        .sidebar .user-info .uname { font-size: 14px; font-weight: 500; }
+        .sidebar .user-info .urole { font-size: 12px; color: var(--text-muted); }
+        .sidebar .user-info .logout-btn {
+            margin-left: auto; background: none; border: none; color: var(--text-muted);
+            cursor: pointer; font-size: 16px; padding: 4px 8px; border-radius: 6px;
+            transition: background var(--transition), color var(--transition);
+        }
+        .sidebar .user-info .logout-btn:hover { background: var(--danger); color: #fff; }
+
+        .main-content {
+            margin-left: var(--sidebar-width); padding: 20px 28px 40px;
+            min-height: 100vh; transition: background var(--transition);
+        }
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+        }
+        .page-header h2 { font-size: 24px; font-weight: 600; }
+        .page-header .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .theme-toggle {
+            background: var(--bg-input); border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm); padding: 8px 12px; cursor: pointer;
+            color: var(--text-secondary); font-size: 16px;
+        }
+        .theme-toggle:hover { background: var(--border-color); }
+
+        .btn {
+            padding: 8px 18px; border: none; border-radius: var(--radius-sm);
+            font-size: 14px; font-weight: 500; cursor: pointer;
+            transition: background var(--transition), transform 0.1s;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-danger:hover { background: #d63a5e; }
+        .btn-success { background: var(--success); color: #fff; }
+        .btn-success:hover { background: #05b88e; }
+        .btn-warning { background: var(--warning); color: #fff; }
+        .btn-warning:hover { background: #e69e3a; }
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+        .btn-outline:hover { background: var(--bg-input); }
+        .btn-sm { padding: 4px 12px; font-size: 12px; }
+
+        /* Dashboard Stats */
+        .dashboard-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px; margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: var(--radius); padding: 16px 20px;
+            box-shadow: var(--shadow);
+        }
+        .stat-card .stat-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+        .stat-card .stat-value { font-size: 28px; font-weight: 700; margin-top: 2px; }
+        .stat-card.urgent .stat-value { color: var(--urgent-color); }
+        .stat-card.important .stat-value { color: var(--important-color); }
+        .stat-card.general .stat-value { color: var(--general-color); }
+
+        /* Todo Section */
+        .todo-section {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: var(--radius); padding: 20px;
+            box-shadow: var(--shadow);
+            margin-top: 20px;
+        }
+        .todo-section .todo-header {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px; margin-bottom: 16px;
+        }
+        .todo-section .todo-header h3 { font-size: 18px; font-weight: 600; }
+        .todo-filters {
+            display: flex; gap: 8px; flex-wrap: wrap;
+        }
+        .todo-filters .filter-btn {
+            padding: 4px 14px; border: 1px solid var(--border-color);
+            border-radius: 20px; background: transparent; color: var(--text-secondary);
+            font-size: 12px; cursor: pointer; transition: all var(--transition);
+        }
+        .todo-filters .filter-btn:hover { background: var(--bg-input); }
+        .todo-filters .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+        .todo-item {
+            display: flex; align-items: flex-start; gap: 14px;
+            padding: 14px 0; border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+        .todo-item:last-child { border-bottom: none; }
+        .todo-item .todo-check {
+            margin-top: 2px; width: 20px; height: 20px; border-radius: 50%;
+            border: 2px solid var(--border-color); background: transparent;
+            cursor: pointer; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            transition: all var(--transition); color: transparent;
+        }
+        .todo-item .todo-check:hover { border-color: var(--accent); }
+        .todo-item .todo-check.done { background: var(--success); border-color: var(--success); color: #fff; }
+        .todo-item .todo-body { flex: 1; min-width: 150px; }
+        .todo-item .todo-body .todo-title { font-size: 15px; font-weight: 500; }
+        .todo-item .todo-body .todo-meta {
+            font-size: 13px; color: var(--text-muted);
+            display: flex; flex-wrap: wrap; gap: 12px; margin-top: 3px;
+        }
+        .todo-item .todo-body .todo-meta span { display: inline-flex; align-items: center; gap: 4px; }
+        .todo-item .todo-urgency {
+            font-size: 11px; font-weight: 600; padding: 2px 12px;
+            border-radius: 20px; text-transform: uppercase;
+            flex-shrink: 0;
+        }
+        .todo-item .todo-urgency.urgent { background: #ef476f20; color: var(--urgent-color); }
+        .todo-item .todo-urgency.important { background: #ffb34720; color: var(--important-color); }
+        .todo-item .todo-urgency.general { background: #06d6a020; color: var(--general-color); }
+        .todo-item .todo-progress {
+            flex-shrink: 0; min-width: 80px; display: flex; align-items: center; gap: 8px;
+            font-size: 13px; color: var(--text-muted);
+        }
+        .todo-item .todo-progress .progress-bar {
+            width: 60px; height: 4px; border-radius: 2px; background: var(--border-color); overflow: hidden;
+        }
+        .todo-item .todo-progress .progress-bar .fill {
+            height: 100%; border-radius: 2px; transition: width 0.4s ease;
+        }
+        .todo-item .todo-progress .progress-bar .fill.urgent { background: var(--urgent-color); }
+        .todo-item .todo-progress .progress-bar .fill.important { background: var(--important-color); }
+        .todo-item .todo-progress .progress-bar .fill.general { background: var(--general-color); }
+        .todo-item .todo-actions {
+            display: flex; gap: 6px; flex-shrink: 0;
+        }
+        .todo-item .todo-actions button {
+            background: none; border: none; color: var(--text-muted);
+            cursor: pointer; padding: 4px 6px; border-radius: 4px;
+        }
+        .todo-item .todo-actions button:hover { background: var(--bg-input); color: var(--text-primary); }
+        .todo-item .todo-actions .delete-btn:hover { color: var(--danger); }
+        .todo-empty { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+        .todo-empty i { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+
+        /* Search */
+        .search-box {
+            display: flex; gap: 8px; align-items: center;
+            background: var(--bg-input); border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm); padding: 4px 12px;
+        }
+        .search-box input {
+            border: none; background: transparent; padding: 6px 0;
+            font-size: 14px; color: var(--text-primary); outline: none; flex: 1;
+        }
+        .search-box i { color: var(--text-muted); }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center;
+            z-index: 1000; padding: 20px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: var(--bg-card); border-radius: var(--radius);
+            padding: 28px 32px; max-width: 620px; width: 100%;
+            max-height: 90vh; overflow-y: auto; border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-hover);
+        }
+        .modal-box .modal-title {
+            font-size: 20px; font-weight: 600; margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .modal-box .modal-title .close-btn {
+            background: none; border: none; font-size: 22px;
+            color: var(--text-muted); cursor: pointer;
+        }
+        .modal-box .modal-title .close-btn:hover { color: var(--text-primary); }
+        .modal-box .form-group { margin-bottom: 16px; }
+        .modal-box label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px; }
+        .modal-box input, .modal-box select, .modal-box textarea {
+            width: 100%; padding: 8px 12px; border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm); background: var(--bg-input);
+            color: var(--text-primary); font-size: 14px; outline: none;
+            font-family: inherit;
+        }
+        .modal-box input:focus, .modal-box select:focus, .modal-box textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(79,110,247,0.12);
+        }
+        .modal-box .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modal-box .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .modal-box .form-actions {
+            display: flex; justify-content: flex-end; gap: 10px;
+            margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color);
+        }
+        .modal-box .step-input-group {
+            display: flex; gap: 8px; align-items: center; margin-bottom: 6px;
+        }
+        .modal-box .step-input-group input { flex: 1; }
+        .modal-box .step-input-group button {
+            background: none; border: none; color: var(--danger); cursor: pointer; font-size: 16px;
+        }
+        .modal-box .step-input-group button.add-step { color: var(--success); }
+
+        /* User Table */
+        .user-table-wrap { overflow-x: auto; margin-top: 12px; }
+        .user-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .user-table th {
+            text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--border-color);
+            color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase;
+        }
+        .user-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
+        .user-table tr:hover td { background: var(--bg-input); }
+        .user-table .role-badge {
+            display: inline-block; padding: 2px 12px; border-radius: 20px;
+            font-size: 12px; font-weight: 500;
+        }
+        .user-table .role-badge.admin { background: #4f6ef720; color: var(--accent); }
+        .user-table .role-badge.leader { background: #ffb34720; color: var(--important-color); }
+        .user-table .role-badge.employee { background: #06d6a020; color: var(--general-color); }
+
+        /* Role Management */
+        .role-list {
+            display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0;
+        }
+        .role-tag {
+            background: var(--bg-input); padding: 4px 12px; border-radius: 20px;
+            border: 1px solid var(--border-color); font-size: 13px;
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        /* Page sections */
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar { width: 60px; padding: 12px 0; }
+            .sidebar .logo span, .sidebar .nav-item span, .sidebar .nav-section,
+            .sidebar .user-info .uname, .sidebar .user-info .urole { display: none; }
+            .sidebar .logo { padding: 0 12px 16px; justify-content: center; }
+            .sidebar .nav-item { padding: 10px 0; justify-content: center; border-left: none; border-right: 3px solid transparent; }
+            .sidebar .nav-item.active { border-left: none; border-right-color: var(--accent); }
+            .sidebar .user-info { padding: 12px 0; justify-content: center; }
+            .sidebar .user-info .logout-btn { margin-left: 0; }
+            .main-content { margin-left: 60px; padding: 16px; }
+            .modal-box { padding: 20px; }
+            .modal-box .form-row, .modal-box .form-row-3 { grid-template-columns: 1fr; }
+            .dashboard-grid { grid-template-columns: 1fr 1fr; }
+            .todo-item { flex-wrap: wrap; }
+            .todo-item .todo-actions { margin-left: auto; }
+            .todo-item .todo-progress { width: 100%; margin-top: 6px; }
+        }
+        @media (max-width: 480px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .login-box { padding: 24px 20px; }
+        }
+        .hidden { display: none !important; }
+        .mt-8 { margin-top: 8px; }
+        .mb-8 { margin-bottom: 8px; }
+        .flex { display: flex; }
+        .flex-center { align-items: center; gap: 8px; }
+        .gap-4 { gap: 4px; }
+        .w-full { width: 100%; }
+    </style>
+</head>
+<body>
+
+    <!-- Login -->
+    <div id="login-page">
+        <div class="login-box">
+            <h1><i class="fas fa-robot" style="color:var(--accent);margin-right:8px;"></i>AI-IMS</h1>
+            <p class="subtitle">AI Intelligent Management System</p>
+            <form id="login-form">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="login-username" placeholder="请输入用户名" value="admin" required>
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="login-password" placeholder="请输入密码" value="admin123" required>
+                </div>
+                <button type="submit" class="btn-login"><i class="fas fa-sign-in-alt"></i> 登 录</button>
+                <div class="error-msg" id="login-error"></div>
+            </form>
+            <div class="demo-hint">
+                <strong>演示账号：</strong><br>
+                admin / admin123 &nbsp;|&nbsp; leader / leader123<br>
+                manager / mgr123 &nbsp;|&nbsp; supervisor / sup123<br>
+                groupleader / gl123 &nbsp;|&nbsp; employee / emp123
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="main-app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo"><i class="fas fa-robot"></i><span>AI-IMS</span></div>
+            <div class="nav-section">导航</div>
+            <a class="nav-item active" data-page="dashboard"><i class="fas fa-home"></i><span>主页</span></a>
+            <a class="nav-item" data-page="todos"><i class="fas fa-list-check"></i><span>待办事项</span></a>
+            <a class="nav-item" data-page="calendar"><i class="fas fa-calendar-days"></i><span>日历</span></a>
+            <a class="nav-item" data-page="users" id="nav-users" style="display:none;"><i class="fas fa-users-cog"></i><span>用户管理</span></a>
+            <a class="nav-item" data-page="roles" id="nav-roles" style="display:none;"><i class="fas fa-tags"></i><span>角色管理</span></a>
+            <div class="user-info">
+                <div class="avatar" id="sidebar-avatar">A</div>
+                <div>
+                    <div class="uname" id="sidebar-uname">用户</div>
+                    <div class="urole" id="sidebar-urole">角色</div>
+                </div>
+                <button class="logout-btn" id="logout-btn"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </aside>
+
+        <div class="main-content">
+            <div class="page-header">
+                <h2 id="page-title">主页</h2>
+                <div class="actions">
+                    <button class="theme-toggle" id="theme-toggle"><i class="fas fa-moon"></i></button>
+                    <button class="btn btn-primary" id="btn-add-todo"><i class="fas fa-plus"></i> 新建待办</button>
+                    <button class="btn btn-outline btn-sm" id="btn-edit-profile"><i class="fas fa-user-edit"></i> 个人资料</button>
+                </div>
+            </div>
+
+            <!-- Dashboard -->
+            <div class="page-section active" id="page-dashboard">
+                <div class="dashboard-grid" id="stats-grid">
+                    <div class="stat-card"><div class="stat-label">全部待办</div><div class="stat-value" id="stat-total">0</div></div>
+                    <div class="stat-card urgent"><div class="stat-label">紧急</div><div class="stat-value" id="stat-urgent">0</div></div>
+                    <div class="stat-card important"><div class="stat-label">重要</div><div class="stat-value" id="stat-important">0</div></div>
+                    <div class="stat-card general"><div class="stat-label">一般</div><div class="stat-value" id="stat-general">0</div></div>
+                </div>
+
+                <!-- 近期待办设置时间段 -->
+                <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px;">
+                    <label style="font-size:14px; color:var(--text-secondary);">近期范围：</label>
+                    <select id="dashboard-range" style="padding:4px 12px; border:1px solid var(--border-color); border-radius:var(--radius-sm); background:var(--bg-input); color:var(--text-primary);">
+                        <option value="1">1天</option>
+                        <option value="3" selected>3天</option>
+                        <option value="7">7天</option>
+                        <option value="14">14天</option>
+                        <option value="30">30天</option>
+                    </select>
+                </div>
+                <div class="todo-section">
+                    <div class="todo-header">
+                        <h3><i class="fas fa-clock" style="color:var(--accent);"></i> 近期待办</h3>
+                        <div class="todo-filters" id="dashboard-filters">
+                            <button class="filter-btn active" data-filter="all">全部</button>
+                            <button class="filter-btn" data-filter="urgent">紧急</button>
+                            <button class="filter-btn" data-filter="important">重要</button>
+                            <button class="filter-btn" data-filter="general">一般</button>
+                        </div>
+                    </div>
+                    <div id="dashboard-todo-list"></div>
+                </div>
+            </div>
+
+            <!-- Todos -->
+            <div class="page-section" id="page-todos">
+                <div class="todo-section">
+                    <div class="todo-header">
+                        <h3><i class="fas fa-list-check" style="color:var(--accent);"></i> 所有待办</h3>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="todo-search" placeholder="搜索事项..." style="width:140px;">
+                            </div>
+                            <div class="todo-filters" id="todo-filters">
+                                <button class="filter-btn active" data-filter="all">全部</button>
+                                <button class="filter-btn" data-filter="urgent">紧急</button>
+                                <button class="filter-btn" data-filter="important">重要</button>
+                                <button class="filter-btn" data-filter="general">一般</button>
+                                <button class="filter-btn" data-filter="done">已完成</button>
+                                <button class="filter-btn" data-filter="pending">进行中</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="todo-list"></div>
+                </div>
+            </div>
+
+            <!-- Calendar -->
+            <div class="page-section" id="page-calendar">
+                <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+                        <span style="font-size:18px; font-weight:600;" id="calendar-month-label">2026年1月</span>
+                        <div style="display:flex; gap:6px;">
+                            <button id="cal-prev" class="btn btn-outline btn-sm"><i class="fas fa-chevron-left"></i></button>
+                            <button id="cal-today" class="btn btn-outline btn-sm">今天</button>
+                            <button id="cal-next" class="btn btn-outline btn-sm"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px;" id="calendar-grid"></div>
+                    <div style="margin-top:16px;">
+                        <h4 style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;">📌 该日待办</h4>
+                        <div id="calendar-day-todos"><p style="color:var(--text-muted);font-size:14px;">点击日期查看待办</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users -->
+            <div class="page-section" id="page-users">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+                    <h3 style="font-size:18px;"><i class="fas fa-users-cog" style="color:var(--accent);"></i> 用户管理</h3>
+                    <button class="btn btn-primary" id="btn-add-user"><i class="fas fa-user-plus"></i> 添加用户</button>
+                </div>
+                <div class="user-table-wrap">
+                    <table class="user-table">
+                        <thead><tr><th>编号</th><th>用户名</th><th>邮箱</th><th>角色</th><th>操作</th></tr></thead>
+                        <tbody id="user-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Roles -->
+            <div class="page-section" id="page-roles">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+                    <h3 style="font-size:18px;"><i class="fas fa-tags" style="color:var(--accent);"></i> 角色管理</h3>
+                    <button class="btn btn-primary" id="btn-add-role"><i class="fas fa-plus"></i> 添加角色</button>
+                </div>
+                <div class="user-table-wrap">
+                    <table class="user-table">
+                        <thead><tr><th>ID</th><th>角色名</th><th>层级</th><th>操作</th></tr></thead>
+                        <tbody id="role-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Todo Modal -->
+    <div class="modal-overlay" id="todo-modal">
+        <div class="modal-box">
+            <div class="modal-title">
+                <span id="todo-modal-title">新建待办</span>
+                <button class="close-btn" data-modal-close>&times;</button>
+            </div>
+            <form id="todo-form">
+                <input type="hidden" id="todo-id" value="">
+                <div class="form-group">
+                    <label>事项名称 *</label>
+                    <input type="text" id="todo-title" placeholder="请输入事项名称" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>紧急类型</label>
+                        <select id="todo-urgency">
+                            <option value="general">一般</option>
+                            <option value="important">重要</option>
+                            <option value="urgent">紧急</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>重复类型</label>
+                        <select id="todo-repeat">
+                            <option value="once">一次性</option>
+                            <option value="daily">每天</option>
+                            <option value="weekly">每周</option>
+                            <option value="monthly">每月</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row" id="repeat-days-group" style="display:none;">
+                    <div class="form-group" id="weekly-days-group" style="display:none;">
+                        <label>每周哪几天 (按住Ctrl多选)</label>
+                        <select id="todo-weekdays" multiple style="height:80px;">
+                            <option value="0">周日</option><option value="1">周一</option><option value="2">周二</option>
+                            <option value="3">周三</option><option value="4">周四</option><option value="5">周五</option>
+                            <option value="6">周六</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="monthly-days-group" style="display:none;">
+                        <label>每月哪几天 (逗号分隔，如 1,15)</label>
+                        <input type="text" id="todo-monthdays" placeholder="1,15,30">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>开始时间</label>
+                        <input type="datetime-local" id="todo-start">
+                    </div>
+                    <div class="form-group">
+                        <label>结束时间</label>
+                        <input type="datetime-local" id="todo-end">
+                    </div>
+                </div>
+                <!-- 步骤动态输入 -->
+                <div class="form-group">
+                    <label>事项步骤</label>
+                    <div id="steps-container"></div>
+                    <button type="button" class="btn btn-sm btn-outline" id="add-step-btn"><i class="fas fa-plus"></i> 添加步骤</button>
+                </div>
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label>自动删除（天后）</label>
+                        <input type="number" id="todo-auto-delete" value="3" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>提前提醒</label>
+                        <input type="number" id="todo-reminder-offset" value="10" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>单位</label>
+                        <select id="todo-reminder-unit">
+                            <option value="minute">分钟</option>
+                            <option value="hour">小时</option>
+                            <option value="day">天</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" data-modal-close>取消</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Modal -->
+    <div class="modal-overlay" id="user-modal">
+        <div class="modal-box">
+            <div class="modal-title">
+                <span id="user-modal-title">添加用户</span>
+                <button class="close-btn" data-modal-close>&times;</button>
+            </div>
+            <form id="user-form">
+                <input type="hidden" id="user-id" value="">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>用户名 *</label>
+                        <input type="text" id="user-username" placeholder="用户名" required>
+                    </div>
+                    <div class="form-group">
+                        <label>密码 *</label>
+                        <input type="text" id="user-password" placeholder="密码" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input type="email" id="user-email" placeholder="邮箱">
+                </div>
+                <div class="form-group">
+                    <label>角色</label>
+                    <select id="user-role"></select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" data-modal-close>取消</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Role Modal -->
+    <div class="modal-overlay" id="role-modal">
+        <div class="modal-box">
+            <div class="modal-title">
+                <span id="role-modal-title">添加角色</span>
+                <button class="close-btn" data-modal-close>&times;</button>
+            </div>
+            <form id="role-form">
+                <input type="hidden" id="role-id" value="">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>角色名 *</label>
+                        <input type="text" id="role-name" placeholder="角色名" required>
+                    </div>
+                    <div class="form-group">
+                        <label>层级（数字越小权限越高）</label>
+                        <input type="number" id="role-level" placeholder="0" value="0">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" data-modal-close>取消</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal-overlay" id="profile-modal">
+        <div class="modal-box">
+            <div class="modal-title">
+                <span>个人资料</span>
+                <button class="close-btn" data-modal-close>&times;</button>
+            </div>
+            <form id="profile-form">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="profile-username" required>
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="text" id="profile-password" required>
+                </div>
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input type="email" id="profile-email">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" data-modal-close>取消</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        // 前端应用（完整功能）
+        // ================================================================
+        const API_BASE = 'http://localhost:3000/api';
+
+        let currentUser = null;
+        let currentPage = 'dashboard';
+        let calendarDate = new Date();
+        let todoFilter = 'all';
+        let dashboardFilter = 'all';
+        let todoSearchTerm = '';
+        let dashboardRange = 3;
+
+        let users = [];
+        let todos = [];
+        let roles = [];
+
+        // ---------- 辅助函数 ----------
+        function getRoleName(id) {
+            const r = roles.find(x => x.id === id);
+            return r ? r.name : '未知';
+        }
+
+        function getRoleLevel(id) {
+            const r = roles.find(x => x.id === id);
+            return r ? r.level : 999;
+        }
+
+        function getUserById(id) { return users.find(u => u.id === id); }
+
+        function canViewTodo(user, todo) {
+            if (!user) return false;
+            const userRole = roles.find(r => r.id === user.roleId);
+            const creator = getUserById(todo.createdBy);
+            if (!creator) return false;
+            if (userRole.name === '管理员') return true;
+            if (userRole.name === '领导') return true;
+            const creatorRole = roles.find(r => r.id === creator.roleId);
+            if (!creatorRole) return false;
+            if (creator.id === user.id) return true;
+            return userRole.level <= creatorRole.level;
+        }
+
+        function canModifyTodo(user, todo) {
+            if (!user) return false;
+            const userRole = roles.find(r => r.id === user.roleId);
+            if (userRole.name === '管理员') return true;
+            if (userRole.name === '领导') return todo.createdBy === user.id;
+            return todo.createdBy === user.id;
+        }
+
+        function canManageUsers(user) {
+            if (!user) return false;
+            const role = roles.find(r => r.id === user.roleId);
+            return role && role.name === '管理员';
+        }
+
+        function canManageRoles(user) {
+            if (!user) return false;
+            const role = roles.find(r => r.id === user.roleId);
+            return role && role.name === '管理员';
+        }
+
+        function canViewRoles(user) {
+            if (!user) return false;
+            const role = roles.find(r => r.id === user.roleId);
+            return role && (role.name === '管理员' || role.name === '领导');
+        }
+
+        function formatDate(d) {
+            if (!d) return '';
+            const dt = new Date(d);
+            return dt.toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatDateShort(d) {
+            if (!d) return '';
+            const dt = new Date(d);
+            return dt.toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function getUrgencyLabel(u) {
+            return { 'urgent': '紧急', 'important': '重要', 'general': '一般' } [u] || u;
+        }
+
+        function getRepeatLabel(todo) {
+            const map = { 'once': '一次性', 'daily': '每天', 'weekly': '每周', 'monthly': '每月' };
+            let label = map[todo.repeatType] || '一次性';
+            if (todo.repeatType === 'weekly' && todo.repeatDays && todo.repeatDays.length) {
+                label += ' (' + todo.repeatDays.map(d => '周' + ['日','一','二','三','四','五','六'][d]).join(',') + ')';
+            }
+            if (todo.repeatType === 'monthly' && todo.repeatDays && todo.repeatDays.length) {
+                label += ' (' + todo.repeatDays.join(',') + '日)';
+            }
+            return label;
+        }
+
+        function getReminderLabel(todo) {
+            if (!todo.reminderOffset) return '不提醒';
+            const unitMap = { 'minute': '分钟', 'hour': '小时', 'day': '天' };
+            return `提前 ${todo.reminderOffset}${unitMap[todo.reminderUnit]||''}`;
+        }
+
+        function daysInMonth(year, month) { return new Date(year, month+1, 0).getDate(); }
+
+        // ---------- API 调用 ----------
+        async function apiFetch(url, options = {}) {
+            const res = await fetch(API_BASE + url, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-Id': currentUser ? currentUser.id : '',
+                    ...options.headers,
+                }
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || '请求失败');
+            }
+            return res.json();
+        }
+
+        async function loadAllData() {
+            try {
+                [users, todos, roles] = await Promise.all([
+                    apiFetch('/users'),
+                    apiFetch('/todos'),
+                    apiFetch('/roles')
+                ]);
+            } catch (e) {
+                console.error('加载数据失败', e);
+            }
+        }
+
+        // ---------- 登录/注销 ----------
+        async function login(username, password) {
+            try {
+                const data = await apiFetch('/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password })
+                });
+                currentUser = data;
+                localStorage.setItem('session', JSON.stringify({ userId: currentUser.id }));
+                await loadAllData();
+                return true;
+            } catch (e) {
+                throw e;
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('session');
+            document.getElementById('login-page').style.display = 'flex';
+            document.getElementById('main-app').style.display = 'none';
+        }
+
+        async function restoreSession() {
+            const session = localStorage.getItem('session');
+            if (session) {
+                try {
+                    const { userId } = JSON.parse(session);
+                    const data = await apiFetch('/me', { headers: { 'X-User-Id': userId } });
+                    currentUser = data;
+                    await loadAllData();
+                    document.getElementById('login-page').style.display = 'none';
+                    document.getElementById('main-app').style.display = 'block';
+                    initApp();
+                    return true;
+                } catch (e) {
+                    logout();
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        // ---------- 渲染 ----------
+        function renderSidebar() {
+            if (!currentUser) return;
+            document.getElementById('sidebar-avatar').textContent = currentUser.username.charAt(0).toUpperCase();
+            document.getElementById('sidebar-uname').textContent = currentUser.username;
+            const roleName = getRoleName(currentUser.roleId);
+            document.getElementById('sidebar-urole').textContent = roleName;
+
+            const navUsers = document.getElementById('nav-users');
+            const navRoles = document.getElementById('nav-roles');
+            navUsers.style.display = canManageUsers(currentUser) ? 'flex' : 'none';
+            navRoles.style.display = canViewRoles(currentUser) ? 'flex' : 'none';
+        }
+
+        function renderStats() {
+            const visible = todos.filter(t => canViewTodo(currentUser, t) && !t.completed);
+            document.getElementById('stat-total').textContent = visible.length;
+            document.getElementById('stat-urgent').textContent = visible.filter(t => t.urgency === 'urgent').length;
+            document.getElementById('stat-important').textContent = visible.filter(t => t.urgency === 'important').length;
+            document.getElementById('stat-general').textContent = visible.filter(t => t.urgency === 'general').length;
+        }
+
+        function renderCalendar(year, month) {
+            const grid = document.getElementById('calendar-grid');
+            const label = document.getElementById('calendar-month-label');
+            const firstDay = new Date(year, month, 1).getDay();
+            const days = daysInMonth(year, month);
+            const today = new Date();
+            const todayDate = today.getDate(), todayMonth = today.getMonth(), todayYear = today.getFullYear();
+
+            label.textContent = `${year}年${month+1}月`;
+            let html = '';
+            const weekDays = ['日','一','二','三','四','五','六'];
+            weekDays.forEach(w => html += `<div class="day-label" style="text-align:center;font-size:12px;font-weight:600;color:var(--text-muted);padding:6px 0;">${w}</div>`);
+
+            for (let i = 0; i < firstDay; i++) {
+                html += `<div class="day-cell" style="aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);background:var(--bg-input);font-size:14px;color:var(--text-muted);opacity:0.5;"></div>`;
+            }
+
+            const visibleTodos = todos.filter(t => canViewTodo(currentUser, t) && !t.completed);
+            for (let d = 1; d <= days; d++) {
+                const isToday = (d === todayDate && month === todayMonth && year === todayYear);
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const dayTodos = visibleTodos.filter(t => {
+                    const start = new Date(t.startTime);
+                    const end = new Date(t.endTime);
+                    const check = new Date(year, month, d);
+                    const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+                    const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+                    return check >= startDate && check <= endDate;
+                });
+                let cls = 'day-cell';
+                if (!isToday) cls += ' other-month';
+                if (isToday) cls += ' today';
+                if (dayTodos.length > 0) cls += ' has-todo';
+                const hasUrgent = dayTodos.some(t => t.urgency === 'urgent');
+                if (hasUrgent) cls += ' urgent';
+                else if (dayTodos.some(t => t.urgency === 'important')) cls += ' important';
+
+                html += `<div class="${cls}" style="aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:var(--radius-sm);background:${isToday ? 'var(--accent)' : 'var(--bg-input)'};color:${isToday ? '#fff' : 'var(--text-secondary)'};font-size:14px;font-weight:500;cursor:pointer;position:relative;min-height:36px;" data-date="${dateStr}">
+                            <span>${d}</span>
+                            ${dayTodos.length > 0 ? `<span style="font-size:9px;color:var(--text-muted);">${dayTodos.length}</span>` : ''}
+                        </div>`;
+            }
+            grid.innerHTML = html;
+
+            grid.querySelectorAll('[data-date]').forEach(el => {
+                el.addEventListener('click', function() {
+                    showDayTodos(this.dataset.date);
+                });
+            });
+        }
+
+        function showDayTodos(dateStr) {
+            const visible = todos.filter(t => canViewTodo(currentUser, t) && !t.completed);
+            const [year, month, day] = dateStr.split('-').map(Number);
+            const dayTodos = visible.filter(t => {
+                const start = new Date(t.startTime);
+                const end = new Date(t.endTime);
+                const check = new Date(year, month-1, day);
+                const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+                const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+                return check >= startDate && check <= endDate;
+            });
+            const container = document.getElementById('calendar-day-todos');
+            if (dayTodos.length === 0) {
+                container.innerHTML = `<p style="color:var(--text-muted);font-size:14px;">📭 该日暂无待办事项</p>`;
+                return;
+            }
+            let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+            dayTodos.forEach(t => {
+                const color = t.urgency === 'urgent' ? 'var(--urgent-color)' : t.urgency === 'important' ? 'var(--important-color)' : 'var(--general-color)';
+                html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-input);border-radius:6px;border-left:3px solid ${color};flex-wrap:wrap;">
+                            <span style="font-weight:500;">${t.title}</span>
+                            <span style="font-size:12px;color:var(--text-muted);">${formatDateShort(t.startTime)} - ${formatDateShort(t.endTime)}</span>
+                            <span class="todo-urgency ${t.urgency}" style="font-size:10px;">${getUrgencyLabel(t.urgency)}</span>
+                        </div>`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function renderTodoList(containerId, filter = 'all', showActions = true, search = '', rangeDays = null) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            let list = todos.filter(t => canViewTodo(currentUser, t));
+
+            if (rangeDays !== null && rangeDays > 0) {
+                const now = new Date();
+                const limit = new Date(now);
+                limit.setDate(limit.getDate() + rangeDays);
+                list = list.filter(t => {
+                    const start = new Date(t.startTime);
+                    return start >= now && start <= limit && !t.completed;
+                });
+            }
+
+            if (search) {
+                const s = search.toLowerCase();
+                list = list.filter(t => t.title.toLowerCase().includes(s));
+            }
+
+            if (filter === 'urgent') list = list.filter(t => t.urgency === 'urgent' && !t.completed);
+            else if (filter === 'important') list = list.filter(t => t.urgency === 'important' && !t.completed);
+            else if (filter === 'general') list = list.filter(t => t.urgency === 'general' && !t.completed);
+            else if (filter === 'done') list = list.filter(t => t.completed);
+            else if (filter === 'pending') list = list.filter(t => !t.completed);
+            else list = list.filter(t => !t.completed);
+
+            const order = { 'urgent': 0, 'important': 1, 'general': 2 };
+            list.sort((a,b) => {
+                if (a.completed !== b.completed) return a.completed ? 1 : -1;
+                if (order[a.urgency] !== order[b.urgency]) return order[a.urgency] - order[b.urgency];
+                return new Date(a.startTime) - new Date(b.startTime);
+            });
+
+            if (list.length === 0) {
+                container.innerHTML = `<div class="todo-empty"><i class="fas fa-inbox"></i><p>暂无待办事项</p></div>`;
+                return;
+            }
+
+            let html = '';
+            list.forEach(todo => {
+                const color = todo.urgency === 'urgent' ? 'var(--urgent-color)' : todo.urgency === 'important' ? 'var(--important-color)' : 'var(--general-color)';
+                const steps = todo.steps || [];
+                const currentStep = todo.currentStep || 0;
+                const progress = steps.length > 0 ? Math.round((currentStep / steps.length) * 100) : 0;
+                const isDone = todo.completed;
+
+                html += `<div class="todo-item" data-id="${todo.id}">
+                            <button class="todo-check ${isDone ? 'done' : ''}" data-id="${todo.id}" title="切换完成状态">
+                                ${isDone ? '<i class="fas fa-check"></i>' : ''}
+                            </button>
+                            <div class="todo-body">
+                                <div class="todo-title" style="${isDone ? 'text-decoration:line-through;color:var(--text-muted);' : ''}">${todo.title}</div>
+                                <div class="todo-meta">
+                                    <span><i class="far fa-calendar"></i> ${formatDate(todo.startTime)} - ${formatDate(todo.endTime)}</span>
+                                    <span><i class="fas fa-repeat"></i> ${getRepeatLabel(todo)}</span>
+                                    <span><i class="fas fa-bell"></i> ${getReminderLabel(todo)}</span>
+                                    <span><i class="fas fa-user"></i> ${(getUserById(todo.createdBy)||{}).username || '未知'}</span>
+                                    ${steps.length ? `<span><i class="fas fa-list-ul"></i> ${currentStep+1}/${steps.length} 步</span>` : ''}
+                                    ${todo.autoDeleteDays ? `<span><i class="fas fa-clock"></i> ${todo.autoDeleteDays}天后删</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="todo-urgency ${todo.urgency}">${getUrgencyLabel(todo.urgency)}</div>
+                            <div class="todo-progress">
+                                <span>${isDone ? '✅ 完成' : `${progress}%`}</span>
+                                <div class="progress-bar"><div class="fill ${todo.urgency}" style="width:${isDone ? 100 : progress}%;"></div></div>
+                            </div>
+                            ${showActions && canModifyTodo(currentUser, todo) ? `
+                            <div class="todo-actions">
+                                <button class="edit-btn" data-id="${todo.id}" title="编辑"><i class="fas fa-edit"></i></button>
+                                <button class="delete-btn" data-id="${todo.id}" title="删除"><i class="fas fa-trash"></i></button>
+                            </div>` : ''}
+                        </div>`;
+            });
+            container.innerHTML = html;
+
+            container.querySelectorAll('.todo-check').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const id = parseInt(this.dataset.id);
+                    await toggleTodoComplete(id);
+                });
+            });
+            container.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    openTodoModal(id);
+                });
+            });
+            container.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const id = parseInt(this.dataset.id);
+                    if (confirm('确定删除此待办？')) {
+                        await deleteTodo(id);
+                    }
+                });
+            });
+        }
+
+        function renderUserTable() {
+            const tbody = document.getElementById('user-table-body');
+            let html = '';
+            users.forEach(u => {
+                const roleName = getRoleName(u.roleId);
+                const canEdit = canManageUsers(currentUser) && u.id !== currentUser.id;
+                html += `<tr>
+                            <td>${u.id}</td>
+                            <td><strong>${u.username}</strong></td>
+                            <td>${u.email || '-'}</td>
+                            <td><span class="role-badge admin">${roleName}</span></td>
+                            <td>
+                                ${canEdit ? `<button class="btn btn-sm btn-outline edit-user-btn" data-id="${u.id}"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm btn-danger delete-user-btn" data-id="${u.id}"><i class="fas fa-trash"></i></button>` : '<span style="color:var(--text-muted);font-size:12px;">-</span>'}
+                            </td>
+                        </tr>`;
+            });
+            tbody.innerHTML = html;
+
+            tbody.querySelectorAll('.edit-user-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    openUserModal(id);
+                });
+            });
+            tbody.querySelectorAll('.delete-user-btn').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const id = parseInt(this.dataset.id);
+                    if (confirm('确定删除该用户？')) {
+                        await deleteUser(id);
+                    }
+                });
+            });
+        }
+
+        function renderRoleTable() {
+            const tbody = document.getElementById('role-table-body');
+            let html = '';
+            const adminRole = roles.find(r => r.name === '管理员');
+            roles.forEach(r => {
+                const isAdmin = r.id === adminRole.id;
+                const canEdit = canManageRoles(currentUser) && !isAdmin;
+                html += `<tr>
+                            <td>${r.id}</td>
+                            <td><strong>${r.name}</strong></td>
+                            <td>${r.level}</td>
+                            <td>
+                                ${canEdit ? `<button class="btn btn-sm btn-outline edit-role-btn" data-id="${r.id}"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm btn-danger delete-role-btn" data-id="${r.id}"><i class="fas fa-trash"></i></button>` : isAdmin ? '<span style="color:var(--text-muted);font-size:12px;">系统内置</span>' : '-'}
+                            </td>
+                        </tr>`;
+            });
+            tbody.innerHTML = html;
+
+            tbody.querySelectorAll('.edit-role-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    openRoleModal(id);
+                });
+            });
+            tbody.querySelectorAll('.delete-role-btn').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const id = parseInt(this.dataset.id);
+                    if (confirm('确定删除该角色？')) {
+                        await deleteRole(id);
+                    }
+                });
+            });
+        }
+
+        // ---------- CRUD ----------
+        async function toggleTodoComplete(id) {
+            const todo = todos.find(t => t.id === id);
+            if (!todo || !canModifyTodo(currentUser, todo)) return;
+            todo.completed = !todo.completed;
+            todo.completedAt = todo.completed ? new Date().toISOString() : null;
+            await apiFetch(`/todos/${id}`, { method: 'PUT', body: JSON.stringify(todo) });
+            await loadAllData();
+            refreshAll();
+        }
+
+        async function deleteTodo(id) {
+            await apiFetch(`/todos/${id}`, { method: 'DELETE' });
+            await loadAllData();
+            refreshAll();
+        }
+
+        async function deleteUser(id) {
+            await apiFetch(`/users/${id}`, { method: 'DELETE' });
+            await loadAllData();
+            refreshAll();
+        }
+
+        async function deleteRole(id) {
+            await apiFetch(`/roles/${id}`, { method: 'DELETE' });
+            await loadAllData();
+            refreshAll();
+        }
+
+        // ---------- 表单 ----------
+        function openTodoModal(id) {
+            const modal = document.getElementById('todo-modal');
+            document.getElementById('todo-id').value = '';
+            document.getElementById('todo-modal-title').textContent = '新建待办';
+            document.getElementById('todo-form').reset();
+            const stepsContainer = document.getElementById('steps-container');
+            stepsContainer.innerHTML = '';
+            ['步骤1', '步骤2', '步骤3'].forEach(step => addStepInput(step));
+
+            if (id) {
+                const todo = todos.find(t => t.id === id);
+                if (!todo || !canModifyTodo(currentUser, todo)) { alert('无权限编辑'); return; }
+                document.getElementById('todo-modal-title').textContent = '编辑待办';
+                document.getElementById('todo-id').value = id;
+                document.getElementById('todo-title').value = todo.title;
+                document.getElementById('todo-urgency').value = todo.urgency;
+                document.getElementById('todo-repeat').value = todo.repeatType || 'once';
+                document.getElementById('todo-start').value = todo.startTime ? todo.startTime.slice(0,16) : '';
+                document.getElementById('todo-end').value = todo.endTime ? todo.endTime.slice(0,16) : '';
+                document.getElementById('todo-auto-delete').value = todo.autoDeleteDays || 3;
+                document.getElementById('todo-reminder-offset').value = todo.reminderOffset || 0;
+                document.getElementById('todo-reminder-unit').value = todo.reminderUnit || 'minute';
+                stepsContainer.innerHTML = '';
+                (todo.steps || []).forEach(s => addStepInput(s));
+                if (todo.steps.length === 0) addStepInput('');
+
+                if (todo.repeatType === 'weekly' && todo.repeatDays) {
+                    const sel = document.getElementById('todo-weekdays');
+                    Array.from(sel.options).forEach(opt => {
+                        opt.selected = todo.repeatDays.includes(parseInt(opt.value));
+                    });
+                }
+                if (todo.repeatType === 'monthly' && todo.repeatDays) {
+                    document.getElementById('todo-monthdays').value = todo.repeatDays.join(',');
+                }
+            } else {
+                const now = new Date();
+                const start = new Date(now);
+                start.setHours(start.getHours()+1);
+                start.setMinutes(0,0,0);
+                const end = new Date(start);
+                end.setHours(end.getHours()+1);
+                document.getElementById('todo-start').value = start.toISOString().slice(0,16);
+                document.getElementById('todo-end').value = end.toISOString().slice(0,16);
+                document.getElementById('todo-auto-delete').value = 3;
+                document.getElementById('todo-reminder-offset').value = 10;
+            }
+            updateRepeatFields();
+            modal.classList.add('show');
+        }
+
+        function addStepInput(value = '') {
+            const container = document.getElementById('steps-container');
+            const div = document.createElement('div');
+            div.className = 'step-input-group';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'step-input';
+            input.value = value;
+            input.placeholder = '输入步骤';
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.innerHTML = '<i class="fas fa-times"></i>';
+            delBtn.className = 'remove-step';
+            delBtn.addEventListener('click', function() {
+                if (container.children.length > 1) {
+                    container.removeChild(div);
+                }
+            });
+            div.appendChild(input);
+            div.appendChild(delBtn);
+            container.appendChild(div);
+        }
+
+        function getStepsFromUI() {
+            const inputs = document.querySelectorAll('#steps-container .step-input');
+            return Array.from(inputs).map(inp => inp.value.trim()).filter(s => s);
+        }
+
+        function updateRepeatFields() {
+            const repeat = document.getElementById('todo-repeat').value;
+            const group = document.getElementById('repeat-days-group');
+            const weekly = document.getElementById('weekly-days-group');
+            const monthly = document.getElementById('monthly-days-group');
+            if (repeat === 'weekly') {
+                group.style.display = 'grid';
+                weekly.style.display = 'block';
+                monthly.style.display = 'none';
+            } else if (repeat === 'monthly') {
+                group.style.display = 'grid';
+                weekly.style.display = 'none';
+                monthly.style.display = 'block';
+            } else {
+                group.style.display = 'none';
+            }
+        }
+
+        async function saveTodoFromForm() {
+            const id = document.getElementById('todo-id').value;
+            const title = document.getElementById('todo-title').value.trim();
+            if (!title) { alert('请输入事项名称'); return; }
+            const urgency = document.getElementById('todo-urgency').value;
+            const repeatType = document.getElementById('todo-repeat').value;
+            const startTime = document.getElementById('todo-start').value;
+            const endTime = document.getElementById('todo-end').value;
+            const steps = getStepsFromUI();
+            const autoDeleteDays = parseInt(document.getElementById('todo-auto-delete').value) || 0;
+            const reminderOffset = parseInt(document.getElementById('todo-reminder-offset').value) || 0;
+            const reminderUnit = document.getElementById('todo-reminder-unit').value;
+
+            let repeatDays = [];
+            if (repeatType === 'weekly') {
+                const sel = document.getElementById('todo-weekdays');
+                repeatDays = Array.from(sel.selectedOptions).map(o => parseInt(o.value));
+            } else if (repeatType === 'monthly') {
+                const val = document.getElementById('todo-monthdays').value.trim();
+                repeatDays = val.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n>=1 && n<=31);
+            }
+
+            const todoData = {
+                title,
+                urgency,
+                steps: steps.length ? steps : ['步骤1', '步骤2', '步骤3'],
+                startTime: startTime || new Date().toISOString(),
+                endTime: endTime || new Date(Date.now()+3600000).toISOString(),
+                repeatType,
+                repeatDays,
+                autoDeleteDays,
+                reminderOffset,
+                reminderUnit,
+                currentStep: 0,
+                completed: false,
+                completedAt: null,
+                createdBy: currentUser.id,
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                if (id) {
+                    const existing = todos.find(t => t.id === parseInt(id));
+                    if (!existing || !canModifyTodo(currentUser, existing)) { alert('无权限修改'); return; }
+                    const updated = { ...existing, ...todoData };
+                    await apiFetch(`/todos/${id}`, { method: 'PUT', body: JSON.stringify(updated) });
+                } else {
+                    await apiFetch('/todos', { method: 'POST', body: JSON.stringify(todoData) });
+                }
+                await loadAllData();
+                closeModal('todo-modal');
+                refreshAll();
+                // 模拟邮件提醒
+                if (todoData.reminderOffset > 0) {
+                    const admin = users.find(u => {
+                        const r = roles.find(role => role.id === u.roleId);
+                        return r && r.name === '管理员';
+                    });
+                    if (admin && admin.email) {
+                        console.log(`[邮件提醒] 发送至 ${admin.email}: 待办 "${todoData.title}" 即将提醒`);
+                    }
+                }
+            } catch (e) {
+                alert('保存失败: '+e.message);
+            }
+        }
+
+        function openUserModal(id) {
+            const modal = document.getElementById('user-modal');
+            document.getElementById('user-id').value = '';
+            document.getElementById('user-modal-title').textContent = '添加用户';
+            document.getElementById('user-form').reset();
+            const roleSelect = document.getElementById('user-role');
+            roleSelect.innerHTML = roles.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+
+            if (id) {
+                const user = users.find(u => u.id === id);
+                if (!user) return;
+                document.getElementById('user-modal-title').textContent = '编辑用户';
+                document.getElementById('user-id').value = id;
+                document.getElementById('user-username').value = user.username;
+                document.getElementById('user-password').value = user.password;
+                document.getElementById('user-email').value = user.email || '';
+                roleSelect.value = user.roleId;
+            }
+            modal.classList.add('show');
+        }
+
+        async function saveUserFromForm() {
+            const id = document.getElementById('user-id').value;
+            const username = document.getElementById('user-username').value.trim();
+            const password = document.getElementById('user-password').value.trim();
+            const email = document.getElementById('user-email').value.trim();
+            const roleId = parseInt(document.getElementById('user-role').value);
+
+            if (!username || !password) { alert('用户名和密码不能为空'); return; }
+            try {
+                if (id) {
+                    await apiFetch(`/users/${id}`, { method: 'PUT', body: JSON.stringify({ username, password, email, roleId }) });
+                } else {
+                    await apiFetch('/users', { method: 'POST', body: JSON.stringify({ username, password, email, roleId }) });
+                }
+                await loadAllData();
+                closeModal('user-modal');
+                refreshAll();
+            } catch (e) {
+                alert('保存失败: '+e.message);
+            }
+        }
+
+        function openRoleModal(id) {
+            const modal = document.getElementById('role-modal');
+            document.getElementById('role-id').value = '';
+            document.getElementById('role-modal-title').textContent = '添加角色';
+            document.getElementById('role-form').reset();
+            if (id) {
+                const role = roles.find(r => r.id === id);
+                if (!role) return;
+                document.getElementById('role-modal-title').textContent = '编辑角色';
+                document.getElementById('role-id').value = id;
+                document.getElementById('role-name').value = role.name;
+                document.getElementById('role-level').value = role.level;
+            }
+            modal.classList.add('show');
+        }
+
+        async function saveRoleFromForm() {
+            const id = document.getElementById('role-id').value;
+            const name = document.getElementById('role-name').value.trim();
+            const level = parseInt(document.getElementById('role-level').value) || 0;
+            if (!name) { alert('角色名不能为空'); return; }
+            try {
+                if (id) {
+                    await apiFetch(`/roles/${id}`, { method: 'PUT', body: JSON.stringify({ name, level }) });
+                } else {
+                    await apiFetch('/roles', { method: 'POST', body: JSON.stringify({ name, level }) });
+                }
+                await loadAllData();
+                closeModal('role-modal');
+                refreshAll();
+            } catch (e) {
+                alert('保存失败: '+e.message);
+            }
+        }
+
+        function openProfileModal() {
+            const modal = document.getElementById('profile-modal');
+            document.getElementById('profile-username').value = currentUser.username;
+            document.getElementById('profile-password').value = currentUser.password;
+            document.getElementById('profile-email').value = currentUser.email || '';
+            modal.classList.add('show');
+        }
+
+        async function saveProfileFromForm() {
+            const username = document.getElementById('profile-username').value.trim();
+            const password = document.getElementById('profile-password').value.trim();
+            const email = document.getElementById('profile-email').value.trim();
+            if (!username || !password) { alert('用户名和密码不能为空'); return; }
+            try {
+                await apiFetch('/me', {
+                    method: 'PUT',
+                    headers: { 'X-User-Id': currentUser.id },
+                    body: JSON.stringify({ username, password, email })
+                });
+                currentUser.username = username;
+                currentUser.password = password;
+                currentUser.email = email;
+                localStorage.setItem('session', JSON.stringify({ userId: currentUser.id }));
+                await loadAllData();
+                closeModal('profile-modal');
+                refreshAll();
+            } catch (e) {
+                alert('保存失败: '+e.message);
+            }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+
+        // ---------- 刷新 ----------
+        function refreshAll() {
+            renderSidebar();
+            renderStats();
+            renderTodoList('dashboard-todo-list', dashboardFilter, true, '', dashboardRange);
+            renderTodoList('todo-list', todoFilter, true, todoSearchTerm);
+            renderCalendar(calendarDate.getFullYear(), calendarDate.getMonth());
+            if (canManageUsers(currentUser)) renderUserTable();
+            if (canViewRoles(currentUser)) renderRoleTable();
+            const titles = { 'dashboard': '主页', 'todos': '待办事项', 'calendar': '日历', 'users': '用户管理', 'roles': '角色管理' };
+            document.getElementById('page-title').textContent = titles[currentPage] || '主页';
+            document.querySelectorAll('.sidebar .nav-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.page === currentPage);
+            });
+            document.querySelectorAll('.page-section').forEach(el => {
+                el.classList.toggle('active', el.id === 'page-' + currentPage);
+            });
+        }
+
+        function navigateTo(page) {
+            if (page === 'users' && !canManageUsers(currentUser)) return;
+            if (page === 'roles' && !canViewRoles(currentUser)) return;
+            currentPage = page;
+            refreshAll();
+            if (page === 'calendar') {
+                const today = new Date();
+                const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+                showDayTodos(dateStr);
+            }
+        }
+
+        // ---------- 初始化 ----------
+        function initApp() {
+            if (!currentUser) return;
+            renderSidebar();
+            const now = new Date();
+            calendarDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            refreshAll();
+            const today = new Date();
+            const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+            showDayTodos(dateStr);
+        }
+
+        // ---------- 事件绑定 ----------
+        document.addEventListener('DOMContentLoaded', function() {
+            // Login
+            document.getElementById('login-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const username = document.getElementById('login-username').value.trim();
+                const password = document.getElementById('login-password').value.trim();
+                const errEl = document.getElementById('login-error');
+                try {
+                    await login(username, password);
+                    errEl.textContent = '';
+                    document.getElementById('login-page').style.display = 'none';
+                    document.getElementById('main-app').style.display = 'block';
+                    initApp();
+                } catch (err) {
+                    errEl.textContent = '❌ ' + err.message;
+                }
+            });
+
+            document.getElementById('logout-btn').addEventListener('click', logout);
+
+            // Theme
+            document.getElementById('theme-toggle').addEventListener('click', function() {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    this.innerHTML = '<i class="fas fa-moon"></i>';
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    this.innerHTML = '<i class="fas fa-sun"></i>';
+                }
+            });
+
+            // Navigation
+            document.querySelectorAll('.sidebar .nav-item').forEach(el => {
+                el.addEventListener('click', function() {
+                    navigateTo(this.dataset.page);
+                });
+            });
+
+            // Add buttons
+            document.getElementById('btn-add-todo').addEventListener('click', () => openTodoModal(null));
+            document.getElementById('btn-add-user').addEventListener('click', () => openUserModal(null));
+            document.getElementById('btn-add-role').addEventListener('click', () => openRoleModal(null));
+            document.getElementById('btn-edit-profile').addEventListener('click', openProfileModal);
+
+            // Modal close
+            document.querySelectorAll('[data-modal-close]').forEach(el => {
+                el.addEventListener('click', function() {
+                    const modal = this.closest('.modal-overlay');
+                    if (modal) modal.classList.remove('show');
+                });
+            });
+            document.querySelectorAll('.modal-overlay').forEach(el => {
+                el.addEventListener('click', function(e) {
+                    if (e.target === this) this.classList.remove('show');
+                });
+            });
+
+            // Form submit
+            document.getElementById('todo-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveTodoFromForm();
+            });
+            document.getElementById('user-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveUserFromForm();
+            });
+            document.getElementById('role-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveRoleFromForm();
+            });
+            document.getElementById('profile-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveProfileFromForm();
+            });
+
+            // Add step
+            document.getElementById('add-step-btn').addEventListener('click', function() {
+                addStepInput('');
+            });
+
+            // Repeat change
+            document.getElementById('todo-repeat').addEventListener('change', updateRepeatFields);
+
+            // Dashboard range
+            document.getElementById('dashboard-range').addEventListener('change', function() {
+                dashboardRange = parseInt(this.value);
+                renderTodoList('dashboard-todo-list', dashboardFilter, true, '', dashboardRange);
+            });
+
+            // Search
+            document.getElementById('todo-search').addEventListener('input', function() {
+                todoSearchTerm = this.value;
+                renderTodoList('todo-list', todoFilter, true, todoSearchTerm);
+            });
+
+            // Filters
+            document.querySelectorAll('#dashboard-filters .filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('#dashboard-filters .filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    dashboardFilter = this.dataset.filter;
+                    renderTodoList('dashboard-todo-list', dashboardFilter, true, '', dashboardRange);
+                });
+            });
+            document.querySelectorAll('#todo-filters .filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('#todo-filters .filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    todoFilter = this.dataset.filter;
+                    renderTodoList('todo-list', todoFilter, true, todoSearchTerm);
+                });
+            });
+
+            // Calendar nav
+            function changeMonth(delta) {
+                calendarDate.setMonth(calendarDate.getMonth() + delta);
+                refreshAll();
+            }
+            document.getElementById('cal-prev').addEventListener('click', () => changeMonth(-1));
+            document.getElementById('cal-next').addEventListener('click', () => changeMonth(1));
+            document.getElementById('cal-today').addEventListener('click', function() {
+                const now = new Date();
+                calendarDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                refreshAll();
+                const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+                showDayTodos(dateStr);
+            });
+
+            // 自动清理（每10分钟）
+            setInterval(async function() {
+                const now = new Date();
+                let changed = false;
+                for (let todo of todos) {
+                    if (!canModifyTodo(currentUser, todo)) continue;
+                    let shouldDelete = false;
+                    if (todo.completed && todo.completedAt) {
+                        const delDate = new Date(todo.completedAt);
+                        delDate.setDate(delDate.getDate() + (todo.autoDeleteDays || 3));
+                        if (now > delDate) shouldDelete = true;
+                    } else if (!todo.completed) {
+                        const endDate = new Date(todo.endTime);
+                        const delDate = new Date(endDate);
+                        delDate.setDate(delDate.getDate() + (todo.autoDeleteDays || 3));
+                        if (now > delDate) shouldDelete = true;
+                    }
+                    if (shouldDelete) {
+                        try {
+                            await apiFetch(`/todos/${todo.id}`, { method: 'DELETE' });
+                            changed = true;
+                        } catch (e) {}
+                    }
+                }
+                if (changed) {
+                    await loadAllData();
+                    refreshAll();
+                }
+            }, 600000);
+
+            // Restore session
+            restoreSession().then(success => {
+                if (!success) {
+                    document.getElementById('login-page').style.display = 'flex';
+                    document.getElementById('main-app').style.display = 'none';
+                }
+            });
+
+            console.log('✅ AI-IMS 前端已启动');
+        });
+    </script>
+</body>
+</html>
