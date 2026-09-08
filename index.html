@@ -47,11 +47,7 @@
             --accent-hover: #5a7aee;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg-primary);
@@ -184,6 +180,7 @@
         .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
         .btn-outline:hover { background: var(--bg-input); }
         .btn-sm { padding: 4px 12px; font-size: 12px; }
+        .btn-xs { padding: 2px 10px; font-size: 11px; }
 
         /* Dashboard Stats */
         .dashboard-grid {
@@ -372,6 +369,17 @@
         .page-section { display: none; }
         .page-section.active { display: block; }
 
+        /* Data management */
+        .data-mgmt {
+            display: flex; gap: 12px; flex-wrap: wrap;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+        .data-mgmt .btn { font-size: 12px; }
+
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar { width: 60px; padding: 12px 0; }
@@ -462,6 +470,16 @@
                 </div>
             </div>
 
+            <!-- Data Management -->
+            <div class="data-mgmt" id="data-mgmt">
+                <span style="font-size:13px;color:var(--text-secondary);"><i class="fas fa-database"></i> 数据存储 (localStorage)</span>
+                <span id="storage-size" style="font-size:12px;color:var(--text-muted);">大小: 0 KB</span>
+                <button class="btn btn-sm btn-outline" id="export-data"><i class="fas fa-download"></i> 导出 JSON</button>
+                <button class="btn btn-sm btn-outline" id="import-data"><i class="fas fa-upload"></i> 导入 JSON</button>
+                <input type="file" id="import-file" accept=".json" style="display:none;">
+                <button class="btn btn-sm btn-danger" id="clear-data"><i class="fas fa-trash"></i> 清除所有数据</button>
+            </div>
+
             <!-- Dashboard -->
             <div class="page-section active" id="page-dashboard">
                 <div class="dashboard-grid" id="stats-grid">
@@ -471,7 +489,6 @@
                     <div class="stat-card general"><div class="stat-label">一般</div><div class="stat-value" id="stat-general">0</div></div>
                 </div>
 
-                <!-- 近期待办设置时间段 -->
                 <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px;">
                     <label style="font-size:14px; color:var(--text-secondary);">近期范围：</label>
                     <select id="dashboard-range" style="padding:4px 12px; border:1px solid var(--border-color); border-radius:var(--radius-sm); background:var(--bg-input); color:var(--text-primary);">
@@ -625,7 +642,6 @@
                         <input type="datetime-local" id="todo-end">
                     </div>
                 </div>
-                <!-- 步骤动态输入 -->
                 <div class="form-group">
                     <label>事项步骤</label>
                     <div id="steps-container"></div>
@@ -749,10 +765,71 @@
 
     <script>
         // ================================================================
-        // 前端应用（完整功能）
+        // 前端应用 (所有逻辑在浏览器中完成，数据保存在 localStorage)
+        // 初始数据从外部 JSON 文件加载（通过 fetch），如果失败则使用内置默认值
         // ================================================================
-        const API_BASE = 'http://localhost:3000/api';
 
+        // ---------- 默认数据 ----------
+        const DEFAULT_ROLES = [
+            { id: 1, name: '管理员', level: 0 },
+            { id: 2, name: '领导', level: 1 },
+            { id: 3, name: '经理', level: 2 },
+            { id: 4, name: '主管', level: 3 },
+            { id: 5, name: '组长', level: 4 },
+            { id: 6, name: '员工', level: 5 }
+        ];
+
+        const DEFAULT_USERS = [
+            { id: 1, username: 'admin', password: 'admin123', email: 'admin@demo.com', roleId: 1 },
+            { id: 2, username: 'leader', password: 'leader123', email: 'leader@demo.com', roleId: 2 },
+            { id: 3, username: 'manager', password: 'mgr123', email: 'manager@demo.com', roleId: 3 },
+            { id: 4, username: 'supervisor', password: 'sup123', email: 'sup@demo.com', roleId: 4 },
+            { id: 5, username: 'groupleader', password: 'gl123', email: 'gl@demo.com', roleId: 5 },
+            { id: 6, username: 'employee', password: 'emp123', email: 'emp@demo.com', roleId: 6 }
+        ];
+
+        const DEFAULT_TODOS = [
+            {
+                id: 1,
+                title: '项目启动会议',
+                urgency: 'important',
+                steps: ['准备材料', '召开会议', '形成纪要'],
+                currentStep: 0,
+                startTime: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()+1, 10, 0).toISOString(),
+                endTime: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()+1, 12, 0).toISOString(),
+                repeatType: 'once',
+                repeatDays: [],
+                reminderOffset: 15,
+                reminderUnit: 'minute',
+                reminderAt: 'start',
+                createdBy: 1,
+                createdAt: new Date().toISOString(),
+                completed: false,
+                completedAt: null,
+                autoDeleteDays: 3
+            },
+            {
+                id: 2,
+                title: '周报提交',
+                urgency: 'urgent',
+                steps: ['收集数据', '撰写报告', '提交审批'],
+                currentStep: 1,
+                startTime: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()+2, 17, 0).toISOString(),
+                endTime: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()+2, 18, 0).toISOString(),
+                repeatType: 'weekly',
+                repeatDays: [5],
+                reminderOffset: 30,
+                reminderUnit: 'minute',
+                reminderAt: 'end',
+                createdBy: 1,
+                createdAt: new Date().toISOString(),
+                completed: false,
+                completedAt: null,
+                autoDeleteDays: 3
+            }
+        ];
+
+        // ---------- 状态 ----------
         let currentUser = null;
         let currentPage = 'dashboard';
         let calendarDate = new Date();
@@ -761,9 +838,140 @@
         let todoSearchTerm = '';
         let dashboardRange = 3;
 
+        // ---------- 数据存储 (localStorage) ----------
+        const STORAGE_KEY_USERS = 'taskflow_users';   // 存储 { roles, users }
+        const STORAGE_KEY_TODOS = 'taskflow_todos';   // 存储 todos 数组
+
+        function loadUsersFromStorage() {
+            const data = localStorage.getItem(STORAGE_KEY_USERS);
+            if (data) {
+                try { return JSON.parse(data); } catch(e) {}
+            }
+            return null;
+        }
+
+        function saveUsersToStorage(data) {
+            localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(data));
+            updateStorageSize();
+        }
+
+        function loadTodosFromStorage() {
+            const data = localStorage.getItem(STORAGE_KEY_TODOS);
+            if (data) {
+                try { return JSON.parse(data); } catch(e) {}
+            }
+            return null;
+        }
+
+        function saveTodosToStorage(data) {
+            localStorage.setItem(STORAGE_KEY_TODOS, JSON.stringify(data));
+            updateStorageSize();
+        }
+
+        // 获取当前数据（如果storage有则使用，否则使用默认）
+        let roles = [];
         let users = [];
         let todos = [];
-        let roles = [];
+
+        function loadAllData() {
+            const storedUsers = loadUsersFromStorage();
+            if (storedUsers && storedUsers.roles && storedUsers.users) {
+                roles = storedUsers.roles;
+                users = storedUsers.users;
+            } else {
+                // 从外部JSON加载，如果失败则使用默认
+                fetch('users.json')
+                    .then(res => {
+                        if (!res.ok) throw new Error('File not found');
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (data.roles && data.users) {
+                            roles = data.roles;
+                            users = data.users;
+                            saveUsersToStorage({ roles, users });
+                            refreshAll();
+                        }
+                    })
+                    .catch(() => {
+                        roles = DEFAULT_ROLES;
+                        users = DEFAULT_USERS;
+                        saveUsersToStorage({ roles, users });
+                        refreshAll();
+                    });
+            }
+
+            const storedTodos = loadTodosFromStorage();
+            if (storedTodos) {
+                todos = storedTodos;
+            } else {
+                fetch('data/data.json')
+                    .then(res => {
+                        if (!res.ok) throw new Error('File not found');
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (Array.isArray(data)) {
+                            todos = data;
+                            saveTodosToStorage(todos);
+                            refreshAll();
+                        }
+                    })
+                    .catch(() => {
+                        todos = DEFAULT_TODOS;
+                        saveTodosToStorage(todos);
+                        refreshAll();
+                    });
+            }
+            // 确保管理员存在
+            ensureAdminExists();
+            updateStorageSize();
+        }
+
+        function ensureAdminExists() {
+            const adminRole = roles.find(r => r.name === '管理员');
+            if (!adminRole) {
+                const newRole = { id: getNextId(roles), name: '管理员', level: 0 };
+                roles.push(newRole);
+            }
+            const admin = users.find(u => u.roleId === (adminRole ? adminRole.id : roles.find(r => r.name === '管理员').id));
+            if (!admin) {
+                const adminRoleId = roles.find(r => r.name === '管理员').id;
+                users.push({
+                    id: getNextId(users),
+                    username: 'admin',
+                    password: 'admin123',
+                    email: 'admin@demo.com',
+                    roleId: adminRoleId
+                });
+            }
+            // 保存到storage
+            saveUsersToStorage({ roles, users });
+        }
+
+        function getNextId(collection) {
+            if (!collection || collection.length === 0) return 1;
+            return Math.max(...collection.map(item => item.id)) + 1;
+        }
+
+        // 更新存储大小显示
+        function updateStorageSize() {
+            let total = 0;
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    total += localStorage[key].length * 2; // 估算字节数
+                }
+            }
+            const sizeKB = (total / 1024).toFixed(1);
+            document.getElementById('storage-size').textContent = `大小: ${sizeKB} KB`;
+            // 如果超过 1MB 提示
+            if (total > 1024 * 1024) {
+                document.getElementById('storage-size').style.color = 'var(--danger)';
+                document.getElementById('storage-size').textContent += ' ⚠️ 数据较大，建议导出清理';
+            } else {
+                document.getElementById('storage-size').style.color = 'var(--text-muted)';
+            }
+        }
 
         // ---------- 辅助函数 ----------
         function getRoleName(id) {
@@ -785,6 +993,7 @@
             if (!creator) return false;
             if (userRole.name === '管理员') return true;
             if (userRole.name === '领导') return true;
+            // 员工
             const creatorRole = roles.find(r => r.id === creator.roleId);
             if (!creatorRole) return false;
             if (creator.id === user.id) return true;
@@ -817,85 +1026,15 @@
             return role && (role.name === '管理员' || role.name === '领导');
         }
 
-        function formatDate(d) {
-            if (!d) return '';
-            const dt = new Date(d);
-            return dt.toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        }
-
-        function formatDateShort(d) {
-            if (!d) return '';
-            const dt = new Date(d);
-            return dt.toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        }
-
-        function getUrgencyLabel(u) {
-            return { 'urgent': '紧急', 'important': '重要', 'general': '一般' } [u] || u;
-        }
-
-        function getRepeatLabel(todo) {
-            const map = { 'once': '一次性', 'daily': '每天', 'weekly': '每周', 'monthly': '每月' };
-            let label = map[todo.repeatType] || '一次性';
-            if (todo.repeatType === 'weekly' && todo.repeatDays && todo.repeatDays.length) {
-                label += ' (' + todo.repeatDays.map(d => '周' + ['日','一','二','三','四','五','六'][d]).join(',') + ')';
-            }
-            if (todo.repeatType === 'monthly' && todo.repeatDays && todo.repeatDays.length) {
-                label += ' (' + todo.repeatDays.join(',') + '日)';
-            }
-            return label;
-        }
-
-        function getReminderLabel(todo) {
-            if (!todo.reminderOffset) return '不提醒';
-            const unitMap = { 'minute': '分钟', 'hour': '小时', 'day': '天' };
-            return `提前 ${todo.reminderOffset}${unitMap[todo.reminderUnit]||''}`;
-        }
-
-        function daysInMonth(year, month) { return new Date(year, month+1, 0).getDate(); }
-
-        // ---------- API 调用 ----------
-        async function apiFetch(url, options = {}) {
-            const res = await fetch(API_BASE + url, {
-                ...options,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-User-Id': currentUser ? currentUser.id : '',
-                    ...options.headers,
-                }
-            });
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.error || '请求失败');
-            }
-            return res.json();
-        }
-
-        async function loadAllData() {
-            try {
-                [users, todos, roles] = await Promise.all([
-                    apiFetch('/users'),
-                    apiFetch('/todos'),
-                    apiFetch('/roles')
-                ]);
-            } catch (e) {
-                console.error('加载数据失败', e);
-            }
-        }
-
-        // ---------- 登录/注销 ----------
-        async function login(username, password) {
-            try {
-                const data = await apiFetch('/login', {
-                    method: 'POST',
-                    body: JSON.stringify({ username, password })
-                });
-                currentUser = data;
+        // ---------- 登录 ----------
+        function login(username, password) {
+            const user = users.find(u => u.username === username && u.password === password);
+            if (user) {
+                currentUser = { ...user, password: undefined };
                 localStorage.setItem('session', JSON.stringify({ userId: currentUser.id }));
-                await loadAllData();
                 return true;
-            } catch (e) {
-                throw e;
             }
+            return false;
         }
 
         function logout() {
@@ -905,22 +1044,20 @@
             document.getElementById('main-app').style.display = 'none';
         }
 
-        async function restoreSession() {
+        function restoreSession() {
             const session = localStorage.getItem('session');
             if (session) {
                 try {
                     const { userId } = JSON.parse(session);
-                    const data = await apiFetch('/me', { headers: { 'X-User-Id': userId } });
-                    currentUser = data;
-                    await loadAllData();
-                    document.getElementById('login-page').style.display = 'none';
-                    document.getElementById('main-app').style.display = 'block';
-                    initApp();
-                    return true;
-                } catch (e) {
-                    logout();
-                    return false;
-                }
+                    const user = users.find(u => u.id === userId);
+                    if (user) {
+                        currentUser = { ...user, password: undefined };
+                        document.getElementById('login-page').style.display = 'none';
+                        document.getElementById('main-app').style.display = 'block';
+                        initApp();
+                        return true;
+                    }
+                } catch(e) {}
             }
             return false;
         }
@@ -930,13 +1067,20 @@
             if (!currentUser) return;
             document.getElementById('sidebar-avatar').textContent = currentUser.username.charAt(0).toUpperCase();
             document.getElementById('sidebar-uname').textContent = currentUser.username;
-            const roleName = getRoleName(currentUser.roleId);
-            document.getElementById('sidebar-urole').textContent = roleName;
+            document.getElementById('sidebar-urole').textContent = getRoleName(currentUser.roleId);
 
             const navUsers = document.getElementById('nav-users');
             const navRoles = document.getElementById('nav-roles');
-            navUsers.style.display = canManageUsers(currentUser) ? 'flex' : 'none';
-            navRoles.style.display = canViewRoles(currentUser) ? 'flex' : 'none';
+            if (canManageUsers(currentUser)) {
+                navUsers.style.display = 'flex';
+            } else {
+                navUsers.style.display = 'none';
+            }
+            if (canViewRoles(currentUser)) {
+                navRoles.style.display = 'flex';
+            } else {
+                navRoles.style.display = 'none';
+            }
         }
 
         function renderStats() {
@@ -993,7 +1137,8 @@
 
             grid.querySelectorAll('[data-date]').forEach(el => {
                 el.addEventListener('click', function() {
-                    showDayTodos(this.dataset.date);
+                    const date = this.dataset.date;
+                    showDayTodos(date);
                 });
             });
         }
@@ -1105,9 +1250,9 @@
             container.innerHTML = html;
 
             container.querySelectorAll('.todo-check').forEach(btn => {
-                btn.addEventListener('click', async function() {
+                btn.addEventListener('click', function() {
                     const id = parseInt(this.dataset.id);
-                    await toggleTodoComplete(id);
+                    toggleTodoComplete(id);
                 });
             });
             container.querySelectorAll('.edit-btn').forEach(btn => {
@@ -1117,10 +1262,10 @@
                 });
             });
             container.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', async function() {
+                btn.addEventListener('click', function() {
                     const id = parseInt(this.dataset.id);
                     if (confirm('确定删除此待办？')) {
-                        await deleteTodo(id);
+                        deleteTodo(id);
                     }
                 });
             });
@@ -1152,10 +1297,10 @@
                 });
             });
             tbody.querySelectorAll('.delete-user-btn').forEach(btn => {
-                btn.addEventListener('click', async function() {
+                btn.addEventListener('click', function() {
                     const id = parseInt(this.dataset.id);
                     if (confirm('确定删除该用户？')) {
-                        await deleteUser(id);
+                        deleteUser(id);
                     }
                 });
             });
@@ -1187,10 +1332,10 @@
                 });
             });
             tbody.querySelectorAll('.delete-role-btn').forEach(btn => {
-                btn.addEventListener('click', async function() {
+                btn.addEventListener('click', function() {
                     const id = parseInt(this.dataset.id);
                     if (confirm('确定删除该角色？')) {
-                        await deleteRole(id);
+                        deleteRole(id);
                     }
                 });
             });
@@ -1202,26 +1347,29 @@
             if (!todo || !canModifyTodo(currentUser, todo)) return;
             todo.completed = !todo.completed;
             todo.completedAt = todo.completed ? new Date().toISOString() : null;
-            await apiFetch(`/todos/${id}`, { method: 'PUT', body: JSON.stringify(todo) });
-            await loadAllData();
+            saveTodosToStorage(todos);
             refreshAll();
         }
 
         async function deleteTodo(id) {
-            await apiFetch(`/todos/${id}`, { method: 'DELETE' });
-            await loadAllData();
+            todos = todos.filter(t => t.id !== id);
+            saveTodosToStorage(todos);
             refreshAll();
         }
 
         async function deleteUser(id) {
-            await apiFetch(`/users/${id}`, { method: 'DELETE' });
-            await loadAllData();
+            if (id === currentUser.id) { alert('不能删除自己'); return; }
+            users = users.filter(u => u.id !== id);
+            saveUsersToStorage({ roles, users });
             refreshAll();
         }
 
         async function deleteRole(id) {
-            await apiFetch(`/roles/${id}`, { method: 'DELETE' });
-            await loadAllData();
+            const adminRole = roles.find(r => r.name === '管理员');
+            if (id === adminRole.id) { alert('不能删除管理员角色'); return; }
+            if (users.find(u => u.roleId === id)) { alert('有用户使用该角色，无法删除'); return; }
+            roles = roles.filter(r => r.id !== id);
+            saveUsersToStorage({ roles, users });
             refreshAll();
         }
 
@@ -1323,7 +1471,7 @@
             }
         }
 
-        async function saveTodoFromForm() {
+        function saveTodoFromForm() {
             const id = document.getElementById('todo-id').value;
             const title = document.getElementById('todo-title').value.trim();
             if (!title) { alert('请输入事项名称'); return; }
@@ -1363,33 +1511,30 @@
                 createdAt: new Date().toISOString()
             };
 
-            try {
-                if (id) {
-                    const existing = todos.find(t => t.id === parseInt(id));
-                    if (!existing || !canModifyTodo(currentUser, existing)) { alert('无权限修改'); return; }
-                    const updated = { ...existing, ...todoData };
-                    await apiFetch(`/todos/${id}`, { method: 'PUT', body: JSON.stringify(updated) });
-                } else {
-                    await apiFetch('/todos', { method: 'POST', body: JSON.stringify(todoData) });
+            if (id) {
+                const existing = todos.find(t => t.id === parseInt(id));
+                if (!existing || !canModifyTodo(currentUser, existing)) { alert('无权限修改'); return; }
+                Object.assign(existing, todoData);
+            } else {
+                todoData.id = getNextId(todos);
+                todos.push(todoData);
+            }
+            saveTodosToStorage(todos);
+            closeModal('todo-modal');
+            refreshAll();
+            // 模拟邮件提醒
+            if (todoData.reminderOffset > 0) {
+                const admin = users.find(u => {
+                    const r = roles.find(role => role.id === u.roleId);
+                    return r && r.name === '管理员';
+                });
+                if (admin && admin.email) {
+                    console.log(`[邮件提醒] 发送至 ${admin.email}: 待办 "${todoData.title}" 即将提醒`);
                 }
-                await loadAllData();
-                closeModal('todo-modal');
-                refreshAll();
-                // 模拟邮件提醒
-                if (todoData.reminderOffset > 0) {
-                    const admin = users.find(u => {
-                        const r = roles.find(role => role.id === u.roleId);
-                        return r && r.name === '管理员';
-                    });
-                    if (admin && admin.email) {
-                        console.log(`[邮件提醒] 发送至 ${admin.email}: 待办 "${todoData.title}" 即将提醒`);
-                    }
-                }
-            } catch (e) {
-                alert('保存失败: '+e.message);
             }
         }
 
+        // 用户表单
         function openUserModal(id) {
             const modal = document.getElementById('user-modal');
             document.getElementById('user-id').value = '';
@@ -1411,7 +1556,7 @@
             modal.classList.add('show');
         }
 
-        async function saveUserFromForm() {
+        function saveUserFromForm() {
             const id = document.getElementById('user-id').value;
             const username = document.getElementById('user-username').value.trim();
             const password = document.getElementById('user-password').value.trim();
@@ -1419,20 +1564,31 @@
             const roleId = parseInt(document.getElementById('user-role').value);
 
             if (!username || !password) { alert('用户名和密码不能为空'); return; }
-            try {
-                if (id) {
-                    await apiFetch(`/users/${id}`, { method: 'PUT', body: JSON.stringify({ username, password, email, roleId }) });
-                } else {
-                    await apiFetch('/users', { method: 'POST', body: JSON.stringify({ username, password, email, roleId }) });
+            if (id) {
+                const user = users.find(u => u.id === parseInt(id));
+                if (!user) return;
+                const adminRole = roles.find(r => r.name === '管理员');
+                if (user.roleId === adminRole.id && roleId !== adminRole.id) {
+                    alert('不能修改管理员角色');
+                    return;
                 }
-                await loadAllData();
-                closeModal('user-modal');
-                refreshAll();
-            } catch (e) {
-                alert('保存失败: '+e.message);
+                Object.assign(user, { username, password, email, roleId });
+            } else {
+                if (users.find(u => u.username === username)) { alert('用户名已存在'); return; }
+                users.push({
+                    id: getNextId(users),
+                    username,
+                    password,
+                    email,
+                    roleId
+                });
             }
+            saveUsersToStorage({ roles, users });
+            closeModal('user-modal');
+            refreshAll();
         }
 
+        // 角色表单
         function openRoleModal(id) {
             const modal = document.getElementById('role-modal');
             document.getElementById('role-id').value = '';
@@ -1449,25 +1605,27 @@
             modal.classList.add('show');
         }
 
-        async function saveRoleFromForm() {
+        function saveRoleFromForm() {
             const id = document.getElementById('role-id').value;
             const name = document.getElementById('role-name').value.trim();
             const level = parseInt(document.getElementById('role-level').value) || 0;
             if (!name) { alert('角色名不能为空'); return; }
-            try {
-                if (id) {
-                    await apiFetch(`/roles/${id}`, { method: 'PUT', body: JSON.stringify({ name, level }) });
-                } else {
-                    await apiFetch('/roles', { method: 'POST', body: JSON.stringify({ name, level }) });
-                }
-                await loadAllData();
-                closeModal('role-modal');
-                refreshAll();
-            } catch (e) {
-                alert('保存失败: '+e.message);
+            const adminRole = roles.find(r => r.name === '管理员');
+            if (id) {
+                const role = roles.find(r => r.id === parseInt(id));
+                if (!role) return;
+                if (role.id === adminRole.id) { alert('不能修改管理员角色'); return; }
+                Object.assign(role, { name, level });
+            } else {
+                if (roles.find(r => r.name === name)) { alert('角色名已存在'); return; }
+                roles.push({ id: getNextId(roles), name, level });
             }
+            saveUsersToStorage({ roles, users });
+            closeModal('role-modal');
+            refreshAll();
         }
 
+        // 个人资料
         function openProfileModal() {
             const modal = document.getElementById('profile-modal');
             document.getElementById('profile-username').value = currentUser.username;
@@ -1476,31 +1634,142 @@
             modal.classList.add('show');
         }
 
-        async function saveProfileFromForm() {
+        function saveProfileFromForm() {
             const username = document.getElementById('profile-username').value.trim();
             const password = document.getElementById('profile-password').value.trim();
             const email = document.getElementById('profile-email').value.trim();
             if (!username || !password) { alert('用户名和密码不能为空'); return; }
-            try {
-                await apiFetch('/me', {
-                    method: 'PUT',
-                    headers: { 'X-User-Id': currentUser.id },
-                    body: JSON.stringify({ username, password, email })
-                });
-                currentUser.username = username;
-                currentUser.password = password;
-                currentUser.email = email;
+            const user = users.find(u => u.id === currentUser.id);
+            if (user) {
+                Object.assign(user, { username, password, email });
+                saveUsersToStorage({ roles, users });
+                currentUser = { ...user, password: undefined };
                 localStorage.setItem('session', JSON.stringify({ userId: currentUser.id }));
-                await loadAllData();
                 closeModal('profile-modal');
                 refreshAll();
-            } catch (e) {
-                alert('保存失败: '+e.message);
             }
         }
 
+        // ---------- 辅助格式化 ----------
+        function formatDate(d) {
+            if (!d) return '';
+            const dt = new Date(d);
+            return dt.toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+        function formatDateShort(d) {
+            if (!d) return '';
+            const dt = new Date(d);
+            return dt.toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+        function getUrgencyLabel(u) {
+            return { 'urgent': '紧急', 'important': '重要', 'general': '一般' } [u] || u;
+        }
+        function getRepeatLabel(todo) {
+            const map = { 'once': '一次性', 'daily': '每天', 'weekly': '每周', 'monthly': '每月' };
+            let label = map[todo.repeatType] || '一次性';
+            if (todo.repeatType === 'weekly' && todo.repeatDays && todo.repeatDays.length) {
+                label += ' (' + todo.repeatDays.map(d => '周' + ['日','一','二','三','四','五','六'][d]).join(',') + ')';
+            }
+            if (todo.repeatType === 'monthly' && todo.repeatDays && todo.repeatDays.length) {
+                label += ' (' + todo.repeatDays.join(',') + '日)';
+            }
+            return label;
+        }
+        function getReminderLabel(todo) {
+            if (!todo.reminderOffset) return '不提醒';
+            const unitMap = { 'minute': '分钟', 'hour': '小时', 'day': '天' };
+            return `提前 ${todo.reminderOffset}${unitMap[todo.reminderUnit]||''}`;
+        }
+        function daysInMonth(year, month) { return new Date(year, month+1, 0).getDate(); }
+
         function closeModal(id) {
             document.getElementById(id).classList.remove('show');
+        }
+
+        // ---------- 数据导入导出 ----------
+        function exportData() {
+            const data = {
+                users: { roles, users },
+                todos: todos
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ai-ims-backup-${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.users && data.users.roles && data.users.users && data.todos) {
+                        if (confirm('导入将覆盖当前所有数据，确认？')) {
+                            roles = data.users.roles;
+                            users = data.users.users;
+                            todos = data.todos;
+                            saveUsersToStorage({ roles, users });
+                            saveTodosToStorage(todos);
+                            refreshAll();
+                            alert('导入成功！');
+                        }
+                    } else {
+                        alert('数据格式不正确');
+                    }
+                } catch(err) {
+                    alert('解析文件失败: '+err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function clearAllData() {
+            if (confirm('确定清除所有数据（包括用户、角色、待办）？此操作不可撤销！')) {
+                localStorage.removeItem(STORAGE_KEY_USERS);
+                localStorage.removeItem(STORAGE_KEY_TODOS);
+                // 重置为默认
+                roles = DEFAULT_ROLES;
+                users = DEFAULT_USERS;
+                todos = DEFAULT_TODOS;
+                saveUsersToStorage({ roles, users });
+                saveTodosToStorage(todos);
+                // 重新登录
+                logout();
+                location.reload();
+            }
+        }
+
+        // ---------- 自动清理过期待办 ----------
+        function autoCleanup() {
+            const now = new Date();
+            let changed = false;
+            const toRemove = [];
+            todos.forEach(todo => {
+                if (!canModifyTodo(currentUser, todo)) return;
+                let shouldDelete = false;
+                if (todo.completed && todo.completedAt) {
+                    const delDate = new Date(todo.completedAt);
+                    delDate.setDate(delDate.getDate() + (todo.autoDeleteDays || 3));
+                    if (now > delDate) shouldDelete = true;
+                } else if (!todo.completed) {
+                    const endDate = new Date(todo.endTime);
+                    const delDate = new Date(endDate);
+                    delDate.setDate(delDate.getDate() + (todo.autoDeleteDays || 3));
+                    if (now > delDate) shouldDelete = true;
+                }
+                if (shouldDelete) {
+                    toRemove.push(todo.id);
+                }
+            });
+            if (toRemove.length > 0) {
+                todos = todos.filter(t => !toRemove.includes(t.id));
+                saveTodosToStorage(todos);
+                changed = true;
+            }
+            if (changed) refreshAll();
         }
 
         // ---------- 刷新 ----------
@@ -1520,6 +1789,7 @@
             document.querySelectorAll('.page-section').forEach(el => {
                 el.classList.toggle('active', el.id === 'page-' + currentPage);
             });
+            updateStorageSize();
         }
 
         function navigateTo(page) {
@@ -1544,24 +1814,31 @@
             const today = new Date();
             const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
             showDayTodos(dateStr);
+            // 填充角色下拉
+            const roleSelect = document.getElementById('user-role');
+            roleSelect.innerHTML = roles.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            // 定时自动清理 (每10分钟)
+            setInterval(autoCleanup, 600000);
         }
 
         // ---------- 事件绑定 ----------
         document.addEventListener('DOMContentLoaded', function() {
+            // 加载数据
+            loadAllData();
+
             // Login
-            document.getElementById('login-form').addEventListener('submit', async function(e) {
+            document.getElementById('login-form').addEventListener('submit', function(e) {
                 e.preventDefault();
                 const username = document.getElementById('login-username').value.trim();
                 const password = document.getElementById('login-password').value.trim();
                 const errEl = document.getElementById('login-error');
-                try {
-                    await login(username, password);
+                if (login(username, password)) {
                     errEl.textContent = '';
                     document.getElementById('login-page').style.display = 'none';
                     document.getElementById('main-app').style.display = 'block';
                     initApp();
-                } catch (err) {
-                    errEl.textContent = '❌ ' + err.message;
+                } else {
+                    errEl.textContent = '❌ 用户名或密码错误';
                 }
             });
 
@@ -1586,10 +1863,22 @@
                 });
             });
 
-            // Add buttons
-            document.getElementById('btn-add-todo').addEventListener('click', () => openTodoModal(null));
-            document.getElementById('btn-add-user').addEventListener('click', () => openUserModal(null));
-            document.getElementById('btn-add-role').addEventListener('click', () => openRoleModal(null));
+            // Add Todo
+            document.getElementById('btn-add-todo').addEventListener('click', function() {
+                openTodoModal(null);
+            });
+
+            // Add User
+            document.getElementById('btn-add-user').addEventListener('click', function() {
+                openUserModal(null);
+            });
+
+            // Add Role
+            document.getElementById('btn-add-role').addEventListener('click', function() {
+                openRoleModal(null);
+            });
+
+            // Profile
             document.getElementById('btn-edit-profile').addEventListener('click', openProfileModal);
 
             // Modal close
@@ -1605,25 +1894,31 @@
                 });
             });
 
-            // Form submit
+            // Todo form
             document.getElementById('todo-form').addEventListener('submit', function(e) {
                 e.preventDefault();
                 saveTodoFromForm();
             });
+
+            // User form
             document.getElementById('user-form').addEventListener('submit', function(e) {
                 e.preventDefault();
                 saveUserFromForm();
             });
+
+            // Role form
             document.getElementById('role-form').addEventListener('submit', function(e) {
                 e.preventDefault();
                 saveRoleFromForm();
             });
+
+            // Profile form
             document.getElementById('profile-form').addEventListener('submit', function(e) {
                 e.preventDefault();
                 saveProfileFromForm();
             });
 
-            // Add step
+            // Add step button
             document.getElementById('add-step-btn').addEventListener('click', function() {
                 addStepInput('');
             });
@@ -1676,46 +1971,32 @@
                 showDayTodos(dateStr);
             });
 
-            // 自动清理（每10分钟）
-            setInterval(async function() {
-                const now = new Date();
-                let changed = false;
-                for (let todo of todos) {
-                    if (!canModifyTodo(currentUser, todo)) continue;
-                    let shouldDelete = false;
-                    if (todo.completed && todo.completedAt) {
-                        const delDate = new Date(todo.completedAt);
-                        delDate.setDate(delDate.getDate() + (todo.autoDeleteDays || 3));
-                        if (now > delDate) shouldDelete = true;
-                    } else if (!todo.completed) {
-                        const endDate = new Date(todo.endTime);
-                        const delDate = new Date(endDate);
-                        delDate.setDate(delDate.getDate() + (todo.autoDeleteDays || 3));
-                        if (now > delDate) shouldDelete = true;
-                    }
-                    if (shouldDelete) {
-                        try {
-                            await apiFetch(`/todos/${todo.id}`, { method: 'DELETE' });
-                            changed = true;
-                        } catch (e) {}
-                    }
-                }
-                if (changed) {
-                    await loadAllData();
-                    refreshAll();
-                }
-            }, 600000);
-
-            // Restore session
-            restoreSession().then(success => {
-                if (!success) {
-                    document.getElementById('login-page').style.display = 'flex';
-                    document.getElementById('main-app').style.display = 'none';
+            // Data management
+            document.getElementById('export-data').addEventListener('click', exportData);
+            document.getElementById('import-data').addEventListener('click', function() {
+                document.getElementById('import-file').click();
+            });
+            document.getElementById('import-file').addEventListener('change', function(e) {
+                if (this.files.length > 0) {
+                    importData(this.files[0]);
+                    this.value = '';
                 }
             });
+            document.getElementById('clear-data').addEventListener('click', clearAllData);
 
-            console.log('✅ AI-IMS 前端已启动');
+            // Restore session
+            if (!restoreSession()) {
+                document.getElementById('login-page').style.display = 'flex';
+                document.getElementById('main-app').style.display = 'none';
+            } else {
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+                initApp();
+            }
+
+            console.log('✅ AI-IMS 已启动 (数据存储在 localStorage)');
         });
     </script>
+
 </body>
 </html>
