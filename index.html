@@ -7,7 +7,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗍</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* ===== CSS Variables (保持不变) ===== */
+        /* ===== CSS Variables ===== */
         :root {
             --bg-primary: #f0f4f8;
             --bg-secondary: #ffffff;
@@ -758,6 +758,7 @@
                         <select id="todo-repeat"><option value="once">一次性</option><option value="daily">每天</option><option value="weekly">每周</option><option value="monthly">每月</option></select>
                     </div>
                 </div>
+                <!-- 重复选择器（每天时隐藏） -->
                 <div class="form-group" id="repeat-selector" style="display:none;">
                     <label id="repeat-label">选择重复日</label>
                     <div id="repeat-picker"></div>
@@ -832,15 +833,14 @@
     <script>
         // ================================================================
         // JSONBin.io 配置 - 使用固定 Bin ID（标准 Bins API）
-        // 参考: https://jsonbin.io/api-reference/bins/read
         // ================================================================
         const MASTER_KEY = '$2a$10$sFmJWp8GqChHB2n8/Cg8gODPEbXEhGpXSbqTSKq8u.KVwnUSEY3I6';
         const ACCESS_KEY = '$2a$10$yc8kYQ4Q34qWJf5rwuGu0uT/m0HUVldwcH7pTPj7JcfuvUf4OcHZC';
-        const FIXED_BIN_ID = '6a9fcbbdffd5d16053ec6011';  // 用户提供的 Bin ID
+        const FIXED_BIN_ID = '6a9fcbbdffd5d16053ec6011';
         const BIN_API_BASE = 'https://api.jsonbin.io/v3/b';
 
         // ================================================================
-        // 默认数据（仅保留管理员，用于首次写入或重置）
+        // 默认数据
         // ================================================================
         const DEFAULT_ROLES = [
             { id: 1, name: '管理员', level: 0 },
@@ -866,10 +866,8 @@
         let dashboardRange = 3;
 
         // ================================================================
-        // JSONBin API 操作（标准 Bins，非 XL）
+        // JSONBin API 操作
         // ================================================================
-
-        // 读取 Bin
         async function readBin(binId) {
             const resp = await fetch(`${BIN_API_BASE}/${binId}?meta=false`, {
                 headers: {
@@ -885,7 +883,6 @@
             return await resp.json();
         }
 
-        // 更新 Bin
         async function updateBin(binId, data) {
             const resp = await fetch(`${BIN_API_BASE}/${binId}`, {
                 method: 'PUT',
@@ -904,9 +901,8 @@
         }
 
         // ================================================================
-        // 数据加载与同步（固定 Bin）
+        // 数据加载与同步
         // ================================================================
-
         async function loadAllData() {
             try {
                 const data = await readBin(FIXED_BIN_ID);
@@ -914,24 +910,15 @@
                 users = data.users || [];
                 todos = data.todos || [];
 
-                // 确保管理员存在（如果数据为空，则填充默认值）
-                if (roles.length === 0) {
-                    roles = DEFAULT_ROLES;
-                }
-                if (users.length === 0) {
-                    users = DEFAULT_USERS;
-                }
-                // 确保所有用户有有效角色
+                if (roles.length === 0) roles = DEFAULT_ROLES;
+                if (users.length === 0) users = DEFAULT_USERS;
                 const employeeRole = roles.find(r => r.name === '员工');
                 users.forEach(u => {
                     if (!roles.find(r => r.id === u.roleId)) {
                         u.roleId = employeeRole ? employeeRole.id : roles[0].id;
                     }
                 });
-                // 确保管理员存在
                 ensureAdminExists();
-
-                // 同步数据（确保结构完整）
                 await syncAllData();
                 return true;
             } catch (error) {
@@ -939,11 +926,8 @@
                 let msg = '加载数据失败，请检查：\n';
                 if (error.message.includes('读取Bin失败')) {
                     msg += '1. 请确认 Bin ID 是否正确（当前为 ' + FIXED_BIN_ID + '）。\n';
-                    msg += '2. 请确认主钥匙（MASTER_KEY）和访问密钥（ACCESS_KEY）是否正确有效。\n';
-                    msg += '3. 请确认该 Bin 是否存在且您有权限访问。\n';
+                    msg += '2. 请确认主钥匙和访问密钥是否正确。\n';
                     msg += `错误详情: ${error.message}`;
-                } else if (error.message.includes('fetch')) {
-                    msg += '网络连接异常，请检查网络后刷新重试。';
                 } else {
                     msg += error.message;
                 }
@@ -986,7 +970,7 @@
         }
 
         // ================================================================
-        // 辅助函数（与之前相同）
+        // 辅助函数（同前）
         // ================================================================
         function getRoleName(id) { const r = roles.find(x => x.id === id); return r ? r.name : '未知'; }
         function getRoleLevel(id) { const r = roles.find(x => x.id === id); return r ? r.level : 999; }
@@ -1144,7 +1128,7 @@
         }
 
         // ================================================================
-        // 渲染函数（与之前相同）
+        // 渲染函数
         // ================================================================
         function renderSidebar() {
             if (!currentUser) return;
@@ -1182,7 +1166,6 @@
             const visibleTodos = todos.filter(t => canViewTodo(currentUser, t) && !t.completed);
             for (let d = 1; d <= days; d++) {
                 const isToday = (d === todayDate && month === todayMonth && year === todayYear);
-                const dateObj = new Date(year, month, d);
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const isSelected = (dateStr === todoDateSearch);
 
@@ -1294,6 +1277,7 @@
             if (!container) return;
             let list = todos.filter(t => canViewTodo(currentUser, t));
 
+            // 日期筛选
             const effectiveDateFilter = dateFilter || todoDateSearch;
             if (effectiveDateFilter && /^\d{4}-\d{2}-\d{2}$/.test(effectiveDateFilter)) {
                 const [y, m, d] = effectiveDateFilter.split('-').map(Number);
@@ -1513,7 +1497,7 @@
             const container = document.getElementById('repeat-picker');
             container.innerHTML = '';
             if (repeatType === 'daily') {
-                container.innerHTML = '<div style="padding:8px;color:var(--text-muted);">每天重复（无需选择具体日期）</div>';
+                // 每天时不需要显示选择器，直接隐藏外层
                 return;
             } else if (repeatType === 'weekly') {
                 const weekdays = ['日','一','二','三','四','五','六'];
@@ -1564,8 +1548,6 @@
         // 时间选择器切换
         // ================================================================
         function updateTimePicker(repeatType) {
-            const startGroup = document.getElementById('start-time-group');
-            const endGroup = document.getElementById('end-time-group');
             const startInput = document.getElementById('todo-start');
             const endInput = document.getElementById('todo-end');
             const startLabel = document.getElementById('start-time-label');
@@ -1599,19 +1581,11 @@
                 endLabel.textContent = '结束时间 (时分)';
                 if (startInput.value && startInput.value.includes('T')) {
                     const timePart = startInput.value.split('T')[1];
-                    if (timePart) {
-                        startInput.value = timePart.slice(0,5);
-                    } else {
-                        startInput.value = '09:00';
-                    }
+                    startInput.value = timePart ? timePart.slice(0,5) : '09:00';
                 }
                 if (endInput.value && endInput.value.includes('T')) {
                     const timePart = endInput.value.split('T')[1];
-                    if (timePart) {
-                        endInput.value = timePart.slice(0,5);
-                    } else {
-                        endInput.value = '10:00';
-                    }
+                    endInput.value = timePart ? timePart.slice(0,5) : '10:00';
                 }
                 if (!startInput.value) startInput.value = '09:00';
                 if (!endInput.value) endInput.value = '10:00';
@@ -1670,11 +1644,13 @@
                     }
                 }
 
-                if (repeat !== 'once') {
+                // 处理重复选择器显示
+                if (repeat === 'daily') {
+                    document.getElementById('repeat-selector').style.display = 'none';
+                } else if (repeat === 'weekly' || repeat === 'monthly') {
                     document.getElementById('repeat-selector').style.display = 'block';
                     const label = document.getElementById('repeat-label');
-                    if (repeat === 'daily') label.textContent = '每天重复';
-                    else if (repeat === 'weekly') label.textContent = '选择每周重复日（点击切换）';
+                    if (repeat === 'weekly') label.textContent = '选择每周重复日（点击切换）';
                     else if (repeat === 'monthly') label.textContent = '选择每月重复日（点击切换）';
                     renderRepeatPicker(repeat, todo.repeatDays || []);
                 }
@@ -1692,18 +1668,23 @@
             modal.classList.add('show');
         }
 
+        // 重复类型变更事件
         document.getElementById('todo-repeat').addEventListener('change', function() {
             const repeat = this.value;
             const selector = document.getElementById('repeat-selector');
             const label = document.getElementById('repeat-label');
             updateTimePicker(repeat);
-            if (repeat === 'once') {
+            if (repeat === 'once' || repeat === 'daily') {
                 selector.style.display = 'none';
+                if (repeat === 'daily') {
+                    // 清空picker内容
+                    document.getElementById('repeat-picker').innerHTML = '';
+                }
                 return;
             }
+            // weekly 或 monthly
             selector.style.display = 'block';
-            if (repeat === 'daily') label.textContent = '每天重复（无需选择具体日期）';
-            else if (repeat === 'weekly') label.textContent = '选择每周重复日（点击切换）';
+            if (repeat === 'weekly') label.textContent = '选择每周重复日（点击切换）';
             else if (repeat === 'monthly') label.textContent = '选择每月重复日（点击切换）';
             renderRepeatPicker(repeat, []);
         });
@@ -1980,11 +1961,12 @@
             renderSidebar();
             const now = new Date();
             calendarDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-            todoDateSearch = todayStr;
-            document.getElementById('todo-date-search').value = todayStr;
+            // 默认不设置日期搜索，显示全部待办
+            todoDateSearch = '';
+            document.getElementById('todo-date-search').value = '';
             refreshAll();
-            showDayTodos(todayStr);
+            // 不自动显示某天待办，留空
+            document.getElementById('calendar-day-todos').innerHTML = '<p style="color:var(--text-muted);font-size:14px;">点击日期查看待办</p>';
             const roleSelect = document.getElementById('user-role');
             roleSelect.innerHTML = roles.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
             setInterval(autoCleanup, 600000);
@@ -2183,18 +2165,15 @@
             document.getElementById('cal-today').addEventListener('click', function() {
                 const now = new Date();
                 calendarDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-                todoDateSearch = todayStr;
-                document.getElementById('todo-date-search').value = todayStr;
+                // 取消日期筛选
+                todoDateSearch = '';
+                document.getElementById('todo-date-search').value = '';
+                document.querySelectorAll('.day-cell').forEach(el => el.classList.remove('selected'));
                 refreshAll();
-                showDayTodos(todayStr);
-                document.querySelectorAll('.day-cell').forEach(el => {
-                    el.classList.toggle('selected', el.dataset.date === todayStr);
-                });
+                document.getElementById('calendar-day-todos').innerHTML = '<p style="color:var(--text-muted);font-size:14px;">点击日期查看待办</p>';
             });
 
             console.log('✅ AI-IMS 已启动 (使用固定 Bin ID: ' + FIXED_BIN_ID + ')');
-            console.log('📖 API 参考: https://jsonbin.io/api-reference/bins/read');
         });
     </script>
 </body>
