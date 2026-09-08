@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI-Intelligent Management System</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗍</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* ===== CSS Variables ===== */
@@ -31,6 +31,10 @@
             --important-color: #ffb347;
             --general-color: #06d6a0;
             --sidebar-width: 220px;
+            --today-bg: #e8edf5;
+            --today-color: var(--text-primary);
+            --selected-bg: var(--accent);
+            --selected-color: #fff;
         }
         [data-theme="dark"] {
             --bg-primary: #0f1724;
@@ -45,6 +49,10 @@
             --shadow-hover: 0 4px 20px rgba(0,0,0,0.5);
             --accent: #6a8aff;
             --accent-hover: #5a7aee;
+            --today-bg: #2a3a4a;
+            --today-color: var(--text-primary);
+            --selected-bg: var(--accent);
+            --selected-color: #fff;
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
@@ -81,8 +89,17 @@
             background:var(--bg-card); padding:40px 36px; border-radius:var(--radius);
             box-shadow:var(--shadow-hover); width:100%; max-width:400px;
             border:1px solid var(--border-color);
+            position:relative;
         }
-        .login-box h1 { font-size:28px; font-weight:700; text-align:center; margin-bottom:6px; }
+        .login-box .login-theme-toggle {
+            position:absolute; top:16px; right:16px;
+            background:var(--bg-input); border:1px solid var(--border-color);
+            border-radius:var(--radius-sm); padding:6px 10px; cursor:pointer;
+            color:var(--text-secondary); font-size:14px;
+            transition:background var(--transition);
+        }
+        .login-box .login-theme-toggle:hover { background:var(--border-color); }
+        .login-box h1 { font-size:28px; font-weight:700; text-align:center; margin-bottom:6px; padding-top:8px; }
         .login-box .subtitle { text-align:center; color:var(--text-muted); margin-bottom:28px; font-size:14px; }
         .login-box .form-group { margin-bottom:18px; }
         .login-box label { display:block; font-size:13px; font-weight:500; color:var(--text-secondary); margin-bottom:5px; }
@@ -100,11 +117,6 @@
         }
         .login-box .btn-login:hover { background:var(--accent-hover); }
         .login-box .error-msg { color:var(--danger); font-size:13px; text-align:center; margin-top:12px; min-height:20px; }
-        .login-box .demo-hint {
-            margin-top:18px; padding:12px 14px; background:var(--bg-input);
-            border-radius:var(--radius-sm); font-size:13px; color:var(--text-muted);
-            border:1px dashed var(--border-color);
-        }
 
         /* Sidebar & Main Layout */
         #main-app { display:none; min-height:100vh; }
@@ -294,9 +306,15 @@
             background:var(--bg-input); border:1px solid var(--border-color);
             border-radius:var(--radius-sm); padding:4px 12px;
         }
-        .search-box input {
+        .search-box input[type="text"] {
             border:none; background:transparent; padding:6px 0;
             font-size:14px; color:var(--text-primary); outline:none; flex:1;
+            min-width:120px;
+        }
+        .search-box input[type="date"] {
+            border:none; background:transparent; padding:6px 0;
+            font-size:14px; color:var(--text-primary); outline:none;
+            width:150px;
         }
         .search-box i { color:var(--text-muted); }
 
@@ -338,7 +356,16 @@
         }
         .calendar-grid .day-cell:hover { background:var(--border-color); transform:scale(1.02); }
         .calendar-grid .day-cell.other-month { color:var(--text-muted); opacity:0.4; }
-        .calendar-grid .day-cell.today { background:var(--accent); color:#fff; box-shadow:0 0 0 3px rgba(79,110,247,0.3); }
+        .calendar-grid .day-cell.today {
+            background:var(--today-bg);
+            color:var(--today-color);
+            box-shadow:0 0 0 2px var(--accent);
+        }
+        .calendar-grid .day-cell.selected {
+            background:var(--selected-bg);
+            color:var(--selected-color);
+            box-shadow:0 0 0 2px var(--selected-bg);
+        }
         .calendar-grid .day-cell .day-num { font-size:20px; font-weight:700; line-height:1.2; }
         .calendar-grid .day-cell .day-badge {
             position:absolute; top:2px; right:2px;
@@ -462,7 +489,7 @@
         }
         .user-table .role-badge.admin { background:#4f6ef720; color:var(--accent); }
 
-        /* ===== 移动端用户管理表格优化 ===== */
+        /* 移动端用户管理表格优化 */
         @media (max-width: 768px) {
             .user-table thead { display:none; }
             .user-table, .user-table tbody, .user-table tr, .user-table td {
@@ -516,6 +543,7 @@
             .calendar-grid .day-cell { font-size:14px; min-height:40px; }
             .calendar-grid .day-cell .day-num { font-size:16px; }
             .mini-calendar .day-option { width:32px; height:32px; font-size:12px; }
+            .search-box input[type="date"] { width:130px; }
         }
         @media (max-width:480px) {
             .dashboard-grid { grid-template-columns:1fr; }
@@ -524,6 +552,7 @@
             .calendar-grid .day-cell .day-num { font-size:14px; }
             .calendar-grid .day-cell .day-badge { font-size:8px; padding:0 4px; min-width:14px; top:1px; right:1px; }
             .mini-calendar .day-option { width:28px; height:28px; font-size:11px; }
+            .search-box input[type="date"] { width:110px; }
         }
         .hidden { display:none !important; }
     </style>
@@ -538,6 +567,7 @@
     <!-- 登录页 -->
     <div id="login-page">
         <div class="login-box">
+            <button class="login-theme-toggle" id="login-theme-toggle"><i class="fas fa-moon"></i></button>
             <h1><i class="fas fa-tasks" style="color:var(--accent);margin-right:8px;"></i>AI-IMS</h1>
             <p class="subtitle">AI Intelligent Management System</p>
             <form id="login-form">
@@ -552,10 +582,6 @@
                 <button type="submit" class="btn-login"><i class="fas fa-sign-in-alt"></i> 登 录</button>
                 <div class="error-msg" id="login-error"></div>
             </form>
-            <div class="demo-hint">
-                <strong>演示账号：</strong><br>
-                admin / admin123 (管理员)
-            </div>
         </div>
     </div>
 
@@ -585,7 +611,6 @@
                 <div class="actions">
                     <button class="theme-toggle" id="theme-toggle"><i class="fas fa-moon"></i></button>
                     <button class="btn btn-primary" id="btn-add-todo"><i class="fas fa-plus"></i> 新建待办</button>
-                    <button class="btn btn-outline btn-sm" id="btn-edit-profile"><i class="fas fa-user-edit"></i> 个人资料</button>
                 </div>
             </div>
 
@@ -649,8 +674,10 @@
                         <h3><i class="fas fa-list-check" style="color:var(--accent);"></i> 所有待办</h3>
                         <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                             <div class="search-box">
-                                <i class="fas fa-search"></i>
-                                <input type="text" id="todo-search" placeholder="搜索事项或日期(YYYY-MM-DD)" style="width:200px;">
+                                <i class="fas fa-calendar-day"></i>
+                                <input type="date" id="todo-date-search" title="按日期筛选">
+                                <i class="fas fa-search" style="margin-left:4px;"></i>
+                                <input type="text" id="todo-search" placeholder="搜索事项..." style="min-width:100px;">
                             </div>
                             <div class="todo-filters" id="todo-filters">
                                 <button class="filter-btn active" data-filter="all">全部</button>
@@ -735,9 +762,16 @@
                     <label id="repeat-label">选择重复日</label>
                     <div id="repeat-picker"></div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group"><label>开始时间</label><input type="datetime-local" id="todo-start"></div>
-                    <div class="form-group"><label>结束时间</label><input type="datetime-local" id="todo-end"></div>
+                <!-- 时间选择：一次性用datetime-local，重复类型用time -->
+                <div class="form-row" id="time-picker-row">
+                    <div class="form-group" id="start-time-group">
+                        <label id="start-time-label">开始时间</label>
+                        <input type="datetime-local" id="todo-start">
+                    </div>
+                    <div class="form-group" id="end-time-group">
+                        <label id="end-time-label">结束时间</label>
+                        <input type="datetime-local" id="todo-end">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>事项步骤</label>
@@ -795,32 +829,15 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="profile-modal">
-        <div class="modal-box">
-            <div class="modal-title"><span>个人资料</span><button class="close-btn" data-modal-close>&times;</button></div>
-            <form id="profile-form">
-                <div class="form-group"><label>用户名</label><input type="text" id="profile-username" required></div>
-                <div class="form-group"><label>密码</label><input type="text" id="profile-password" required></div>
-                <div class="form-group"><label>邮箱</label><input type="email" id="profile-email"></div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-outline" data-modal-close>取消</button>
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 保存</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script>
         // ================================================================
-        // JSONBin.io 配置（遵循官方 API 文档）
-        // 参考: https://jsonbin.io/api-reference
+        // JSONBin.io 配置（使用 XL Bins API）
+        // 参考: https://jsonbin.io/api-reference/xlbins/read
         // ================================================================
-        // 主钥匙 - 拥有所有权限，用于创建、更新、删除
         const MASTER_KEY = '$2a$10$sFmJWp8GqChHB2n8/Cg8gODPEbXEhGpXSbqTSKq8u.KVwnUSEY3I6';
-        // 访问密钥 "GitHub" - 用于读取
         const ACCESS_KEY = '$2a$10$yc8kYQ4Q34qWJf5rwuGu0uT/m0HUVldwcH7pTPj7JcfuvUf4OcHZC';
-
-        const BIN_API_BASE = 'https://api.jsonbin.io/v3/b';
+        // XL Bins API 端点
+        const BIN_API_BASE = 'https://api.jsonbin.io/v3/xl/b';
         const BIN_ID_KEY = 'aiims_bin_id';
 
         // ================================================================
@@ -847,107 +864,90 @@
         let binId = localStorage.getItem(BIN_ID_KEY);
         let currentPage = 'dashboard';
         let calendarDate = new Date();
-        let todoFilter = 'all', dashboardFilter = 'all', todoSearchTerm = '', dashboardRange = 3;
+        let todoFilter = 'all', dashboardFilter = 'all', todoSearchTerm = '', todoDateSearch = '';
+        let dashboardRange = 3;
 
         // ================================================================
-        // JSONBin API 操作（严格遵循官方文档）
-        // 参考: https://jsonbin.io/api-reference/bins/create
-        //       https://jsonbin.io/api-reference/bins/read
-        //       https://jsonbin.io/api-reference/bins/update
-        //       https://jsonbin.io/api-reference/bins/delete
+        // JSONBin XL API 操作
         // ================================================================
 
-        /**
-         * 创建 Bin（首次使用时调用）
-         * POST /b
-         * Headers: Content-Type, X-Master-Key, X-Access-Key
-         */
+        // 创建 XL Bin
         async function createBin(data) {
             const resp = await fetch(BIN_API_BASE, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Master-Key': MASTER_KEY,
-                    'X-Access-Key': ACCESS_KEY
+                    'X-Bin-Meta': 'false'
                 },
                 body: JSON.stringify(data)
             });
             if (!resp.ok) {
                 const errText = await resp.text();
-                throw new Error(`创建Bin失败 (${resp.status}): ${errText}`);
+                throw new Error(`创建XL Bin失败 (${resp.status}): ${errText}`);
             }
             const result = await resp.json();
-            return result.id; // 返回 Bin ID
+            return result.id;
         }
 
-        /**
-         * 读取 Bin
-         * GET /b/<BIN_ID>?meta=false
-         * Headers: X-Master-Key 或 X-Access-Key
-         */
+        // 读取 XL Bin
         async function readBin(binId) {
             const resp = await fetch(`${BIN_API_BASE}/${binId}?meta=false`, {
                 headers: {
-                    'X-Access-Key': ACCESS_KEY
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': MASTER_KEY,
+                    'X-Bin-Meta': 'false'
                 }
             });
             if (!resp.ok) {
                 const errText = await resp.text();
-                throw new Error(`读取Bin失败 (${resp.status}): ${errText}`);
+                throw new Error(`读取XL Bin失败 (${resp.status}): ${errText}`);
             }
             return await resp.json();
         }
 
-        /**
-         * 更新 Bin（完全替换）
-         * PUT /b/<BIN_ID>
-         * Headers: Content-Type, X-Master-Key, X-Access-Key
-         */
+        // 更新 XL Bin
         async function updateBin(binId, data) {
             const resp = await fetch(`${BIN_API_BASE}/${binId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Master-Key': MASTER_KEY,
-                    'X-Access-Key': ACCESS_KEY
+                    'X-Bin-Meta': 'false'
                 },
                 body: JSON.stringify(data)
             });
             if (!resp.ok) {
                 const errText = await resp.text();
-                throw new Error(`更新Bin失败 (${resp.status}): ${errText}`);
+                throw new Error(`更新XL Bin失败 (${resp.status}): ${errText}`);
             }
             return await resp.json();
         }
 
-        /**
-         * 删除 Bin
-         * DELETE /b/<BIN_ID>
-         * Headers: X-Master-Key, X-Access-Key
-         */
+        // 删除 XL Bin
         async function deleteBin(binId) {
             const resp = await fetch(`${BIN_API_BASE}/${binId}`, {
                 method: 'DELETE',
                 headers: {
+                    'Content-Type': 'application/json',
                     'X-Master-Key': MASTER_KEY,
-                    'X-Access-Key': ACCESS_KEY
+                    'X-Bin-Meta': 'false'
                 }
             });
             if (!resp.ok) {
                 const errText = await resp.text();
-                throw new Error(`删除Bin失败 (${resp.status}): ${errText}`);
+                throw new Error(`删除XL Bin失败 (${resp.status}): ${errText}`);
             }
             return await resp.json();
         }
 
         // ================================================================
-        // 数据加载与同步（使用上述 API）
+        // 数据加载与同步
         // ================================================================
 
         async function loadAllData() {
             try {
                 if (!binId) {
-                    // 首次使用：创建 Bin
                     const initialData = { roles: DEFAULT_ROLES, users: DEFAULT_USERS, todos: DEFAULT_TODOS };
                     binId = await createBin(initialData);
                     localStorage.setItem(BIN_ID_KEY, binId);
@@ -957,43 +957,36 @@
                     return true;
                 }
 
-                // 尝试读取现有 Bin
                 try {
                     const data = await readBin(binId);
                     roles = data.roles || [];
                     users = data.users || [];
                     todos = data.todos || [];
-                    // 确保管理员存在
                     ensureAdminExists();
-                    // 如果角色为空，补全默认角色
                     if (roles.length === 0) {
                         roles = DEFAULT_ROLES;
                     }
-                    // 确保所有用户有有效角色
                     const employeeRole = roles.find(r => r.name === '员工');
                     users.forEach(u => {
                         if (!roles.find(r => r.id === u.roleId)) {
                             u.roleId = employeeRole ? employeeRole.id : roles[0].id;
                         }
                     });
-                    // 同步更新到云端（确保数据结构完整）
                     await syncAllData();
                     return true;
                 } catch (readError) {
-                    // 如果读取失败（如 Bin 被删除或 ID 无效），重新创建
-                    console.warn('读取Bin失败，将重新创建:', readError.message);
+                    console.warn('读取XL Bin失败，将重新创建:', readError.message);
                     localStorage.removeItem(BIN_ID_KEY);
                     binId = null;
-                    // 递归调用重新创建
                     return loadAllData();
                 }
             } catch (error) {
                 console.error('加载数据失败:', error);
                 let msg = '加载数据失败，请检查：\n';
-                if (error.message.includes('创建Bin失败') || error.message.includes('更新Bin失败')) {
+                if (error.message.includes('创建XL Bin失败') || error.message.includes('更新XL Bin失败')) {
                     msg += '1. 请确认主钥匙（MASTER_KEY）是否正确有效。\n';
                     msg += '2. 请确认访问密钥（ACCESS_KEY）是否正确有效。\n';
-                    msg += '3. 可参考官方文档: https://jsonbin.io/api-reference\n';
+                    msg += '3. 可参考官方文档: https://jsonbin.io/api-reference/xlbins/read\n';
                     msg += `错误详情: ${error.message}`;
                 } else if (error.message.includes('fetch')) {
                     msg += '网络连接异常，请检查网络后刷新重试。';
@@ -1030,7 +1023,6 @@
 
         async function syncAllData() {
             if (!binId) {
-                // 如果没有 binId，创建新的
                 const initialData = { roles, users, todos };
                 binId = await createBin(initialData);
                 localStorage.setItem(BIN_ID_KEY, binId);
@@ -1038,15 +1030,14 @@
             }
             try {
                 await updateBin(binId, { roles, users, todos });
-                console.log('数据已同步到 JSONBin.io');
+                console.log('数据已同步到 JSONBin.io (XL Bin)');
             } catch (error) {
                 console.error('同步失败:', error);
-                // 如果更新失败（如 Bin 被删除），尝试重新创建
                 if (error.message.includes('404') || error.message.includes('Not Found')) {
-                    console.warn('Bin 不存在，尝试重新创建');
+                    console.warn('XL Bin 不存在，尝试重新创建');
                     localStorage.removeItem(BIN_ID_KEY);
                     binId = null;
-                    await syncAllData(); // 递归重新创建
+                    await syncAllData();
                 } else {
                     alert('数据保存失败，请检查网络或钥匙！\n' + error.message);
                 }
@@ -1129,6 +1120,7 @@
         function formatDate(d) { if(!d) return ''; const dt=new Date(d); return dt.toLocaleString('zh-CN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }
         function formatDateShort(d) { if(!d) return ''; const dt=new Date(d); return dt.toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}); }
         function formatDateOnly(d) { if(!d) return ''; const dt=new Date(d); return dt.toLocaleDateString('zh-CN'); }
+        function formatDateInput(d) { if(!d) return ''; const dt=new Date(d); return dt.toISOString().slice(0,10); }
         function getUrgencyLabel(u) { return { 'urgent':'紧急','important':'重要','general':'一般' }[u]||u; }
         function getRepeatLabel(todo) {
             const map = { 'once':'一次性','daily':'每天','weekly':'每周','monthly':'每月' };
@@ -1156,9 +1148,13 @@
             currentPage = 'todos';
             todoFilter = filter || 'all';
             if (dateStr) {
-                todoSearchTerm = dateStr;
-                document.getElementById('todo-search').value = dateStr;
+                todoDateSearch = dateStr;
+                document.getElementById('todo-date-search').value = dateStr;
+                todoSearchTerm = '';
+                document.getElementById('todo-search').value = '';
             } else {
+                todoDateSearch = '';
+                document.getElementById('todo-date-search').value = '';
                 todoSearchTerm = '';
                 document.getElementById('todo-search').value = '';
             }
@@ -1245,7 +1241,9 @@
             const visibleTodos = todos.filter(t => canViewTodo(currentUser, t) && !t.completed);
             for (let d = 1; d <= days; d++) {
                 const isToday = (d === todayDate && month === todayMonth && year === todayYear);
+                const dateObj = new Date(year, month, d);
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const isSelected = (dateStr === todoDateSearch);
 
                 const dayTodos = visibleTodos.filter(t => {
                     const start = new Date(t.startTime);
@@ -1282,6 +1280,7 @@
                 let dayClass = 'day-cell';
                 if (!isToday) dayClass += ' other-month';
                 if (isToday) dayClass += ' today';
+                if (isSelected) dayClass += ' selected';
                 if (dayTodos.length > 0) {
                     dayClass += ' has-todo';
                     if (urgentCount > 0) dayClass += ' urgent-day';
@@ -1298,7 +1297,14 @@
             grid.querySelectorAll('.day-cell[data-date]').forEach(el => {
                 el.addEventListener('click', function() {
                     const date = this.dataset.date;
+                    todoDateSearch = date;
+                    document.getElementById('todo-date-search').value = date;
                     showDayTodos(date);
+                    // 高亮选中的日期
+                    document.querySelectorAll('.day-cell').forEach(c => c.classList.remove('selected'));
+                    this.classList.add('selected');
+                    // 同时更新待办列表，按日期筛选
+                    renderTodoList('todo-list', todoFilter, true, todoSearchTerm, null, date);
                 });
             });
         }
@@ -1337,32 +1343,34 @@
                     const todoId = parseInt(this.dataset.todoId);
                     const todo = todos.find(t => t.id === todoId);
                     if (todo) {
-                        const dateStr = formatDateOnly(todo.startTime);
+                        const dateStr = formatDateInput(todo.startTime);
                         navigateToTodosWithFilter('all', dateStr);
                     }
                 });
             });
         }
 
-        function renderTodoList(containerId, filter='all', showActions=true, search='', rangeDays=null) {
+        function renderTodoList(containerId, filter='all', showActions=true, search='', rangeDays=null, dateFilter=null) {
             const container = document.getElementById(containerId);
             if (!container) return;
             let list = todos.filter(t => canViewTodo(currentUser, t));
 
+            // 日期筛选（优先使用传入的 dateFilter，否则使用全局 todoDateSearch）
+            const effectiveDateFilter = dateFilter || todoDateSearch;
+            if (effectiveDateFilter && /^\d{4}-\d{2}-\d{2}$/.test(effectiveDateFilter)) {
+                const [y, m, d] = effectiveDateFilter.split('-').map(Number);
+                list = list.filter(t => {
+                    const start = new Date(t.startTime);
+                    const check = new Date(y, m-1, d);
+                    const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+                    return startDate.getTime() === check.getTime();
+                });
+            }
+
+            // 文本搜索
             if (search) {
-                const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-                if (dateRegex.test(search)) {
-                    const [y, m, d] = search.split('-').map(Number);
-                    list = list.filter(t => {
-                        const start = new Date(t.startTime);
-                        const check = new Date(y, m-1, d);
-                        const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-                        return startDate.getTime() === check.getTime();
-                    });
-                } else {
-                    const s = search.toLowerCase();
-                    list = list.filter(t => t.title.toLowerCase().includes(s));
-                }
+                const s = search.toLowerCase();
+                list = list.filter(t => t.title.toLowerCase().includes(s));
             }
 
             if (rangeDays !== null && rangeDays > 0) {
@@ -1616,6 +1624,69 @@
         }
 
         // ================================================================
+        // 时间选择器切换（一次性用datetime-local，重复类型用time）
+        // ================================================================
+        function updateTimePicker(repeatType) {
+            const startGroup = document.getElementById('start-time-group');
+            const endGroup = document.getElementById('end-time-group');
+            const startInput = document.getElementById('todo-start');
+            const endInput = document.getElementById('todo-end');
+            const startLabel = document.getElementById('start-time-label');
+            const endLabel = document.getElementById('end-time-label');
+
+            if (repeatType === 'once') {
+                // 一次性：使用 datetime-local
+                startInput.type = 'datetime-local';
+                endInput.type = 'datetime-local';
+                startLabel.textContent = '开始时间';
+                endLabel.textContent = '结束时间';
+                // 如果当前值是 time 格式，转换为 datetime-local
+                if (startInput.value && !startInput.value.includes('T') && startInput.value.length === 5) {
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    const dateStr = tomorrow.toISOString().slice(0,10);
+                    startInput.value = dateStr + 'T' + startInput.value + ':00';
+                    endInput.value = dateStr + 'T' + endInput.value + ':00';
+                }
+                // 如果没有值，设置默认次日
+                if (!startInput.value) {
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    tomorrow.setHours(9, 0, 0, 0);
+                    const end = new Date(tomorrow);
+                    end.setHours(10, 0, 0, 0);
+                    startInput.value = tomorrow.toISOString().slice(0,16);
+                    endInput.value = end.toISOString().slice(0,16);
+                }
+            } else {
+                // 重复类型：使用 time（仅时分）
+                startInput.type = 'time';
+                endInput.type = 'time';
+                startLabel.textContent = '开始时间 (时分)';
+                endLabel.textContent = '结束时间 (时分)';
+                // 如果当前值是 datetime-local 格式，提取时间部分
+                if (startInput.value && startInput.value.includes('T')) {
+                    const timePart = startInput.value.split('T')[1];
+                    if (timePart) {
+                        startInput.value = timePart.slice(0,5);
+                    } else {
+                        startInput.value = '09:00';
+                    }
+                }
+                if (endInput.value && endInput.value.includes('T')) {
+                    const timePart = endInput.value.split('T')[1];
+                    if (timePart) {
+                        endInput.value = timePart.slice(0,5);
+                    } else {
+                        endInput.value = '10:00';
+                    }
+                }
+                if (!startInput.value) startInput.value = '09:00';
+                if (!endInput.value) endInput.value = '10:00';
+            }
+        }
+
+        // ================================================================
         // 表单操作
         // ================================================================
         function openTodoModal(id) {
@@ -1629,6 +1700,10 @@
             document.getElementById('repeat-selector').style.display = 'none';
             document.getElementById('repeat-picker').innerHTML = '';
 
+            // 默认设置为一次性，并设置次日时间
+            document.getElementById('todo-repeat').value = 'once';
+            updateTimePicker('once');
+
             if (id) {
                 const todo = todos.find(t => t.id === id);
                 if (!todo || !canModifyTodo(currentUser, todo)) { alert('无权限编辑'); return; }
@@ -1637,15 +1712,35 @@
                 document.getElementById('todo-title').value = todo.title;
                 document.getElementById('todo-urgency').value = todo.urgency;
                 document.getElementById('todo-repeat').value = todo.repeatType || 'once';
-                document.getElementById('todo-start').value = todo.startTime ? todo.startTime.slice(0,16) : '';
-                document.getElementById('todo-end').value = todo.endTime ? todo.endTime.slice(0,16) : '';
                 document.getElementById('todo-auto-delete').value = todo.autoDeleteDays || 3;
                 document.getElementById('todo-reminder-offset').value = todo.reminderOffset || 0;
                 document.getElementById('todo-reminder-unit').value = todo.reminderUnit || 'minute';
                 container.innerHTML = '';
                 (todo.steps || []).forEach(s => addStepInput(s));
                 if (todo.steps.length === 0) addStepInput('');
-                const repeat = todo.repeatType;
+
+                // 设置时间
+                const repeat = todo.repeatType || 'once';
+                updateTimePicker(repeat);
+                if (repeat === 'once') {
+                    if (todo.startTime) {
+                        document.getElementById('todo-start').value = todo.startTime.slice(0,16);
+                    }
+                    if (todo.endTime) {
+                        document.getElementById('todo-end').value = todo.endTime.slice(0,16);
+                    }
+                } else {
+                    if (todo.startTime) {
+                        const dt = new Date(todo.startTime);
+                        document.getElementById('todo-start').value = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+                    }
+                    if (todo.endTime) {
+                        const dt = new Date(todo.endTime);
+                        document.getElementById('todo-end').value = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+                    }
+                }
+
+                // 重复选择器
                 if (repeat !== 'once') {
                     document.getElementById('repeat-selector').style.display = 'block';
                     const label = document.getElementById('repeat-label');
@@ -1655,10 +1750,13 @@
                     renderRepeatPicker(repeat, todo.repeatDays || []);
                 }
             } else {
-                const now = new Date();
-                const start = new Date(now); start.setHours(start.getHours()+1); start.setMinutes(0,0,0);
-                const end = new Date(start); end.setHours(end.getHours()+1);
-                document.getElementById('todo-start').value = start.toISOString().slice(0,16);
+                // 新建：默认一次性，次日
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setHours(9, 0, 0, 0);
+                const end = new Date(tomorrow);
+                end.setHours(10, 0, 0, 0);
+                document.getElementById('todo-start').value = tomorrow.toISOString().slice(0,16);
                 document.getElementById('todo-end').value = end.toISOString().slice(0,16);
                 document.getElementById('todo-auto-delete').value = 3;
                 document.getElementById('todo-reminder-offset').value = 10;
@@ -1670,12 +1768,16 @@
             const repeat = this.value;
             const selector = document.getElementById('repeat-selector');
             const label = document.getElementById('repeat-label');
+
+            // 更新时间选择器类型
+            updateTimePicker(repeat);
+
             if (repeat === 'once') {
                 selector.style.display = 'none';
                 return;
             }
             selector.style.display = 'block';
-            if (repeat === 'daily') label.textContent = '每天重复（无需选择）';
+            if (repeat === 'daily') label.textContent = '每天重复（无需选择具体日期）';
             else if (repeat === 'weekly') label.textContent = '选择每周重复日（点击切换）';
             else if (repeat === 'monthly') label.textContent = '选择每月重复日（点击切换）';
             renderRepeatPicker(repeat, []);
@@ -1706,14 +1808,35 @@
             return Array.from(inputs).map(inp => inp.value.trim()).filter(s => s);
         }
 
+        function buildStartEndTime(repeatType, startVal, endVal) {
+            if (repeatType === 'once') {
+                // datetime-local 格式
+                return { startTime: startVal, endTime: endVal };
+            } else {
+                // time 格式，需要拼接到今天的日期（或者使用固定日期）
+                const today = new Date();
+                const dateStr = today.toISOString().slice(0,10);
+                let start = dateStr + 'T' + startVal + ':00';
+                let end = dateStr + 'T' + endVal + ':00';
+                // 如果结束时间小于开始时间，将结束时间设为第二天
+                if (startVal >= endVal) {
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    const dateStr2 = tomorrow.toISOString().slice(0,10);
+                    end = dateStr2 + 'T' + endVal + ':00';
+                }
+                return { startTime: start, endTime: end };
+            }
+        }
+
         async function saveTodoFromForm() {
             const id = document.getElementById('todo-id').value;
             const title = document.getElementById('todo-title').value.trim();
             if (!title) { alert('请输入事项名称'); return; }
             const urgency = document.getElementById('todo-urgency').value;
             const repeatType = document.getElementById('todo-repeat').value;
-            const startTime = document.getElementById('todo-start').value;
-            const endTime = document.getElementById('todo-end').value;
+            const startRaw = document.getElementById('todo-start').value;
+            const endRaw = document.getElementById('todo-end').value;
             const steps = getStepsFromUI();
             const autoDeleteDays = parseInt(document.getElementById('todo-auto-delete').value) || 0;
             const reminderOffset = parseInt(document.getElementById('todo-reminder-offset').value) || 0;
@@ -1723,6 +1846,9 @@
             if (repeatType === 'weekly' || repeatType === 'monthly') {
                 repeatDays = getSelectedDays();
             }
+
+            // 构建开始和结束时间
+            const { startTime, endTime } = buildStartEndTime(repeatType, startRaw, endRaw);
 
             const todoData = {
                 title,
@@ -1854,30 +1980,6 @@
             refreshAll();
         }
 
-        function openProfileModal() {
-            const modal = document.getElementById('profile-modal');
-            document.getElementById('profile-username').value = currentUser.username;
-            document.getElementById('profile-password').value = currentUser.password;
-            document.getElementById('profile-email').value = currentUser.email || '';
-            modal.classList.add('show');
-        }
-
-        async function saveProfileFromForm() {
-            const username = document.getElementById('profile-username').value.trim();
-            const password = document.getElementById('profile-password').value.trim();
-            const email = document.getElementById('profile-email').value.trim();
-            if (!username || !password) { alert('用户名和密码不能为空'); return; }
-            const user = users.find(u => u.id === currentUser.id);
-            if (user) {
-                Object.assign(user, { username, password, email });
-                await syncAllData();
-                currentUser = { ...user, password: undefined };
-                localStorage.setItem('session', JSON.stringify({ userId: currentUser.id }));
-                closeModal('profile-modal');
-                refreshAll();
-            }
-        }
-
         // ================================================================
         // 自动清理过期待办
         // ================================================================
@@ -1913,7 +2015,7 @@
             renderSidebar();
             renderStats();
             renderTodoList('dashboard-todo-list', dashboardFilter, true, '', dashboardRange);
-            renderTodoList('todo-list', todoFilter, true, todoSearchTerm);
+            renderTodoList('todo-list', todoFilter, true, todoSearchTerm, null, todoDateSearch);
             renderCalendar(calendarDate.getFullYear(), calendarDate.getMonth());
             renderUserTable();
             if (canManageRoles(currentUser)) renderRoleTable();
@@ -1929,8 +2031,8 @@
                 document.querySelectorAll('#todo-filters .filter-btn').forEach(btn => {
                     btn.classList.toggle('active', btn.dataset.filter === todoFilter);
                 });
-                if (todoSearchTerm && /^\d{4}-\d{2}-\d{2}$/.test(todoSearchTerm)) {
-                    document.getElementById('todo-search').value = todoSearchTerm;
+                if (todoDateSearch) {
+                    document.getElementById('todo-date-search').value = todoDateSearch;
                 }
             }
         }
@@ -1943,6 +2045,10 @@
                 const today = new Date();
                 const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
                 showDayTodos(dateStr);
+                // 高亮今天
+                document.querySelectorAll('.day-cell').forEach(el => {
+                    el.classList.toggle('selected', el.dataset.date === dateStr);
+                });
             }
         }
 
@@ -1954,10 +2060,12 @@
             renderSidebar();
             const now = new Date();
             calendarDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            // 设置默认日期搜索为今天
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+            todoDateSearch = todayStr;
+            document.getElementById('todo-date-search').value = todayStr;
             refreshAll();
-            const today = new Date();
-            const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-            showDayTodos(dateStr);
+            showDayTodos(todayStr);
             const roleSelect = document.getElementById('user-role');
             roleSelect.innerHTML = roles.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
             setInterval(autoCleanup, 600000);
@@ -2010,7 +2118,19 @@
 
             document.getElementById('logout-btn').addEventListener('click', logout);
 
-            // Theme
+            // Login page theme toggle
+            document.getElementById('login-theme-toggle').addEventListener('click', function() {
+                const html = document.documentElement;
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.removeAttribute('data-theme');
+                    this.innerHTML = '<i class="fas fa-moon"></i>';
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    this.innerHTML = '<i class="fas fa-sun"></i>';
+                }
+            });
+
+            // Main theme toggle
             document.getElementById('theme-toggle').addEventListener('click', function() {
                 const html = document.documentElement;
                 if (html.getAttribute('data-theme') === 'dark') {
@@ -2019,6 +2139,11 @@
                 } else {
                     html.setAttribute('data-theme', 'dark');
                     this.innerHTML = '<i class="fas fa-sun"></i>';
+                }
+                // 同步登录页主题按钮
+                const loginBtn = document.getElementById('login-theme-toggle');
+                if (loginBtn) {
+                    loginBtn.innerHTML = html.getAttribute('data-theme') === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
                 }
             });
 
@@ -2055,7 +2180,6 @@
             document.getElementById('btn-add-todo').addEventListener('click', () => openTodoModal(null));
             document.getElementById('btn-add-user').addEventListener('click', () => openUserModal(null));
             document.getElementById('btn-add-role').addEventListener('click', () => openRoleModal(null));
-            document.getElementById('btn-edit-profile').addEventListener('click', openProfileModal);
 
             // Modal close
             document.querySelectorAll('[data-modal-close]').forEach(el => {
@@ -2083,10 +2207,6 @@
                 e.preventDefault();
                 saveRoleFromForm();
             });
-            document.getElementById('profile-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                saveProfileFromForm();
-            });
 
             document.getElementById('add-step-btn').addEventListener('click', () => addStepInput(''));
 
@@ -2096,9 +2216,34 @@
                 renderTodoList('dashboard-todo-list', dashboardFilter, true, '', dashboardRange);
             });
 
-            // Search
+            // 日期搜索
+            document.getElementById('todo-date-search').addEventListener('change', function() {
+                const dateVal = this.value;
+                if (dateVal) {
+                    todoDateSearch = dateVal;
+                    todoSearchTerm = '';
+                    document.getElementById('todo-search').value = '';
+                    // 更新日历高亮
+                    document.querySelectorAll('.day-cell').forEach(el => {
+                        el.classList.toggle('selected', el.dataset.date === dateVal);
+                    });
+                    showDayTodos(dateVal);
+                    renderTodoList('todo-list', todoFilter, true, '', null, dateVal);
+                } else {
+                    todoDateSearch = '';
+                    renderTodoList('todo-list', todoFilter, true, todoSearchTerm);
+                }
+            });
+
+            // 文本搜索
             document.getElementById('todo-search').addEventListener('input', function() {
                 todoSearchTerm = this.value;
+                // 如果有文本搜索，清除日期搜索
+                if (todoSearchTerm) {
+                    todoDateSearch = '';
+                    document.getElementById('todo-date-search').value = '';
+                    document.querySelectorAll('.day-cell').forEach(el => el.classList.remove('selected'));
+                }
                 renderTodoList('todo-list', todoFilter, true, todoSearchTerm);
             });
 
@@ -2108,11 +2253,7 @@
                     document.querySelectorAll('#todo-filters .filter-btn').forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
                     todoFilter = this.dataset.filter;
-                    if (todoFilter !== 'all' && /^\d{4}-\d{2}-\d{2}$/.test(todoSearchTerm)) {
-                        todoSearchTerm = '';
-                        document.getElementById('todo-search').value = '';
-                    }
-                    renderTodoList('todo-list', todoFilter, true, todoSearchTerm);
+                    renderTodoList('todo-list', todoFilter, true, todoSearchTerm, null, todoDateSearch);
                 });
             });
 
@@ -2126,13 +2267,18 @@
             document.getElementById('cal-today').addEventListener('click', function() {
                 const now = new Date();
                 calendarDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+                todoDateSearch = todayStr;
+                document.getElementById('todo-date-search').value = todayStr;
                 refreshAll();
-                const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-                showDayTodos(dateStr);
+                showDayTodos(todayStr);
+                document.querySelectorAll('.day-cell').forEach(el => {
+                    el.classList.toggle('selected', el.dataset.date === todayStr);
+                });
             });
 
-            console.log('✅ AI-IMS 已启动 (数据存储在 JSONBin.io)');
-            console.log('📖 API 参考: https://jsonbin.io/api-reference');
+            console.log('✅ AI-IMS 已启动 (数据存储在 JSONBin.io XL Bin)');
+            console.log('📖 API 参考: https://jsonbin.io/api-reference/xlbins/read');
         });
     </script>
 </body>
