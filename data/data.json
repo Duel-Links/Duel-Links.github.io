@@ -1,0 +1,40 @@
+[
+  {
+    "id": 1,
+    "title": "项目启动会议",
+    "urgency": "important",
+    "steps": ["准备材料", "召开会议", "形成纪要"],
+    "currentStep": 0,
+    "startTime": "2026-09-09T10:00:00.000Z",
+    "endTime": "2026-09-09T12:00:00.000Z",
+    "repeatType": "once",
+    "repeatDays": [],
+    "reminderOffset": 15,
+    "reminderUnit": "minute",
+    "reminderAt": "start",
+    "createdBy": 1,
+    "createdAt": "2026-09-08T08:00:00.000Z",
+    "completed": false,
+    "completedAt": null,
+    "autoDeleteDays": 3
+  },
+  {
+    "id": 2,
+    "title": "周报提交",
+    "urgency": "urgent",
+    "steps": ["收集数据", "撰写报告", "提交审批"],
+    "currentStep": 1,
+    "startTime": "2026-09-10T17:00:00.000Z",
+    "endTime": "2026-09-10T18:00:00.000Z",
+    "repeatType": "weekly",
+    "repeatDays": [5],
+    "reminderOffset": 30,
+    "reminderUnit": "minute",
+    "reminderAt": "end",
+    "createdBy": 1,
+    "createdAt": "2026-09-08T08:00:00.000Z",
+    "completed": false,
+    "completedAt": null,
+    "autoDeleteDays": 3
+  }
+]
