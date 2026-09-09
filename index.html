@@ -555,8 +555,17 @@
             .sidebar .logo { padding:0 12px 16px; justify-content:center; }
             .sidebar .nav-item { padding:10px 0; justify-content:center; border-left:none; border-right:3px solid transparent; }
             .sidebar .nav-item.active { border-left:none; border-right-color:var(--accent); }
-            .sidebar .user-info { padding:12px 0; justify-content:center; gap:8px; }
-            .sidebar .user-info .logout-btn { margin-left:0; }
+            /* 移动端用户信息改为竖列排列 */
+            .sidebar .user-info {
+                flex-direction: column;
+                gap: 8px;
+                justify-content: center;
+                align-items: center;
+                padding: 12px 0;
+            }
+            .sidebar .user-info .logout-btn {
+                margin-left: 0;
+            }
             .main-content { margin-left:60px; padding:16px; }
             .modal-box { padding:20px; }
             .modal-box .form-row, .modal-box .form-row-3 { grid-template-columns:1fr; }
@@ -2198,8 +2207,6 @@
                 document.getElementById('calendar-day-todos').innerHTML = '<p style="color:var(--text-muted);font-size:14px;text-align:center;">点击日期查看待办</p>';
             });
 
-            console.log('✅ AI-IMS 已启动 (使用固定 Bin ID: ' + FIXED_BIN_ID + ')');
-            console.log('📖 API 参考: https://jsonbin.io/api-reference/bins/read');
         });
     </script>
 </body>
