@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI-Intelligent Management System</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗍</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -36,20 +36,21 @@
             --selected-bg: var(--accent);
             --selected-color: #fff;
         }
+        /* 暗色模式 - 更柔和的深灰色 */
         [data-theme="dark"] {
-            --bg-primary: #0f1724;
-            --bg-secondary: #1a2332;
-            --bg-card: #1e2a3a;
-            --bg-input: #253040;
+            --bg-primary: #1a2332;
+            --bg-secondary: #253040;
+            --bg-card: #2a3a4a;
+            --bg-input: #304050;
             --text-primary: #e8edf5;
-            --text-secondary: #b0c0d0;
-            --text-muted: #6a7a8a;
-            --border-color: #2a3a4a;
+            --text-secondary: #b8c8d8;
+            --text-muted: #8a9aaa;
+            --border-color: #3a4a5a;
             --shadow: 0 2px 12px rgba(0,0,0,0.4);
             --shadow-hover: 0 4px 20px rgba(0,0,0,0.5);
             --accent: #6a8aff;
             --accent-hover: #5a7aee;
-            --today-bg: #2a3a4a;
+            --today-bg: #3a4a5a;
             --today-color: var(--text-primary);
             --selected-bg: var(--accent);
             --selected-color: #fff;
@@ -125,12 +126,13 @@
             background:var(--bg-secondary); border-right:1px solid var(--border-color);
             padding:20px 0; display:flex; flex-direction:column;
             transition:background var(--transition), border var(--transition);
-            z-index:100; overflow-y:auto;
+            z-index:100; overflow-y:auto; overflow-x:hidden;
         }
         .sidebar .logo {
             padding:0 20px 20px; font-size:20px; font-weight:700; color:var(--accent);
             display:flex; align-items:center; gap:10px;
             border-bottom:1px solid var(--border-color); margin-bottom:16px;
+            flex-shrink:0;
         }
         .sidebar .logo i { font-size:22px; }
         .sidebar .nav-item {
@@ -138,26 +140,29 @@
             color:var(--text-secondary); text-decoration:none; cursor:pointer;
             transition:background var(--transition), color var(--transition);
             border-left:3px solid transparent; font-size:14px; font-weight:500;
+            flex-shrink:0;
         }
         .sidebar .nav-item:hover { background:var(--bg-input); color:var(--text-primary); }
         .sidebar .nav-item.active { color:var(--accent); border-left-color:var(--accent); background:var(--bg-input); }
         .sidebar .nav-item i { width:20px; text-align:center; font-size:16px; }
-        .sidebar .nav-section { padding:12px 20px 6px; font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:600; }
+        .sidebar .nav-section { padding:12px 20px 6px; font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:600; flex-shrink:0; }
         .sidebar .user-info {
             margin-top:auto; padding:16px 20px; border-top:1px solid var(--border-color);
             display:flex; align-items:center; gap:12px;
+            flex-shrink:0;
         }
         .sidebar .user-info .avatar {
             width:36px; height:36px; border-radius:50%; background:var(--accent); color:#fff;
             display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px;
             flex-shrink:0;
         }
-        .sidebar .user-info .uname { font-size:14px; font-weight:500; }
-        .sidebar .user-info .urole { font-size:12px; color:var(--text-muted); }
+        .sidebar .user-info .uname { font-size:14px; font-weight:500; white-space:nowrap; }
+        .sidebar .user-info .urole { font-size:12px; color:var(--text-muted); white-space:nowrap; }
         .sidebar .user-info .logout-btn {
             margin-left:auto; background:none; border:none; color:var(--text-muted);
             cursor:pointer; font-size:16px; padding:4px 8px; border-radius:6px;
             transition:background var(--transition), color var(--transition);
+            flex-shrink:0;
         }
         .sidebar .user-info .logout-btn:hover { background:var(--danger); color:#fff; }
 
@@ -301,36 +306,46 @@
         .todo-empty { text-align:center; padding:40px 20px; color:var(--text-muted); }
         .todo-empty i { font-size:48px; margin-bottom:12px; opacity:0.4; }
 
+        /* 搜索框 - 移动端自适应 */
         .search-box {
-            display:flex; gap:8px; align-items:center;
+            display:flex; gap:8px; align-items:center; flex-wrap:wrap;
             background:var(--bg-input); border:1px solid var(--border-color);
             border-radius:var(--radius-sm); padding:4px 12px;
         }
         .search-box input[type="text"] {
             border:none; background:transparent; padding:6px 0;
-            font-size:14px; color:var(--text-primary); outline:none; flex:1;
-            min-width:120px;
+            font-size:14px; color:var(--text-primary); outline:none; flex:1 1 100px;
+            min-width:80px;
         }
         .search-box input[type="date"] {
             border:none; background:transparent; padding:6px 0;
             font-size:14px; color:var(--text-primary); outline:none;
-            width:150px;
+            flex:0 1 140px;
+            min-width:120px;
         }
-        .search-box i { color:var(--text-muted); }
+        .search-box i { color:var(--text-muted); flex-shrink:0; }
 
         /* Calendar */
         .calendar-wrapper {
             background:var(--bg-card); border:1px solid var(--border-color);
             border-radius:var(--radius); padding:20px;
             box-shadow:var(--shadow);
+            max-height: 600px;
+            display:flex; flex-direction:column;
         }
         .calendar-header {
             display:flex; justify-content:space-between; align-items:center;
             margin-bottom:16px; flex-wrap:wrap; gap:8px;
+            flex-shrink:0;
         }
         .calendar-header .month-label { font-size:20px; font-weight:600; }
         .calendar-header .nav-btns { display:flex; gap:6px; }
 
+        .calendar-grid-container {
+            flex:1 1 auto;
+            overflow-y:auto;
+            min-height: 280px;
+        }
         .calendar-grid {
             display:grid; grid-template-columns:repeat(7,1fr);
             gap:6px;
@@ -381,6 +396,14 @@
         .calendar-grid .day-cell.has-todo.urgent-day { border-bottom-color:var(--urgent-color); }
         .calendar-grid .day-cell.has-todo.important-day { border-bottom-color:var(--important-color); }
 
+        .calendar-day-todos {
+            flex-shrink:0;
+            max-height: 200px;
+            overflow-y:auto;
+            margin-top:12px;
+            padding-top:12px;
+            border-top:1px solid var(--border-color);
+        }
         .calendar-day-todos .todo-item-clickable {
             cursor:pointer;
             transition:background var(--transition), transform var(--transition);
@@ -524,6 +547,7 @@
         .page-section { display:none; }
         .page-section.active { display:block; }
 
+        /* ===== 响应式优化 ===== */
         @media (max-width:768px) {
             .sidebar { width:60px; padding:12px 0; }
             .sidebar .logo span, .sidebar .nav-item span, .sidebar .nav-section,
@@ -531,7 +555,7 @@
             .sidebar .logo { padding:0 12px 16px; justify-content:center; }
             .sidebar .nav-item { padding:10px 0; justify-content:center; border-left:none; border-right:3px solid transparent; }
             .sidebar .nav-item.active { border-left:none; border-right-color:var(--accent); }
-            .sidebar .user-info { padding:12px 0; justify-content:center; }
+            .sidebar .user-info { padding:12px 0; justify-content:center; gap:8px; }
             .sidebar .user-info .logout-btn { margin-left:0; }
             .main-content { margin-left:60px; padding:16px; }
             .modal-box { padding:20px; }
@@ -543,7 +567,12 @@
             .calendar-grid .day-cell { font-size:14px; min-height:40px; }
             .calendar-grid .day-cell .day-num { font-size:16px; }
             .mini-calendar .day-option { width:32px; height:32px; font-size:12px; }
-            .search-box input[type="date"] { width:130px; }
+            .search-box { padding:6px 10px; }
+            .search-box input[type="date"] { flex:1 1 120px; min-width:100px; }
+            .search-box input[type="text"] { flex:1 1 80px; min-width:60px; }
+            .calendar-wrapper { max-height: 450px; }
+            .calendar-grid-container { min-height: 200px; }
+            .calendar-day-todos { max-height: 150px; }
         }
         @media (max-width:480px) {
             .dashboard-grid { grid-template-columns:1fr; }
@@ -552,7 +581,11 @@
             .calendar-grid .day-cell .day-num { font-size:14px; }
             .calendar-grid .day-cell .day-badge { font-size:8px; padding:0 4px; min-width:14px; top:1px; right:1px; }
             .mini-calendar .day-option { width:28px; height:28px; font-size:11px; }
-            .search-box input[type="date"] { width:110px; }
+            .search-box input[type="date"] { flex:1 1 100px; min-width:80px; }
+            .search-box input[type="text"] { flex:1 1 60px; min-width:50px; }
+            .calendar-wrapper { max-height: 380px; }
+            .calendar-grid-container { min-height: 160px; }
+            .calendar-day-todos { max-height: 120px; }
         }
         .hidden { display:none !important; }
     </style>
@@ -672,14 +705,14 @@
                 <div class="todo-section">
                     <div class="todo-header">
                         <h3><i class="fas fa-list-check" style="color:var(--accent);"></i> 所有待办</h3>
-                        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                            <div class="search-box">
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; width:100%;">
+                            <div class="search-box" style="flex:1 1 auto; min-width:200px;">
                                 <i class="fas fa-calendar-day"></i>
                                 <input type="date" id="todo-date-search" title="按日期筛选">
                                 <i class="fas fa-search" style="margin-left:4px;"></i>
-                                <input type="text" id="todo-search" placeholder="搜索事项..." style="min-width:100px;">
+                                <input type="text" id="todo-search" placeholder="搜索事项..." style="flex:1 1 80px; min-width:60px;">
                             </div>
-                            <div class="todo-filters" id="todo-filters">
+                            <div class="todo-filters" style="flex:1 1 100%;">
                                 <button class="filter-btn active" data-filter="all">全部</button>
                                 <button class="filter-btn" data-filter="urgent">紧急</button>
                                 <button class="filter-btn" data-filter="important">重要</button>
@@ -705,10 +738,11 @@
                             <button id="cal-next" class="btn btn-outline btn-sm"><i class="fas fa-chevron-right"></i></button>
                         </div>
                     </div>
-                    <div class="calendar-grid" id="calendar-grid"></div>
-                    <div style="margin-top:16px;">
-                        <h4 style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;">📌 该日待办 <span style="font-size:12px;font-weight:400;color:var(--text-muted);">（点击事项跳转）</span></h4>
-                        <div id="calendar-day-todos" class="calendar-day-todos"><p style="color:var(--text-muted);font-size:14px;">点击日期查看待办</p></div>
+                    <div class="calendar-grid-container">
+                        <div class="calendar-grid" id="calendar-grid"></div>
+                    </div>
+                    <div class="calendar-day-todos" id="calendar-day-todos">
+                        <p style="color:var(--text-muted);font-size:14px;text-align:center;">点击日期查看待办</p>
                     </div>
                 </div>
             </div>
@@ -1244,7 +1278,7 @@
             });
             const container = document.getElementById('calendar-day-todos');
             if (dayTodos.length === 0) {
-                container.innerHTML = `<p style="color:var(--text-muted);font-size:14px;">📭 该日暂无待办事项</p>`;
+                container.innerHTML = `<p style="color:var(--text-muted);font-size:14px;text-align:center;">📭 该日暂无待办事项</p>`;
                 return;
             }
             let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
@@ -1277,7 +1311,6 @@
             if (!container) return;
             let list = todos.filter(t => canViewTodo(currentUser, t));
 
-            // 日期筛选
             const effectiveDateFilter = dateFilter || todoDateSearch;
             if (effectiveDateFilter && /^\d{4}-\d{2}-\d{2}$/.test(effectiveDateFilter)) {
                 const [y, m, d] = effectiveDateFilter.split('-').map(Number);
@@ -1497,7 +1530,6 @@
             const container = document.getElementById('repeat-picker');
             container.innerHTML = '';
             if (repeatType === 'daily') {
-                // 每天时不需要显示选择器，直接隐藏外层
                 return;
             } else if (repeatType === 'weekly') {
                 const weekdays = ['日','一','二','三','四','五','六'];
@@ -1644,7 +1676,6 @@
                     }
                 }
 
-                // 处理重复选择器显示
                 if (repeat === 'daily') {
                     document.getElementById('repeat-selector').style.display = 'none';
                 } else if (repeat === 'weekly' || repeat === 'monthly') {
@@ -1668,7 +1699,6 @@
             modal.classList.add('show');
         }
 
-        // 重复类型变更事件
         document.getElementById('todo-repeat').addEventListener('change', function() {
             const repeat = this.value;
             const selector = document.getElementById('repeat-selector');
@@ -1677,12 +1707,10 @@
             if (repeat === 'once' || repeat === 'daily') {
                 selector.style.display = 'none';
                 if (repeat === 'daily') {
-                    // 清空picker内容
                     document.getElementById('repeat-picker').innerHTML = '';
                 }
                 return;
             }
-            // weekly 或 monthly
             selector.style.display = 'block';
             if (repeat === 'weekly') label.textContent = '选择每周重复日（点击切换）';
             else if (repeat === 'monthly') label.textContent = '选择每月重复日（点击切换）';
@@ -1961,12 +1989,10 @@
             renderSidebar();
             const now = new Date();
             calendarDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            // 默认不设置日期搜索，显示全部待办
             todoDateSearch = '';
             document.getElementById('todo-date-search').value = '';
             refreshAll();
-            // 不自动显示某天待办，留空
-            document.getElementById('calendar-day-todos').innerHTML = '<p style="color:var(--text-muted);font-size:14px;">点击日期查看待办</p>';
+            document.getElementById('calendar-day-todos').innerHTML = '<p style="color:var(--text-muted);font-size:14px;text-align:center;">点击日期查看待办</p>';
             const roleSelect = document.getElementById('user-role');
             roleSelect.innerHTML = roles.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
             setInterval(autoCleanup, 600000);
@@ -2165,15 +2191,15 @@
             document.getElementById('cal-today').addEventListener('click', function() {
                 const now = new Date();
                 calendarDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                // 取消日期筛选
                 todoDateSearch = '';
                 document.getElementById('todo-date-search').value = '';
                 document.querySelectorAll('.day-cell').forEach(el => el.classList.remove('selected'));
                 refreshAll();
-                document.getElementById('calendar-day-todos').innerHTML = '<p style="color:var(--text-muted);font-size:14px;">点击日期查看待办</p>';
+                document.getElementById('calendar-day-todos').innerHTML = '<p style="color:var(--text-muted);font-size:14px;text-align:center;">点击日期查看待办</p>';
             });
 
             console.log('✅ AI-IMS 已启动 (使用固定 Bin ID: ' + FIXED_BIN_ID + ')');
+            console.log('📖 API 参考: https://jsonbin.io/api-reference/bins/read');
         });
     </script>
 </body>
