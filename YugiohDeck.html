@@ -2,12 +2,11 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Duel-Links</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5">
+    <title>Duel-Links 卡组构筑 V3</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎴</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js">
-    </script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -41,48 +40,34 @@
             gap: 20px;
             flex: 1;
             height: 100%;
+            align-items: start;
         }
 
+        /* ========= 移动端断点 ≤1000px ========= */
         @media (max-width: 1000px) {
             .app-container {
                 grid-template-columns: 1fr;
                 height: auto;
+                align-items: stretch;
             }
             .search-section {
                 width: 100% !important;
                 max-width: 100% !important;
+                max-height: none !important;
             }
             .container {
                 width: 100%;
                 max-width: 100%;
                 padding: 10px;
             }
-        }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-                overflow-x: hidden;
-            }
-            .container {
-                height: calc(100vh - 20px);
-            }
-
-            /* 卡片尺寸缩小，适应一行四张 */
             .card-item {
                 height: 100px !important;
                 width: auto !important;
             }
-
-            /* 主卡组和额外卡组均固定4列 */
-            .main-deck-grid {
-                grid-template-columns: repeat(4, 1fr) !important;
-            }
+            .main-deck-grid,
             .extra-deck-grid {
                 grid-template-columns: repeat(4, 1fr) !important;
             }
-
-            /* 搜索区域输入框和按钮字体缩小 */
             .search-box input {
                 padding: 8px !important;
                 font-size: 0.9rem !important;
@@ -91,68 +76,51 @@
                 padding: 0 15px !important;
                 font-size: 0.9rem !important;
             }
-
-            /* 搜索结果卡片预览调整 */
             .result-item img {
                 width: 50px !important;
                 height: 70px !important;
             }
-            .result-name {
-                font-size: 0.9rem !important;
-            }
-            .result-type {
-                font-size: 0.75rem !important;
-            }
-            .result-desc {
-                font-size: 0.7rem !important;
-                max-height: 40px !important;
-            }
+            .result-name { font-size: 0.9rem !important; }
+            .result-type { font-size: 0.75rem !important; }
+            .result-desc { font-size: 0.7rem !important; max-height: 40px !important; }
 
-            /* 卡片详情模态框等保持原布局 */
+            /* 移动端模态框统一宽度 85% */
             .modal-content,
             .add-card-content,
             .deck-list-content,
             .share-content,
             .save-deck-content {
-                width: 95% !important;
-                max-width: 95% !important;
-            }
-            .card-detail {
-                flex-direction: row !important;
-                max-height: 90vh;
-                flex-wrap: wrap;
-            }
-            .card-image {
-                min-width: 40% !important;
-                max-width: 40% !important;
-                max-height: 350px !important;
-            }
-            .card-info {
-                width: 55%;
-                max-height: 60vh;
-                overflow-y: auto;
-            }
-            .add-card-container {
-                flex-direction: row !important;
-                flex-wrap: wrap;
-            }
-            .add-card-preview {
-                min-width: 40% !important;
-                max-width: 40% !important;
-                max-height: 350px !important;
-            }
-            .add-card-info {
-                min-width: 55%;
-                max-height: 45vh;
-                overflow-y: auto;
+                width: 85% !important;
+                max-width: 85% !important;
+                max-height: 85vh !important;
+                overflow: hidden;
             }
 
-            /* 模态框底部适配 */
+            /* 卡片详情 / 添加卡片改为上下结构 */
+            .card-detail,
+            .add-card-container {
+                flex-direction: column !important;
+                max-height: none !important;
+                overflow-y: auto;
+                padding-bottom: 10px;
+            }
+            .card-detail .card-image,
+            .add-card-preview {
+                min-width: 100% !important;
+                max-width: 100% !important;
+                max-height: 250px !important;
+                margin-bottom: 12px;
+            }
+            .card-info,
+            .add-card-info {
+                width: 100% !important;
+                max-height: none !important;
+                overflow-y: visible;
+            }
+
             .deck-list-modal,
             .share-modal,
-            .save-deck-modal {
-                align-items: flex-end;
-            }
+            .save-deck-modal { align-items: flex-end; }
             .deck-list-content,
             .share-content,
             .save-deck-content {
@@ -162,78 +130,39 @@
                 padding-bottom: 30px;
             }
 
-            /* 搜索结果区域最大高度限制，防止挤压卡组区 */
-            .results-container {
-                max-height: 300px !important;
-                overflow-y: auto;
-            }
+            .results-container { max-height: 300px !important; overflow-y: auto; }
 
-            /* 技能栏允许换行 */
-            .deck-skill-section {
-                flex-wrap: wrap;
-            }
-            .skill-selector {
-                flex-wrap: wrap;
-                width: 100%;
-            }
-            .skill-selector input {
-                width: 100%;
-                margin-right: 0;
-                margin-bottom: 8px;
-            }
-            .deck-counts {
-                width: 100%;
-                justify-content: flex-start;
-            }
+            .deck-skill-section { flex-wrap: wrap; }
+            .skill-selector { flex-wrap: wrap; width: 100%; }
+            .skill-selector input { width: 100%; margin-right: 0; margin-bottom: 8px; }
+            .deck-counts { width: 100%; justify-content: flex-start; }
         }
 
         @media (max-width: 480px) {
-            body {
-                padding: 5px;
-            }
-            .card-item {
-                height: 85px !important;
-            }
-            .card-image,
-            .add-card-preview {
-                min-width: 100% !important;
-                max-width: 100% !important;
-            }
-            .card-info,
-            .add-card-info {
-                width: 100% !important;
-                min-width: 100% !important;
-                max-height: 45vh;
-                overflow-y: auto;
-            }
+            body { padding: 5px; }
+            .card-item { height: 85px !important; }
+            .action-btn .action-text { display: none; }
+            .action-btn { padding: 10px; gap: 0; }
+            .deck-actions { gap: 8px; }
         }
 
-        /* 原有样式保持不变（略作精简） */
-        .card-detail {
-            display: flex;
-            padding: 20px;
-            gap: 20px;
-            max-height: 90vh;
-            overflow: auto;
-        }
+        /* 通用样式 */
+        .card-detail { display: flex; padding: 20px; gap: 20px; max-height: 90vh; overflow: auto; }
 
         .search-section {
             background: white;
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
             border: 1px solid #e2e8f0;
             display: flex;
             flex-direction: column;
             height: 100%;
             width: 400px;
+            overflow: hidden;
         }
 
-        .search-box {
-            display: flex;
-            margin-bottom: 15px;
-        }
-
+        .search-box { display: flex; margin-bottom: 15px; }
         .search-box input {
             flex: 1;
             padding: 12px;
@@ -243,13 +172,11 @@
             color: #333;
             font-size: 1rem;
         }
-
         .search-box input:focus {
             outline: none;
             border-color: #4da6ff;
-            box-shadow: 0 0 10px rgba(77, 166, 255, 0.2);
+            box-shadow: 0 0 10px rgba(77,166,255,0.2);
         }
-
         .search-box button {
             padding: 0 20px;
             background: #4da6ff;
@@ -261,10 +188,8 @@
             font-size: 1rem;
             transition: all 0.3s;
         }
-
-        .search-box button:hover {
-            background: #3182ce;
-        }
+        .search-box button:hover { background: #3182ce; }
+        .search-box button:disabled { background: #a0aec0; cursor: not-allowed; }
 
         .search-results {
             flex: 1;
@@ -274,14 +199,8 @@
             background: white;
             display: flex;
             flex-direction: column;
-            height: calc(100% - 60px);
         }
-
-        .results-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px;
-        }
+        .results-container { flex: 1; overflow-y: auto; padding: 8px; }
 
         .result-item {
             display: flex;
@@ -293,15 +212,8 @@
             border-radius: 6px;
             margin-bottom: 5px;
         }
-
-        .result-item:last-child {
-            border-bottom: none;
-        }
-
-        .result-item:hover {
-            background: rgba(77, 166, 255, 0.05);
-        }
-
+        .result-item:last-child { border-bottom: none; }
+        .result-item:hover { background: rgba(77,166,255,0.05); }
         .result-item img {
             width: 70px;
             height: 100px;
@@ -311,12 +223,7 @@
             border: 1px solid #e2e8f0;
             background: #f7fafc;
         }
-
-        .result-info {
-            flex: 1;
-            min-width: 0;
-        }
-
+        .result-info { flex: 1; min-width: 0; }
         .result-name {
             font-weight: bold;
             margin-bottom: 4px;
@@ -326,50 +233,53 @@
             text-overflow: ellipsis;
             color: #2d3748;
         }
-
-        .result-type {
-            font-size: 0.85rem;
-            color: #718096;
-        }
+        .result-type { font-size: 0.85rem; color: #718096; }
 
         .result-desc {
             font-size: 0.8rem;
             color: #4a5568;
             margin-top: 6px;
             max-height: 50px;
-            overflow-y: auto;
             line-height: 1.4;
             padding-right: 5px;
+            overflow-y: scroll !important;
+            scrollbar-width: thin;
+            scrollbar-color: #a0aec0 transparent;
+        }
+        .result-desc::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+            display: block;
+        }
+        .result-desc::-webkit-scrollbar-thumb {
+            background: #a0aec0;
+            border-radius: 10px;
+        }
+        .result-desc::-webkit-scrollbar-track {
+            background: transparent;
         }
 
         .deck-section {
             background: white;
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
             border: 1px solid #e2e8f0;
             display: flex;
             flex-direction: column;
             height: 100%;
             flex: 1;
         }
-
         .deck-skill-section {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(77, 166, 255, 0.05);
+            background: rgba(77,166,255,0.05);
             border-radius: 8px;
             padding: 12px;
             margin-bottom: 15px;
         }
-
-        .skill-selector {
-            display: flex;
-            align-items: center;
-            flex: 1;
-        }
-
+        .skill-selector { display: flex; align-items: center; flex: 1; }
         .skill-selector input {
             flex: 1;
             padding: 10px;
@@ -380,16 +290,9 @@
             font-size: 0.9rem;
             margin-right: 15px;
         }
-
-        .deck-counts {
-            display: flex;
-            gap: 15px;
-            font-size: 0.95rem;
-            align-items: center;
-        }
-
+        .deck-counts { display: flex; gap: 15px; font-size: 0.95rem; align-items: center; }
         .deck-count {
-            background: rgba(77, 166, 255, 0.1);
+            background: rgba(77,166,255,0.1);
             padding: 6px 12px;
             border-radius: 6px;
             display: flex;
@@ -397,20 +300,13 @@
             gap: 6px;
             color: #2d3748;
         }
+        .count-value { color: #3182ce; font-weight: bold; }
+        /* V3 新增：卡组合法性状态色 */
+        .count-value.warn { color: #dd6b20; }
+        .count-value.full { color: #e53e3e; }
+        .deck-count.illegal { background: rgba(221,107,32,0.12); }
 
-        .count-value {
-            color: #3182ce;
-            font-weight: bold;
-        }
-
-        .deck-container {
-            margin-bottom: 20px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
+        .deck-container { margin-bottom: 20px; flex: 1; display: flex; flex-direction: column; }
         .deck-title {
             font-size: 1.1rem;
             margin-bottom: 10px;
@@ -419,10 +315,23 @@
             align-items: center;
             font-weight: 600;
         }
-
-        .deck-title i {
-            margin-right: 8px;
+        .deck-title i { margin-right: 8px; }
+        /* V3 新增：标题区排序按钮 */
+        .deck-title-actions { margin-left: auto; display: flex; gap: 6px; }
+        .mini-btn {
+            border: 1px solid #cbd5e0;
+            background: #f7fafc;
+            color: #4a5568;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
+        .mini-btn:hover { background: #3182ce; color: white; border-color: #3182ce; }
 
         .deck-grid {
             display: grid;
@@ -434,38 +343,9 @@
             border: 1px dashed #cbd5e0;
             flex: 1;
             overflow-y: auto;
-            height: 100%;
         }
-
-        .main-deck-grid {
-            grid-template-columns: repeat(4, 1fr);
-        }
-
-        @media (max-width: 1200px) {
-            .main-deck-grid {
-                grid-template-columns: repeat(5, 1fr);
-            }
-        }
-
-        .main-deck-grid.medium {
-            grid-template-columns: repeat(5, 1fr);
-        }
-
-        .main-deck-grid.large {
-            grid-template-columns: repeat(6, 1fr);
-        }
-
-        .extra-deck-grid {
-            grid-template-columns: repeat(4, 1fr);
-            min-height: 180px;
-            height: auto;
-        }
-
-        @media (max-width: 1200px) {
-            .extra-deck-grid {
-                grid-template-columns: repeat(5, 1fr);
-            }
-        }
+        .main-deck-grid { grid-template-columns: repeat(4, 1fr); }
+        .extra-deck-grid { grid-template-columns: repeat(4, 1fr); min-height: 180px; height: auto; }
 
         .card-item {
             position: relative;
@@ -473,29 +353,18 @@
             transition: transform 0.3s;
             border-radius: 6px;
             overflow: hidden;
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
             height: 150px;
             width: 100px;
             background: white;
         }
-
-        .card-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 12px rgba(77, 166, 255, 0.15);
-        }
-
-        .card-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            display: block;
-        }
-
+        .card-item:hover { transform: translateY(-3px); box-shadow: 0 5px 12px rgba(77,166,255,0.15); }
+        .card-item img { width: 100%; height: 100%; object-fit: contain; display: block; }
         .card-count {
             position: absolute;
             top: 1px;
             right: 16px;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255,255,255,0.9);
             color: #3182ce;
             width: 24px;
             height: 24px;
@@ -508,16 +377,7 @@
             z-index: 2;
             border: 1px solid #e2e8f0;
         }
-
-        .card-controls {
-            position: absolute;
-            bottom: 4px;
-            right: 4px;
-            display: flex;
-            gap: 4px;
-            z-index: 2;
-        }
-
+        .card-controls { position: absolute; bottom: 4px; right: 4px; display: flex; gap: 4px; z-index: 2; }
         .card-btn {
             width: 24px;
             height: 24px;
@@ -532,26 +392,11 @@
             color: white;
             font-size: 0.9rem;
         }
+        .card-increase { background: #48bb78; }
+        .card-decrease { background: #e53e3e; }
+        .card-btn:hover { transform: scale(1.15); }
 
-        .card-increase {
-            background: #48bb78;
-        }
-
-        .card-decrease {
-            background: #e53e3e;
-        }
-
-        .card-btn:hover {
-            transform: scale(1.15);
-        }
-
-        .deck-actions {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-top: auto;
-        }
-
+        .deck-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: auto; }
         .action-btn {
             padding: 12px;
             border: none;
@@ -564,33 +409,13 @@
             gap: 8px;
             font-size: 0.9rem;
             transition: all 0.3s;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.08);
         }
-
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .save-btn {
-            background: #38a169;
-            color: white;
-        }
-
-        .load-btn {
-            background: #3182ce;
-            color: white;
-        }
-
-        .share-btn {
-            background: #805ad5;
-            color: white;
-        }
-
-        .reset-btn {
-            background: #e53e3e;
-            color: white;
-        }
+        .action-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .save-btn { background: #38a169; color: white; }
+        .load-btn { background: #3182ce; color: white; }
+        .share-btn { background: #805ad5; color: white; }
+        .reset-btn { background: #e53e3e; color: white; }
 
         .card-placeholder {
             display: flex;
@@ -607,14 +432,9 @@
             grid-column: 1 / -1;
         }
 
-        .loader {
-            display: none;
-            text-align: center;
-            padding: 15px;
-        }
-
+        .loader { display: none; text-align: center; padding: 15px; }
         .loader .spinner {
-            border: 3px solid rgba(77, 166, 255, 0.2);
+            border: 3px solid rgba(77,166,255,0.2);
             border-radius: 50%;
             border-top: 3px solid #3182ce;
             width: 30px;
@@ -622,15 +442,7 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 10px;
         }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .modal {
             display: none;
@@ -639,23 +451,21 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0,0,0,0.7);
             z-index: 1000;
             justify-content: center;
             align-items: center;
         }
-
         .modal-content {
             background: white;
             border-radius: 12px;
             max-width: 700px;
             max-height: 85vh;
             overflow: hidden;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 0 30px rgba(0,0,0,0.15);
             position: relative;
             width: 90%;
         }
-
         .close-modal {
             position: absolute;
             top: 12px;
@@ -664,52 +474,24 @@
             color: #718096;
             cursor: pointer;
             z-index: 10;
-            transition: color 0.3s;
         }
-
-        .close-modal:hover {
-            color: #3182ce;
-        }
+        .close-modal:hover { color: #3182ce; }
 
         .card-image {
             flex: 1;
             min-width: 250px;
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
             display: flex;
             align-items: center;
             justify-content: center;
             background: #f7fafc;
         }
-
-        .card-image img {
-            width: 100%;
-            max-height: 350px;
-            object-fit: contain;
-        }
-
-        .card-info {
-            flex: 1;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .card-name {
-            font-size: 1.6rem;
-            margin-bottom: 12px;
-            color: #3182ce;
-        }
-
-        .card-type {
-            font-size: 1.1rem;
-            color: #718096;
-            margin-bottom: 15px;
-            font-weight: 500;
-        }
-
+        .card-image img { width: 100%; max-height: 450px; object-fit: contain; }
+        .card-info { flex: 1; padding: 10px; display: flex; flex-direction: column; overflow: hidden; }
+        .card-name { font-size: 1.6rem; margin-bottom: 12px; color: #3182ce; }
+        .card-type { font-size: 1.1rem; color: #718096; margin-bottom: 15px; font-weight: 500; }
         .card-desc {
             line-height: 1.6;
             font-size: 1rem;
@@ -731,23 +513,15 @@
             background: #38a169;
             color: white;
             font-weight: bold;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             transform: translateX(200%);
             transition: transform 0.4s ease-out;
-            z-index: 2000;
+            z-index: 3000;
+            max-width: 80vw;
         }
-
-        .notification.show {
-            transform: translateX(0);
-        }
-
-        .notification.error {
-            background: #e53e3e;
-        }
-
-        .notification.warning {
-            background: #dd6b20;
-        }
+        .notification.show { transform: translateX(0); }
+        .notification.error { background: #e53e3e; }
+        .notification.warning { background: #dd6b20; }
 
         .add-card-modal,
         .deck-list-modal,
@@ -759,12 +533,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0,0,0,0.7);
             z-index: 1000;
             justify-content: center;
             align-items: center;
         }
-
         .add-card-content,
         .deck-list-content,
         .share-content,
@@ -774,54 +547,25 @@
             padding: 20px;
             max-width: 90vh;
             width: 90%;
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 0 25px rgba(0,0,0,0.15);
         }
 
-        .add-card-container {
-            display: flex;
-            gap: 20px;
-            padding: 15px;
-            max-height: 90vh;
-        }
-
+        .add-card-container { display: flex; gap: 20px; padding: 15px; max-height: 90vh; }
         .add-card-preview {
             flex: 1;
             min-width: 150px;
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
             display: flex;
             align-items: center;
             justify-content: center;
             background: #f7fafc;
         }
-
-        .add-card-preview img {
-            width: 100%;
-            max-height: 350px;
-            object-fit: contain;
-        }
-
-        .add-card-info {
-            flex: 1;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .add-card-name {
-            font-size: 1.6rem;
-            margin-bottom: 10px;
-            color: #3182ce;
-        }
-
-        .add-card-type {
-            font-size: 1.1rem;
-            color: #718096;
-            margin-bottom: 10px;
-            font-weight: 500;
-        }
-
+        .add-card-preview img { width: 100%; max-height: 450px; object-fit: contain; }
+        .add-card-info { flex: 1; padding: 10px; display: flex; flex-direction: column; }
+        .add-card-name { font-size: 1.6rem; margin-bottom: 10px; color: #3182ce; }
+        .add-card-type { font-size: 1.1rem; color: #718096; margin-bottom: 10px; font-weight: 500; }
         .add-card-desc {
             line-height: 1.6;
             font-size: 1rem;
@@ -834,14 +578,7 @@
             max-height: 200px;
             margin-bottom: 5px;
         }
-
-        .quantity-selector {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin: 5px 0 10px;
-        }
-
+        .quantity-selector { display: flex; justify-content: center; gap: 12px; margin: 5px 0 10px; }
         .quantity-btn {
             width: 40px;
             height: 40px;
@@ -855,18 +592,8 @@
             transition: all 0.3s;
             border: 1px solid #cbd5e0;
         }
-
-        .quantity-btn.active {
-            background: #3182ce;
-            color: white;
-        }
-
-        .add-card-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-        }
-
+        .quantity-btn.active { background: #3182ce; color: white; }
+        .add-card-actions { display: flex; gap: 12px; justify-content: center; }
         .add-card-btn {
             padding: 10px 25px;
             border: none;
@@ -876,23 +603,10 @@
             font-size: 1rem;
             transition: all 0.3s;
         }
+        .confirm-add { background: #38a169; color: white; }
+        .cancel-add { background: #e53e3e; color: white; }
 
-        .confirm-add {
-            background: #38a169;
-            color: white;
-        }
-
-        .cancel-add {
-            background: #e53e3e;
-            color: white;
-        }
-
-        .deck-list-items {
-            max-height: 350px;
-            overflow-y: auto;
-            margin-bottom: 15px;
-        }
-
+        .deck-list-items { max-height: 350px; overflow-y: auto; margin-bottom: 15px; }
         .deck-item {
             background: #f7fafc;
             border-radius: 8px;
@@ -900,20 +614,9 @@
             margin-bottom: 10px;
             border-left: 3px solid #3182ce;
         }
-
-        .deck-item-name {
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin-bottom: 6px;
-            color: #3182ce;
-        }
-
-        .deck-item-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
+        .deck-item-name { font-size: 1.1rem; font-weight: bold; margin-bottom: 6px; color: #3182ce; }
+        .deck-item-date { font-size: 0.8rem; color: #a0aec0; margin-top: 4px; }
+        .deck-item-actions { display: flex; gap: 8px; margin-top: 8px; }
         .deck-action-btn {
             padding: 6px 12px;
             border: none;
@@ -940,34 +643,13 @@
             width: 100%;
             margin-top: 10px;
         }
+        .btn-primary { background: #3182ce; color: white; }
+        .btn-success { background: #38a169; color: white; }
+        .btn-danger { background: #e53e3e; color: white; }
 
-        .btn-primary {
-            background: #3182ce;
-            color: white;
-        }
-
-        .btn-success {
-            background: #38a169;
-            color: white;
-        }
-
-        .btn-danger {
-            background: #e53e3e;
-            color: white;
-        }
-
-        .share-content {
-            max-width: 500px;
-        }
-
-        .share-options {
-            margin-top: 10px;
-        }
-
-        .share-option {
-            margin-bottom: 20px;
-        }
-
+        .share-content { max-width: 500px; }
+        .share-options { margin-top: 10px; }
+        .share-option { margin-bottom: 20px; }
         .option-title {
             display: flex;
             align-items: center;
@@ -977,7 +659,6 @@
             color: #3182ce;
             margin-bottom: 8px;
         }
-
         .share-code {
             background: #f7fafc;
             padding: 12px;
@@ -992,14 +673,7 @@
             white-space: pre-wrap;
             margin-top: 10px;
         }
-
-        .share-buttons {
-            display: flex;
-            gap: 12px;
-            padding: 12px;
-            justify-content: center;
-        }
-
+        .share-buttons { display: flex; gap: 12px; padding: 12px; justify-content: center; flex-wrap: wrap; }
         .share-btn-action {
             padding: 10px 20px;
             border: none;
@@ -1012,23 +686,11 @@
             font-size: 1rem;
             transition: all 0.3s;
         }
+        .copy-btn { background: #3182ce; color: white; }
+        .download-btn { background: #38a169; color: white; }
+        .close-share-btn { background: #e53e3e; color: white; }
 
-        .copy-btn {
-            background: #3182ce;
-            color: white;
-        }
-
-        .download-btn {
-            background: #38a169;
-            color: white;
-        }
-
-        .close-share-btn {
-            background: #e53e3e;
-            color: white;
-        }
-
-        /* 截图预览模态框（全屏） */
+        /* 截图预览模态框 */
         .screenshot-preview-modal {
             display: none;
             position: fixed;
@@ -1037,28 +699,32 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(0,0,0,0.95);
             flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 20px;
         }
-
         .screenshot-preview-modal img {
-            max-width: 95%;
+            max-width: 95vw;
             max-height: 80vh;
             object-fit: contain;
             border-radius: 12px;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 30px rgba(0,0,0,0.6);
             background: white;
         }
-
-        .close-screenshot-btn {
+        /* V3 新增：截图预览操作按钮组 */
+        .screenshot-actions {
             margin-top: 20px;
-            padding: 12px 30px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .screenshot-action-btn {
+            padding: 12px 24px;
             border: none;
             border-radius: 30px;
-            background: #e74c3c;
             color: white;
             font-weight: 600;
             font-size: 1rem;
@@ -1066,14 +732,15 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: background 0.3s;
+            transition: all 0.3s;
         }
+        .screenshot-download-btn { background: #38a169; }
+        .screenshot-download-btn:hover { background: #2f855a; }
+        .screenshot-copy-btn { background: #805ad5; }
+        .screenshot-copy-btn:hover { background: #6b46c1; }
+        .close-screenshot-btn { background: #e74c3c; }
+        .close-screenshot-btn:hover { background: #c0392b; }
 
-        .close-screenshot-btn:hover {
-            background: #c0392b;
-        }
-
-        /* 加载提示 */
         .share-loading {
             display: none;
             position: fixed;
@@ -1082,32 +749,23 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0,0,0,0.7);
             justify-content: center;
             align-items: center;
             flex-direction: column;
         }
-
         .share-loading-spinner {
             width: 40px;
             height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
+            border: 4px solid rgba(255,255,255,0.3);
             border-top: 4px solid #ffffff;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin-bottom: 15px;
         }
+        .share-loading-text { color: white; font-size: 16px; font-weight: 500; }
 
-        .share-loading-text {
-            color: white;
-            font-size: 16px;
-            font-weight: 500;
-        }
-
-        .load-by-code-section {
-            margin-bottom: 20px;
-        }
-
+        .load-by-code-section { margin-bottom: 20px; }
         .load-by-code-section textarea {
             width: 100%;
             height: 100px;
@@ -1118,15 +776,8 @@
             margin-bottom: 10px;
             resize: vertical;
         }
-
-        .save-deck-content {
-            max-width: 400px;
-        }
-
-        .save-input {
-            margin: 15px 0;
-        }
-
+        .save-deck-content { max-width: 400px; }
+        .save-input { margin: 15px 0; }
         .save-input input {
             width: 100%;
             padding: 12px;
@@ -1136,27 +787,19 @@
             color: #333;
             font-size: 1rem;
         }
-
         .save-input input:focus {
             outline: none;
             border-color: #4da6ff;
-            box-shadow: 0 0 10px rgba(77, 166, 255, 0.2);
+            box-shadow: 0 0 10px rgba(77,166,255,0.2);
         }
-
-        .save-actions {
-            display: flex;
-            gap: 12px;
-        }
-
-        .save-actions button {
-            flex: 1;
-        }
+        .save-actions { display: flex; gap: 12px; }
+        .save-actions button { flex: 1; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="app-container">
-            <div class="search-section">
+        <div class="app-container" id="app-container">
+            <div class="search-section" id="search-section">
                 <div class="search-box">
                     <input type="text" id="card-search" placeholder="输入卡片名称搜索...">
                     <button id="search-btn"><i class="fas fa-search"></i> 搜索</button>
@@ -1181,17 +824,24 @@
                     <div class="skill-selector">
                         <input type="text" class="skill-input" id="deck-skill" placeholder="输入卡组技能...">
                         <div class="deck-counts">
-                            <div class="deck-count">
-                                <i class="fas fa-layer-group"></i> MN: <span id="main-count">0</span>/30
+                            <div class="deck-count" id="main-count-box">
+                                <i class="fas fa-layer-group"></i> MA: <span id="main-count" class="count-value">0</span>/30
                             </div>
-                            <div class="deck-count">
-                                <i class="fas fa-star"></i> EX: <span id="extra-count">0</span>/8
+                            <div class="deck-count" id="extra-count-box">
+                                <i class="fas fa-star"></i> EX: <span id="extra-count" class="count-value">0</span>/8
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="deck-container">
-                    <h3 class="deck-title"><i class="fas fa-layer-group"></i> 主卡组</h3>
+                    <h3 class="deck-title">
+                        <i class="fas fa-layer-group"></i> 主卡组
+                        <span class="deck-title-actions">
+                            <button class="mini-btn" id="sort-main-btn" title="按 怪兽→魔法→陷阱 排序">
+                                <i class="fas fa-sort-amount-down"></i> 排序
+                            </button>
+                        </span>
+                    </h3>
                     <div class="deck-grid main-deck-grid" id="main-deck">
                         <div class="card-placeholder">添加主卡组卡片 (20-30张)</div>
                     </div>
@@ -1203,18 +853,10 @@
                     </div>
                 </div>
                 <div class="deck-actions">
-                    <button class="action-btn save-btn" id="save-btn">
-                        <i class="fas fa-save"></i> 保存
-                    </button>
-                    <button class="action-btn load-btn" id="load-btn">
-                        <i class="fas fa-folder-open"></i> 加载
-                    </button>
-                    <button class="action-btn share-btn" id="share-btn">
-                        <i class="fas fa-share-alt"></i> 分享
-                    </button>
-                    <button class="action-btn reset-btn" id="reset-btn">
-                        <i class="fas fa-trash-alt"></i> 重置
-                    </button>
+                    <button class="action-btn save-btn" id="save-btn"><i class="fas fa-save"></i> <span class="action-text">保存</span></button>
+                    <button class="action-btn load-btn" id="load-btn"><i class="fas fa-folder-open"></i> <span class="action-text">加载</span></button>
+                    <button class="action-btn share-btn" id="share-btn"><i class="fas fa-share-alt"></i> <span class="action-text">分享</span></button>
+                    <button class="action-btn reset-btn" id="reset-btn"><i class="fas fa-trash-alt"></i> <span class="action-text">重置</span></button>
                 </div>
             </div>
         </div>
@@ -1226,7 +868,7 @@
             <span class="close-modal" id="close-modal">&times;</span>
             <div class="card-detail">
                 <div class="card-image">
-                    <img src="" alt="卡片大图" id="detail-image">
+                    <img src="" alt="卡片大图" id="detail-image" onerror="handleImageError(this, this.src)">
                 </div>
                 <div class="card-info">
                     <h2 class="card-name" id="detail-name">卡片名称</h2>
@@ -1242,7 +884,7 @@
         <div class="add-card-content">
             <div class="add-card-container">
                 <div class="add-card-preview">
-                    <img src="" alt="卡片预览" id="add-card-image">
+                    <img src="" alt="卡片预览" id="add-card-image" onerror="handleImageError(this, this.src)">
                 </div>
                 <div class="add-card-info">
                     <div class="add-card-name" id="add-card-name">卡片名称</div>
@@ -1269,14 +911,10 @@
         <div class="deck-list-content">
             <div class="load-by-code-section">
                 <textarea id="deck-code-input" placeholder="在此粘贴卡组代码..."></textarea>
-                <button id="load-by-code-btn" class="btn btn-primary">
-                    <i class="fas fa-code"></i> 通过代码加载卡组
-                </button>
+                <button id="load-by-code-btn" class="btn btn-primary"><i class="fas fa-code"></i> 通过代码加载卡组</button>
             </div>
             <div class="deck-list-items" id="deck-list-items"></div>
-            <button class="btn btn-primary" id="close-deck-list">
-                <i class="fas fa-times"></i> 关闭
-            </button>
+            <button class="btn btn-primary" id="close-deck-list"><i class="fas fa-times"></i> 关闭</button>
         </div>
     </div>
 
@@ -1285,44 +923,35 @@
         <div class="share-content">
             <div class="share-options">
                 <div class="share-option">
-                    <div class="option-title">
-                        <i class="fas fa-code"></i> 卡组代码
-                    </div>
+                    <div class="option-title"><i class="fas fa-code"></i> 卡组代码</div>
                     <div class="share-code" id="deck-code">生成中...</div>
                     <div class="share-buttons">
-                        <button class="share-btn-action copy-btn" id="copy-code-btn">
-                            <i class="fas fa-copy"></i> 复制代码
-                        </button>
+                        <button class="share-btn-action copy-btn" id="copy-code-btn"><i class="fas fa-copy"></i> 复制代码</button>
                     </div>
                 </div>
                 <div class="share-option">
-                    <div class="option-title">
-                        <i class="fas fa-camera"></i> 卡组截图
-                    </div>
+                    <div class="option-title"><i class="fas fa-camera"></i> 卡组截图</div>
                     <div class="share-buttons">
-                        <button class="share-btn-action download-btn" id="generate-screenshot-btn">
-                            <i class="fas fa-camera"></i> 生成截图
-                        </button>
+                        <button class="share-btn-action download-btn" id="generate-screenshot-btn"><i class="fas fa-camera"></i> 生成截图</button>
                     </div>
                 </div>
             </div>
             <div class="share-buttons">
-                <button class="share-btn-action close-share-btn" id="close-share-btn">
-                    <i class="fas fa-times"></i> 关闭
-                </button>
+                <button class="share-btn-action close-share-btn" id="close-share-btn"><i class="fas fa-times"></i> 关闭</button>
             </div>
         </div>
     </div>
 
-    <!-- 截图预览模态框 -->
+    <!-- 截图预览模态框（V3：增加下载/复制按钮，融合 V1 优点） -->
     <div class="screenshot-preview-modal" id="screenshot-preview-modal">
         <img id="screenshot-preview-image" alt="卡组截图" />
-        <button class="close-screenshot-btn" id="close-screenshot-btn">
-            <i class="fas fa-times"></i> 关闭
-        </button>
+        <div class="screenshot-actions">
+            <button class="screenshot-action-btn screenshot-download-btn" id="download-screenshot-btn"><i class="fas fa-download"></i> 下载</button>
+            <button class="screenshot-action-btn screenshot-copy-btn" id="copy-screenshot-btn"><i class="fas fa-copy"></i> 复制</button>
+            <button class="screenshot-action-btn close-screenshot-btn" id="close-screenshot-btn"><i class="fas fa-times"></i> 关闭</button>
+        </div>
     </div>
 
-    <!-- 生成截图时的加载提示 -->
     <div class="share-loading" id="share-loading">
         <div class="share-loading-spinner"></div>
         <div class="share-loading-text">正在生成卡组截图，请稍候…</div>
@@ -1342,13 +971,33 @@
         </div>
     </div>
 
-    <!-- 通知 -->
     <div class="notification" id="notification">操作成功！</div>
 
     <script>
         (function() {
+            'use strict';
+
+            const CARD_IMG_BASE = 'https://cdn.233.momobako.com/ygopro/pics/';
+            const IMG_PROXY = 'https://images.weserv.nl/?url=';
+            const API_BASE = 'https://ygocdb.com/api/v0/';
+            const FALLBACK_IMG = CARD_IMG_BASE + '0.jpg';
+
+            // 图片错误处理：先回退卡背，2秒后尝试代理加载原图
+            window.handleImageError = function(img, originalSrc) {
+                if (img.dataset.retried) return;
+                img.dataset.retried = "true";
+                img.onerror = null;
+                img.src = FALLBACK_IMG;
+                if (originalSrc && originalSrc !== FALLBACK_IMG) {
+                    setTimeout(() => {
+                        img.src = IMG_PROXY + encodeURIComponent(originalSrc);
+                        img.onerror = function() { img.src = FALLBACK_IMG; };
+                    }, 2000);
+                }
+            };
+
             let deck = { main: [], extra: [], skill: "" };
-            let searchState = { currentPage: 1, pageSize: 30, totalResults: 0, currentSearchTerm: '' };
+            let searchState = { pageSize: 30, currentSearchTerm: '', searching: false };
             let currentSelectedCard = null;
             let selectedQuantity = 1;
 
@@ -1356,6 +1005,8 @@
             const extraDeckEl = document.getElementById('extra-deck');
             const mainCountEl = document.getElementById('main-count');
             const extraCountEl = document.getElementById('extra-count');
+            const mainCountBox = document.getElementById('main-count-box');
+            const extraCountBox = document.getElementById('extra-count-box');
             const cardModal = document.getElementById('card-modal');
             const closeModal = document.getElementById('close-modal');
             const notification = document.getElementById('notification');
@@ -1365,72 +1016,134 @@
             const deckListModal = document.getElementById('deck-list-modal');
             const shareModal = document.getElementById('share-modal');
             const saveDeckModal = document.getElementById('save-deck-modal');
+            const screenshotPreviewModal = document.getElementById('screenshot-preview-modal');
             const deckSkillInput = document.getElementById('deck-skill');
             const deckSection = document.getElementById('deck-section');
-            const screenshotPreviewModal = document.getElementById('screenshot-preview-modal');
+            const searchSection = document.getElementById('search-section');
             const screenshotPreviewImage = document.getElementById('screenshot-preview-image');
             const shareLoading = document.getElementById('share-loading');
             const generateScreenshotBtn = document.getElementById('generate-screenshot-btn');
+            const searchBtn = document.getElementById('search-btn');
+
+            let notifyTimer = null;
+
+            // ========== 工具函数 ==========
+            function showNotification(msg, type = 'success') {
+                // type: 'success' | 'error' | 'warning'
+                notification.textContent = msg;
+                notification.className = 'notification' + (type !== 'success' ? ' ' + type : '');
+                notification.classList.add('show');
+                clearTimeout(notifyTimer);
+                notifyTimer = setTimeout(() => notification.classList.remove('show'), 3000);
+            }
+
+            // 灵摆卡描述合并
+            function buildFullDesc(textObj, fallbackDesc) {
+                const pdesc = textObj?.pdesc || '';
+                const desc = textObj?.desc || fallbackDesc || '';
+                return pdesc ? `【灵摆效果】${pdesc}<br>【怪兽效果】${desc}` : desc;
+            }
+
+            function cardImgSrc(id) {
+                return CARD_IMG_BASE + id + '.jpg';
+            }
+
+            function deckTotal(arr) {
+                return arr.reduce((s, c) => s + c.count, 0);
+            }
+
+            // ========== 模态框通用关闭 ==========
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    [cardModal, addCardModal, deckListModal, shareModal, saveDeckModal, screenshotPreviewModal]
+                        .forEach(m => { if (m.style.display === 'flex') m.style.display = 'none'; });
+                }
+            });
 
             deckSkillInput.addEventListener('change', () => { deck.skill = deckSkillInput.value; });
-            document.getElementById('search-btn').addEventListener('click', searchCards);
-            document.getElementById('card-search').addEventListener('keypress', (e) => { if (e.key === 'Enter') searchCards(); });
+
+            // ========== 搜索（V3：防重复提交 + 请求中禁用） ==========
+            searchBtn.addEventListener('click', searchCards);
+            document.getElementById('card-search').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') searchCards();
+            });
 
             function searchCards() {
                 const searchTerm = document.getElementById('card-search').value.trim();
-                if (!searchTerm) { showNotification('请输入卡片名称', true); return; }
+                if (!searchTerm) { showNotification('请输入卡片名称', 'error'); return; }
+                if (searchState.searching) return;
+                if (searchState.currentSearchTerm === searchTerm && resultsContainer.children.length > 0
+                    && !resultsContainer.querySelector('.placeholder')) {
+                    showNotification('当前已是该关键词的搜索结果', 'warning');
+                    return;
+                }
                 searchState.currentSearchTerm = searchTerm;
+                searchState.searching = true;
+                searchBtn.disabled = true;
                 loaderEl.style.display = 'block';
                 resultsContainer.innerHTML = '';
-                fetch(`https://ygocdb.com/api/v0/?search=${encodeURIComponent(searchTerm)}&limit=${searchState.pageSize}`)
+
+                fetch(`${API_BASE}?search=${encodeURIComponent(searchTerm)}&limit=${searchState.pageSize}`)
                     .then(r => r.json())
                     .then(data => {
                         loaderEl.style.display = 'none';
                         if (data.result?.length) {
-                            searchState.totalResults = data.total;
                             displaySearchResults(data.result);
                         } else {
                             resultsContainer.innerHTML = '<div class="result-item"><div class="result-info"><div class="result-name">未找到相关卡片</div><div class="result-type">请尝试其他关键词</div></div></div>';
                         }
                     })
-                    .catch(err => {
+                    .catch(() => {
                         loaderEl.style.display = 'none';
                         resultsContainer.innerHTML = '<div class="result-item"><div class="result-info"><div class="result-name">API调用失败</div><div class="result-type">请稍后重试</div></div></div>';
-                        showNotification('API调用失败', true);
+                        showNotification('API调用失败', 'error');
+                    })
+                    .finally(() => {
+                        searchState.searching = false;
+                        searchBtn.disabled = false;
                     });
             }
 
+            // V3：DocumentFragment 批量渲染 + 图片懒加载
             function displaySearchResults(cards) {
                 resultsContainer.innerHTML = '';
+                const frag = document.createDocumentFragment();
                 cards.forEach(card => {
                     const item = document.createElement('div');
                     item.className = 'result-item';
                     const cardType = card.text?.types || card.type || '';
-                    const cardDesc = card.text?.desc || card.desc || '';
+                    const fullDesc = buildFullDesc(card.text, card.desc);
+                    const imgSrc = cardImgSrc(card.id);
                     item.innerHTML = `
-                        <img src="https://cdn.233.momobako.com/ygopro/pics/${card.id}.jpg" alt="${card.cn_name || card.name}">
+                        <img src="${imgSrc}" alt="${card.cn_name || card.name}" loading="lazy" onerror="handleImageError(this, '${imgSrc}')">
                         <div class="result-info">
                             <div class="result-name">${card.cn_name || card.name}</div>
                             <div class="result-type">${cardType}</div>
-                            <div class="result-desc">${cardDesc}</div>
+                            <div class="result-desc">${fullDesc}</div>
                         </div>`;
                     item.addEventListener('click', () => showAddCardModal({
                         id: card.id,
                         name: card.cn_name || card.name,
                         type: cardType,
-                        desc: cardDesc
+                        desc: fullDesc,
+                        imgSrc: imgSrc
                     }));
-                    resultsContainer.appendChild(item);
+                    frag.appendChild(item);
                 });
+                resultsContainer.appendChild(frag);
             }
 
+            // ========== 添加卡片 ==========
             function showAddCardModal(card) {
                 currentSelectedCard = card;
                 selectedQuantity = 1;
-                document.getElementById('add-card-image').src = `https://cdn.233.momobako.com/ygopro/pics/${card.id}.jpg`;
+                const img = document.getElementById('add-card-image');
+                img.dataset.retried = '';
+                delete img.dataset.retried;
+                img.src = card.imgSrc;
                 document.getElementById('add-card-name').textContent = card.name;
                 document.getElementById('add-card-type').textContent = card.type;
-                document.getElementById('add-card-desc').textContent = card.desc;
+                document.getElementById('add-card-desc').innerHTML = card.desc;
                 document.querySelectorAll('.quantity-btn').forEach(b => b.classList.remove('active'));
                 document.querySelector('.quantity-btn[data-quantity="1"]').classList.add('active');
                 addCardModal.style.display = 'flex';
@@ -1452,16 +1165,20 @@
             });
             document.getElementById('cancel-add').addEventListener('click', () => addCardModal.style.display = 'none');
 
+            function isExtraDeckCard(type) {
+                return type.includes('融合') || type.includes('同调') || type.includes('超量') || type.includes('连接');
+            }
+
             function addCardToDeck(card, quantity) {
-                const isExtra = card.type.includes('融合') || card.type.includes('同调') || card.type.includes('超量') || card.type.includes('连接');
+                const isExtra = isExtraDeckCard(card.type || '');
                 const target = isExtra ? deck.extra : deck.main;
                 const deckName = isExtra ? '额外卡组' : '主卡组';
-                const current = target.reduce((s, c) => s + c.count, 0);
+                const current = deckTotal(target);
                 const max = isExtra ? 8 : 30;
-                if (current + quantity > max) return showNotification(`${deckName}空间不足，只能添加${max - current}张`, true);
-                const exist = target.find(c => c.id === card.id);
+                if (current + quantity > max) return showNotification(`${deckName}空间不足，只能添加${max - current}张`, 'error');
+                const exist = target.find(c => c.id === card.id && card.id !== 0);
                 if (exist) {
-                    if (exist.count + quantity > 3) return showNotification(`"${card.name}"最多还能添加${3 - exist.count}张`, true);
+                    if (exist.count + quantity > 3) return showNotification(`"${card.name}"最多还能添加${3 - exist.count}张`, 'error');
                     exist.count += quantity;
                 } else {
                     target.push({ ...card, count: quantity });
@@ -1470,29 +1187,37 @@
                 showNotification(`已添加${quantity}张"${card.name}"到${deckName}`);
             }
 
+            // ========== 卡组显示（V3：合法性状态提示） ==========
             function updateDeckDisplay() {
                 mainDeckEl.innerHTML = '';
                 extraDeckEl.innerHTML = '';
-                const mainCnt = deck.main.reduce((s, c) => s + c.count, 0);
-                const extraCnt = deck.extra.reduce((s, c) => s + c.count, 0);
+                const mainCnt = deckTotal(deck.main);
+                const extraCnt = deckTotal(deck.extra);
                 mainCountEl.textContent = mainCnt;
                 extraCountEl.textContent = extraCnt;
+
+                // 主卡组 20-30 合法；额外卡组最多 8
+                mainCountEl.className = 'count-value' + (mainCnt > 0 && mainCnt < 20 ? ' warn' : (mainCnt >= 30 ? ' full' : ''));
+                mainCountBox.classList.toggle('illegal', mainCnt > 0 && mainCnt < 20);
+                extraCountEl.className = 'count-value' + (extraCnt >= 8 ? ' full' : '');
+                extraCountBox.classList.toggle('illegal', false);
 
                 if (deck.main.length === 0) mainDeckEl.innerHTML = '<div class="card-placeholder">添加主卡组卡片 (20-30张)</div>';
                 else deck.main.forEach(c => mainDeckEl.appendChild(createCardEl(c, 'main')));
                 if (deck.extra.length === 0) extraDeckEl.innerHTML = '<div class="card-placeholder">添加额外卡组卡片 (最多8张)</div>';
                 else deck.extra.forEach(c => extraDeckEl.appendChild(createCardEl(c, 'extra')));
+                adjustSearchHeight();
             }
 
             function createCardEl(card, type) {
                 const el = document.createElement('div');
                 el.className = 'card-item';
                 el.innerHTML = `
-                    <img src="https://cdn.233.momobako.com/ygopro/pics/${card.id}.jpg" alt="${card.name}">
+                    <img src="${card.imgSrc}" alt="${card.name}" loading="lazy" onerror="handleImageError(this, '${card.imgSrc}')">
                     <div class="card-count">${card.count}</div>
                     <div class="card-controls">
-                        <button class="card-btn card-increase">+</button>
-                        <button class="card-btn card-decrease">-</button>
+                        <button class="card-btn card-increase" title="增加数量">+</button>
+                        <button class="card-btn card-decrease" title="减少数量">-</button>
                     </div>`;
                 el.querySelector('img').onclick = (e) => { e.stopPropagation(); showCardDetail(card); };
                 el.querySelector('.card-increase').onclick = (e) => { e.stopPropagation(); increase(card.id, type); };
@@ -1504,10 +1229,10 @@
                 const arr = type === 'main' ? deck.main : deck.extra;
                 const card = arr.find(c => c.id === id);
                 if (!card) return;
-                if (card.count >= 3) return showNotification('已达最大数量(3张)', true);
-                const total = arr.reduce((s, c) => s + c.count, 0);
+                if (card.count >= 3) return showNotification('已达最大数量(3张)', 'error');
+                const total = deckTotal(arr);
                 const max = type === 'main' ? 30 : 8;
-                if (total >= max) return showNotification(`${type === 'main' ? '主卡组' : '额外卡组'}已满`, true);
+                if (total >= max) return showNotification(`${type === 'main' ? '主卡组' : '额外卡组'}已满`, 'error');
                 card.count++;
                 updateDeckDisplay();
             }
@@ -1521,40 +1246,73 @@
                 updateDeckDisplay();
             }
 
+            // ========== V3 新增：主卡组排序（怪兽→魔法→陷阱→其他） ==========
+            document.getElementById('sort-main-btn').addEventListener('click', () => {
+                if (!deck.main.length) return showNotification('主卡组为空', 'warning');
+                const rank = (t) => {
+                    t = t || '';
+                    if (t.includes('怪兽')) return 0;
+                    if (t.includes('魔法')) return 1;
+                    if (t.includes('陷阱')) return 2;
+                    return 3;
+                };
+                deck.main.sort((a, b) => rank(a.type) - rank(b.type) || a.name.localeCompare(b.name, 'zh'));
+                updateDeckDisplay();
+                showNotification('主卡组已按 怪兽→魔法→陷阱 排序');
+            });
+
             function showCardDetail(card) {
-                document.getElementById('detail-image').src = `https://cdn.233.momobako.com/ygopro/pics/${card.id}.jpg`;
+                document.getElementById('detail-image').src = card.imgSrc;
                 document.getElementById('detail-name').textContent = card.name;
                 document.getElementById('detail-type').textContent = card.type;
-                document.getElementById('detail-desc').textContent = card.desc || '无描述';
+                document.getElementById('detail-desc').innerHTML = card.desc || '无描述';
                 cardModal.style.display = 'flex';
             }
 
-            function showNotification(msg, isErr = false) {
-                notification.textContent = msg;
-                notification.className = 'notification' + (isErr ? ' error' : '');
-                notification.classList.add('show');
-                setTimeout(() => notification.classList.remove('show'), 3000);
-            }
-
-            document.getElementById('save-btn').onclick = () => { document.getElementById('deck-name-input').value = ''; saveDeckModal.style.display = 'flex'; };
+            // ========== 保存卡组（V3：重名覆盖确认 + 存储异常捕获） ==========
+            document.getElementById('save-btn').onclick = () => {
+                document.getElementById('deck-name-input').value = '';
+                saveDeckModal.style.display = 'flex';
+            };
             document.getElementById('save-deck-confirm').onclick = () => {
                 const name = document.getElementById('deck-name-input').value.trim();
-                if (!name) return showNotification('请输入卡组名称', true);
-                const data = { name, date: new Date().toISOString(), main: [...deck.main], extra: [...deck.extra], skill: deck.skill };
-                let saved = JSON.parse(localStorage.getItem('ygoDecks') || '[]');
-                if (saved.length >= 20) return showNotification('最多保存20个卡组', true);
+                if (!name) return showNotification('请输入卡组名称', 'error');
+                let saved;
+                try {
+                    saved = JSON.parse(localStorage.getItem('ygoDecks') || '[]');
+                } catch (e) {
+                    return showNotification('本地存档读取失败，可能被损坏', 'error');
+                }
+                const dupIdx = saved.findIndex(d => d.name === name);
+                if (dupIdx !== -1) {
+                    if (!confirm(`已存在同名卡组"${name}"，是否覆盖？`)) return;
+                    saved.splice(dupIdx, 1);
+                }
+                if (saved.length >= 20) return showNotification('最多保存20个卡组', 'error');
+                const data = {
+                    name,
+                    date: new Date().toISOString(),
+                    main: deck.main.map(c => ({ ...c, imgSrc: undefined })),
+                    extra: deck.extra.map(c => ({ ...c, imgSrc: undefined })),
+                    skill: deck.skill
+                };
                 saved.push(data);
-                localStorage.setItem('ygoDecks', JSON.stringify(saved));
+                try {
+                    localStorage.setItem('ygoDecks', JSON.stringify(saved));
+                } catch (e) {
+                    return showNotification('保存失败：本地存储空间不足', 'error');
+                }
                 saveDeckModal.style.display = 'none';
                 showNotification(`卡组"${name}"保存成功`);
             };
             document.getElementById('save-deck-cancel').onclick = () => saveDeckModal.style.display = 'none';
 
+            // ========== 加载 / 分享 ==========
             document.getElementById('load-btn').onclick = () => showDeckListModal();
             document.getElementById('share-btn').onclick = () => {
-                const mainCnt = deck.main.reduce((s, c) => s + c.count, 0);
-                const extraCnt = deck.extra.reduce((s, c) => s + c.count, 0);
-                if (mainCnt === 0 && extraCnt === 0) return showNotification('卡组为空', true);
+                const mainCnt = deckTotal(deck.main);
+                const extraCnt = deckTotal(deck.extra);
+                if (mainCnt === 0 && extraCnt === 0) return showNotification('卡组为空', 'error');
                 let code = `!${deck.skill || '无技能'}\n#main\n`;
                 deck.main.forEach(c => code += `${c.name} ${c.count}\n`);
                 if (deck.extra.length) { code += '#extra\n'; deck.extra.forEach(c => code += `${c.name} ${c.count}\n`); }
@@ -1564,10 +1322,11 @@
             document.getElementById('copy-code-btn').onclick = () => {
                 navigator.clipboard.writeText(document.getElementById('deck-code').textContent)
                     .then(() => showNotification('代码已复制'))
-                    .catch(() => showNotification('复制失败，请手动复制', true));
+                    .catch(() => showNotification('复制失败，请手动复制', 'error'));
             };
             document.getElementById('close-share-btn').onclick = () => shareModal.style.display = 'none';
 
+            // ========== 截图生成（智能宽度 + 代理预加载） ==========
             generateScreenshotBtn.onclick = async function() {
                 if (this.disabled) return;
                 this.disabled = true;
@@ -1575,16 +1334,44 @@
                 shareLoading.style.display = 'flex';
 
                 const clone = deckSection.cloneNode(true);
+                const actionsEl = clone.querySelector('.deck-actions');
+                if (actionsEl) actionsEl.remove();
+
+                const screenshotWidth = window.innerWidth > 1000 ? 800 : 600;
+
                 clone.style.position = 'absolute';
                 clone.style.left = '-9999px';
-                clone.style.width = deckSection.offsetWidth + 'px';
+                clone.style.top = '0';
+                clone.style.width = screenshotWidth + 'px';
+                clone.style.height = 'auto';
+                clone.style.flex = 'none';
+                clone.style.maxHeight = 'none';
+                clone.style.overflow = 'visible';
+                clone.style.display = 'block';
                 document.body.appendChild(clone);
 
+                clone.querySelectorAll('.deck-container').forEach(el => {
+                    el.style.height = 'auto';
+                    el.style.flex = 'none';
+                    el.style.display = 'block';
+                });
+                clone.querySelectorAll('.deck-grid').forEach(el => {
+                    el.style.height = 'auto';
+                    el.style.minHeight = 'auto';
+                    el.style.overflow = 'visible';
+                    el.style.display = 'grid';
+                });
+                clone.querySelectorAll('.card-item').forEach(el => {
+                    el.style.height = '150px';
+                    el.style.width = '100px';
+                });
+
                 const imgs = clone.querySelectorAll('img');
-                const proxy = url => `https://images.weserv.nl/?url=${encodeURIComponent(url)}`;
                 await Promise.all([...imgs].map(img => new Promise(resolve => {
-                    img.crossOrigin = 'anonymous';
-                    img.src = proxy(img.src);
+                    if (img.src && !img.src.startsWith('data:')) {
+                        img.crossOrigin = 'anonymous';
+                        img.src = IMG_PROXY + encodeURIComponent(img.src);
+                    }
                     img.onload = resolve;
                     img.onerror = resolve;
                     setTimeout(resolve, 3000);
@@ -1597,12 +1384,15 @@
                         backgroundColor: '#ffffff',
                         useCORS: true,
                         allowTaint: false,
-                        logging: false
+                        logging: false,
+                        height: clone.scrollHeight,
+                        windowHeight: clone.scrollHeight
                     });
                     screenshotPreviewImage.src = canvas.toDataURL('image/png');
                     screenshotPreviewModal.style.display = 'flex';
                 } catch (e) {
-                    showNotification('截图生成失败', true);
+                    showNotification('截图生成失败', 'error');
+                    shareModal.style.display = 'flex';
                 } finally {
                     document.body.removeChild(clone);
                     shareLoading.style.display = 'none';
@@ -1610,9 +1400,36 @@
                 }
             };
 
+            // V3 新增：下载截图（融合 V1 能力）
+            document.getElementById('download-screenshot-btn').onclick = () => {
+                const src = screenshotPreviewImage.src;
+                if (!src || !src.startsWith('data:')) return showNotification('请先截图', 'warning');
+                const a = document.createElement('a');
+                a.href = src;
+                a.download = `yugioh-deck-${Date.now()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                showNotification('截图已开始下载');
+            };
+
+            // V3 新增：复制截图到剪贴板（不支持时降级提示长按保存）
+            document.getElementById('copy-screenshot-btn').onclick = async () => {
+                const src = screenshotPreviewImage.src;
+                if (!src || !src.startsWith('data:')) return showNotification('请先截图', 'warning');
+                try {
+                    const blob = await (await fetch(src)).blob();
+                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                    showNotification('截图已复制到剪贴板');
+                } catch (e) {
+                    showNotification('当前浏览器不支持复制图片，请长按图片保存', 'warning');
+                }
+            };
+
             document.getElementById('close-screenshot-btn').onclick = () => screenshotPreviewModal.style.display = 'none';
             screenshotPreviewModal.onclick = function(e) { if (e.target === this) this.style.display = 'none'; };
 
+            // ========== 重置 ==========
             document.getElementById('reset-btn').onclick = () => {
                 if (confirm('确定重置卡组？')) {
                     deck.main = []; deck.extra = []; deck.skill = '';
@@ -1633,10 +1450,11 @@
 
             document.getElementById('close-deck-list').onclick = () => deckListModal.style.display = 'none';
 
+            // ========== 通过代码加载卡组（V3：失败统计反馈） ==========
             document.getElementById('load-by-code-btn').onclick = loadDeckByCode;
             function loadDeckByCode() {
                 const text = document.getElementById('deck-code-input').value.trim();
-                if (!text) return showNotification('请输入卡组代码', true);
+                if (!text) return showNotification('请输入卡组代码', 'error');
                 const lines = text.split('\n');
                 const mainList = [], extraList = [];
                 let skill = '', sec = 'main';
@@ -1652,35 +1470,73 @@
                     const name = parts.join(' ').trim();
                     if (name && cnt > 0) (sec === 'main' ? mainList : extraList).push({ name, cnt });
                 });
+                if (!mainList.length && !extraList.length) {
+                    return showNotification('未解析到有效卡片，请检查代码格式', 'error');
+                }
                 deck.main = []; deck.extra = []; deck.skill = skill; deckSkillInput.value = skill;
-                showNotification('正在加载卡组...');
-                const load = (name, isExtra) => fetch(`https://ygocdb.com/api/v0/?search=${encodeURIComponent(name)}&limit=1`)
+                updateDeckDisplay();
+                showNotification('正在加载卡组...', 'warning');
+
+                let failedNames = [];
+                const load = (name) => fetch(`${API_BASE}?search=${encodeURIComponent(name)}&limit=1`)
                     .then(r => r.json())
                     .then(d => {
                         if (d.result?.length) {
                             const c = d.result[0];
-                            addCardToDeck({ id: c.id, name: c.cn_name || c.name, type: c.text?.types || c.type || '', desc: c.text?.desc || '' }, 1);
+                            addCardToDeck({
+                                id: c.id,
+                                name: c.cn_name || c.name,
+                                type: c.text?.types || c.type || '',
+                                desc: buildFullDesc(c.text, c.desc),
+                                imgSrc: cardImgSrc(c.id)
+                            }, 1);
+                        } else {
+                            failedNames.push(name);
                         }
-                    }).catch(() => {});
+                    }).catch(() => failedNames.push(name));
+
                 const all = [];
-                mainList.forEach(c => { for (let i = 0; i < c.cnt; i++) all.push(load(c.name, false)); });
-                extraList.forEach(c => { for (let i = 0; i < c.cnt; i++) all.push(load(c.name, true)); });
+                mainList.forEach(c => { for (let i = 0; i < c.cnt; i++) all.push(load(c.name)); });
+                extraList.forEach(c => { for (let i = 0; i < c.cnt; i++) all.push(load(c.name)); });
                 Promise.all(all).then(() => {
                     updateDeckDisplay();
                     deckListModal.style.display = 'none';
+                    if (failedNames.length) {
+                        const uniq = [...new Set(failedNames)];
+                        showNotification(`加载完成，但有${uniq.length}种卡片未找到：${uniq.slice(0, 3).join('、')}${uniq.length > 3 ? '等' : ''}`, 'warning');
+                    } else {
+                        showNotification('卡组加载完成');
+                    }
                 });
+            }
+
+            // ========== 本地卡组列表 ==========
+            function createDefaultDeck() {
+                return {
+                    name: "默认卡组",
+                    date: new Date().toISOString(),
+                    skill: "战斗编年史",
+                    main: [
+                        { name: "青眼亚白龙", count: 2 }, { name: "白色灵龙", count: 3 },
+                        { name: "最强混沌战士", count: 1 }, { name: "青眼白龙", count: 3 },
+                        { name: "继承之魂", count: 2 }, { name: "究极融合", count: 1 },
+                        { name: "龙觉醒旋律", count: 3 }, { name: "摇号机GO！GO！", count: 1 },
+                        { name: "复活之福音", count: 2 }, { name: "王者的看破", count: 2 }
+                    ],
+                    extra: [
+                        { name: "究极龙骑士", count: 1 }, { name: "真青眼究极龙", count: 1 },
+                        { name: "青眼究极龙", count: 1 }, { name: "青眼双爆裂龙", count: 1 },
+                        { name: "宵星之机神 丁吉尔苏", count: 1 }, { name: "银河眼光波龙", count: 1 },
+                        { name: "银河眼重铠光子龙", count: 1 }, { name: "银河眼光波刃龙", count: 1 }
+                    ]
+                };
             }
 
             function showDeckListModal() {
                 let saved = JSON.parse(localStorage.getItem('ygoDecks') || '[]');
                 if (!saved.length) {
-                    saved = [{
-                        name: '默认青眼卡组', date: new Date().toISOString(),
-                        skill: '战斗编年史',
-                        main: [{ name: '青眼亚白龙', count: 2 }, { name: '白色灵龙', count: 3 }, { name: '最强混沌战士', count: 1 }, { name: '青眼白龙', count: 3 }, { name: '继承之魂', count: 2 }, { name: '究极融合', count: 1 }, { name: '龙觉醒旋律', count: 3 }, { name: '摇号机GO！GO！', count: 1 }, { name: '复活之福音', count: 2 }, { name: '王者的看破', count: 2 }],
-                        extra: [{ name: '究极龙骑士', count: 1 }, { name: '真青眼究极龙', count: 1 }, { name: '青眼究极龙', count: 1 }, { name: '青眼双爆裂龙', count: 1 }, { name: '宵星之机神 丁吉尔苏', count: 1 }, { name: '银河眼光波龙', count: 1 }, { name: '银河眼重铠光子龙', count: 1 }, { name: '银河眼光波刃龙', count: 1 }]
-                    }];
-                    localStorage.setItem('ygoDecks', JSON.stringify(saved));
+                    saved.push(createDefaultDeck());
+                    try { localStorage.setItem('ygoDecks', JSON.stringify(saved)); } catch (e) {}
                 }
                 const list = document.getElementById('deck-list-items');
                 list.innerHTML = saved.map((d, i) => `
@@ -1688,6 +1544,7 @@
                         <div class="deck-item-name">${d.name}</div>
                         <div>主卡组: ${d.main.reduce((s,c)=>s+c.count,0)} | 额外: ${d.extra.reduce((s,c)=>s+c.count,0)}</div>
                         <div>技能: ${d.skill || '无'}</div>
+                        <div class="deck-item-date">${d.date ? new Date(d.date).toLocaleString() : ''}</div>
                         <div class="deck-item-actions">
                             <button class="deck-action-btn btn btn-primary" data-idx="${i}"><i class="fas fa-folder-open"></i>加载</button>
                             <button class="deck-action-btn btn btn-danger" data-idx="${i}"><i class="fas fa-trash-alt"></i>删除</button>
@@ -1698,7 +1555,7 @@
                     deckListModal.style.display = 'none';
                 });
                 list.querySelectorAll('.btn-danger').forEach(b => b.onclick = () => {
-                    if (confirm('确定删除？')) {
+                    if (confirm(`确定删除"${saved[parseInt(b.dataset.idx)].name}"？`)) {
                         saved.splice(parseInt(b.dataset.idx), 1);
                         localStorage.setItem('ygoDecks', JSON.stringify(saved));
                         showDeckListModal();
@@ -1709,27 +1566,51 @@
 
             function loadDeck(data) {
                 deck.main = []; deck.extra = []; deck.skill = data.skill || ''; deckSkillInput.value = deck.skill;
-                data.main.forEach(c => deck.main.push({ ...c, id: 0, type: '', desc: '' }));
-                data.extra.forEach(c => deck.extra.push({ ...c, id: 0, type: '', desc: '' }));
+                data.main.forEach(c => deck.main.push({ ...c, id: 0, type: '', desc: '', imgSrc: FALLBACK_IMG }));
+                data.extra.forEach(c => deck.extra.push({ ...c, id: 0, type: '', desc: '', imgSrc: FALLBACK_IMG }));
                 updateDeckDisplay();
-                const fetchCard = (name, type) => fetch(`https://ygocdb.com/api/v0/?search=${encodeURIComponent(name)}&limit=1`)
+                showNotification(`已加载卡组"${data.name}"，正在获取卡片数据...`);
+
+                const fetchCard = (name, type) => fetch(`${API_BASE}?search=${encodeURIComponent(name)}&limit=1`)
                     .then(r => r.json())
                     .then(d => {
                         if (d.result?.length) {
                             const c = d.result[0];
                             const arr = type === 'main' ? deck.main : deck.extra;
                             const card = arr.find(x => x.name === name);
-                            if (card) { card.id = c.id; card.type = c.text?.types || c.type || ''; card.desc = c.text?.desc || ''; }
+                            if (card) {
+                                card.id = c.id;
+                                card.type = c.text?.types || c.type || '';
+                                card.desc = buildFullDesc(c.text, c.desc);
+                                card.imgSrc = cardImgSrc(c.id);
+                            }
                         }
                     }).catch(() => {});
-                data.main.forEach(c => fetchCard(c.name, 'main'));
-                data.extra.forEach(c => fetchCard(c.name, 'extra'));
-                setTimeout(updateDeckDisplay, 500);
+                const tasks = [];
+                data.main.forEach(c => tasks.push(fetchCard(c.name, 'main')));
+                data.extra.forEach(c => tasks.push(fetchCard(c.name, 'extra')));
+                Promise.all(tasks).then(() => updateDeckDisplay());
             }
 
+            // ========== 搜索区高度同步 ==========
+            function adjustSearchHeight() {
+                if (window.innerWidth >= 1001) {
+                    const deckHeight = deckSection.offsetHeight;
+                    searchSection.style.maxHeight = deckHeight + 'px';
+                    searchSection.style.height = deckHeight + 'px';
+                } else {
+                    searchSection.style.maxHeight = '';
+                    searchSection.style.height = '';
+                }
+            }
+
+            window.addEventListener('resize', adjustSearchHeight);
             window.addEventListener('DOMContentLoaded', () => {
                 updateDeckDisplay();
+                adjustSearchHeight();
             });
+            const resizeObserver = new ResizeObserver(() => adjustSearchHeight());
+            resizeObserver.observe(deckSection);
         })();
     </script>
 </body>
